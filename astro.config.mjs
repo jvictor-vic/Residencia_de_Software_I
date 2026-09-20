@@ -1,0 +1,14 @@
+// @ts-check
+import { defineConfig } from "astro/config";
+
+// https://astro.build/config
+export default defineConfig({
+  site: "https://www.example.com",
+  base: "/docs",
+  trailingSlash: "always",
+
+  prefetch: {
+    prefetchAll: true,
+    defaultStrategy: "viewport",
+  },
+});
