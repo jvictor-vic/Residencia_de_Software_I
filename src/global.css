@@ -1,0 +1,106 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+*:not(dialog) {
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    interpolate-size: allow-keywords;
+  }
+}
+
+/* Page */
+body {
+  background-color: var(--bg);
+  color: var(--fg);
+  width: 100vw;
+  min-height: 100vh;
+  overflow-x: hidden;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Media and controls */
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+input,
+button,
+textarea,
+select {
+  font: inherit;
+}
+
+/* Tipografia */
+h1,
+h2,
+h3,
+h4 {
+  overflow-wrap: break-word;
+  text-wrap-style: balance;
+  font-family: var(--font-roboto);
+}
+
+h1 {
+  text-box: trim-both cap alphabetic;
+  font-size: 40px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+h2 {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: 0.64px;
+}
+
+h3 {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.24px;
+}
+
+h4 {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+h5,
+h6,
+p {
+  overflow-wrap: break-word;
+  font-family: var(--font-cabin);
+  font-size: 16px;
+}
+
+h5,
+h6 {
+  text-wrap-style: pretty;
+  text-box: trim-both cap alphabetic;
+}
+
+h5 {
+  color: var(--fg--20);
+  font-weight: 600;
+}
+
+h6 {
+  color: var(--fg--40);
+  font-weight: 500;
+}
+
+p {
+  text-wrap-style: pretty;
+}
