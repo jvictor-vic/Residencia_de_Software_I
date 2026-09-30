@@ -1,0 +1,14 @@
+# Package managers & build output
+node_modules/
+dist/
+.astro/
+
+# Lockfiles
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+bun.lockb
+
+# Environment files
+.env
+.env.*
