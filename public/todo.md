@@ -1,0 +1,2 @@
+- [] add favicon
+- [] add social (Open Graph Image)
