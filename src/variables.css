@@ -121,4 +121,7 @@
     --id-15-fg: #e467ba;
     --id-16-fg: #e46791;
   }
+
+  /* Espaçamento */
+  --side-padding: round(nearest, clamp(16px, 2.3529vw + 6.1176px, 40px), 2px);
 }

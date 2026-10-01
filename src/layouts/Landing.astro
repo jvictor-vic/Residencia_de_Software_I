@@ -1,0 +1,401 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import footerPattern from '../assets/patterns/puzzle.png';
+import footerMask from '../assets/landing/ondas.svg';
+import githubIcon from '../assets/icons/github.svg?raw';
+import linkedinIcon from '../assets/icons/linkedin.svg?raw';
+import instagramIcon from '../assets/icons/instagram.svg?raw';
+import phoneIcon from '../assets/icons/phone.svg?raw';
+import mailIcon from '../assets/icons/mail.svg?raw';
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+}
+
+const { title, description, image } = Astro.props;
+---
+
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <BaseHead title={title} description={description} image={image}>
+      <slot name="head" />
+    </BaseHead>
+  </head>
+  <body>
+    <header>
+      <nav class="navBar">
+        <ul>
+          <li>
+            <a href="#hero">LOGO</a>
+          </li>
+          <li>
+            <a href="#Sobre">
+              <h3>Sobre</h3>
+            </a>
+          </li>
+          <li>
+            <a href="#contato">
+              <h3>Contato</h3>
+            </a>
+          </li>
+          <li>
+            <a href="">
+              <h3>Entrar</h3>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </header>
+    <main>
+      <slot />
+    </main>
+    <footer aria-labelledby="footer-title">
+      <div class="footer__content">
+        <section class="footer__brand" aria-label="Identificação da EducaHub">
+          <div class="footer__logo" aria-label="Logo EducaHub">
+            <span>Logo</span>
+          </div>
+
+          <ul class="footer__social" aria-label="Redes sociais">
+            <li>
+              <a
+                href="https://github.com/jvictor-vic/Residencia_de_Software_I"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="GitHub"
+              >
+                <Fragment set:html={githubIcon} />
+              </a>
+            </li>
+            <li>
+              <a
+                href="https://www.linkedin.com"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="LinkedIn"
+              >
+                <Fragment set:html={linkedinIcon} />
+              </a>
+            </li>
+            <li>
+              <a
+                href="https://www.instagram.com"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Instagram"
+              >
+                <Fragment set:html={instagramIcon} />
+              </a>
+            </li>
+          </ul>
+        </section>
+
+        <nav class="footer__nav" aria-label="Navegação do rodapé">
+          <ul>
+            <li>
+              <a href="#top">
+                <h3>Voltar ao topo</h3>
+              </a>
+            </li>
+            <li>
+              <a href="#Sobre">
+                <h3>Sobre</h3>
+              </a>
+            </li>
+            <li>
+              <a href="#contato">
+                <h3>Contato</h3>
+              </a>
+            </li>
+          </ul>
+        </nav>
+
+        <section class="footer__actions" aria-label="Acesso rápido">
+          <a href="#login">
+            <h3>Login</h3>
+          </a>
+          <a href="#matricula">
+            <h3>Matrícula Online</h3>
+          </a>
+        </section>
+
+        <address class="footer__contact" aria-label="Informações de contato">
+          <h3 id="contato">Contato</h3>
+
+          <a href="tel:+5579999676767">
+            <span class="footer__icon" aria-hidden="true">
+              <Fragment set:html={phoneIcon} />
+            </span>
+            <h4>(79) 99967-6767</h4>
+          </a>
+
+          <a href="mailto:suporte@educahub.com.br">
+            <span class="footer__icon" aria-hidden="true">
+              <Fragment set:html={mailIcon} />
+            </span>
+            <h4>suporte@educahub.com.br</h4>
+          </a>
+        </address>
+      </div>
+
+      <p id="copyright">&copy; 2026 EducaHub. Todos direitos reservados</p>
+    </footer>
+  </body>
+</html>
+
+<style
+  define:vars={{
+    footerPattern: `url("${footerPattern.src}")`,
+    footerMask: `url("${footerMask.src}")`,
+  }}
+>
+  /* Globais */
+  body {
+    background-color: var(--bg);
+
+    /* Padrão do Body */
+    background-image:
+      linear-gradient(color-mix(in srgb, var(--fg) 20%, transparent) 2px, transparent 2px),
+      linear-gradient(90deg, color-mix(in srgb, var(--fg) 20%, transparent) 2px, transparent 2px);
+    background-size: 20px 20px;
+  }
+
+  nav {
+    height: 100%;
+    width: 100%;
+  }
+
+  ul {
+    height: 100%;
+    width: 100%;
+    padding: 0;
+    list-style: none;
+  }
+
+  a {
+    text-decoration: none;
+    color: var(--fg);
+  }
+
+  /* Cabeçalho */
+  header {
+    z-index: 10;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 64px;
+    padding: 12px var(--side-padding);
+    background-color: rgb(from var(--fg--90) r g b / 0.5);
+
+    ul {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+  }
+
+  /* Rodapé */
+  footer {
+    z-index: 20;
+    position: relative;
+    background-color: var(--primary);
+    padding: 10rem var(--side-padding) 1rem;
+    overflow: hidden;
+
+    /* Mascará Ondas */
+    -webkit-mask-image: var(--footerMask);
+    mask-image: var(--footerMask);
+    mask-position: top center;
+    mask-size: 100% 1820px;
+    mask-repeat: no-repeat;
+  }
+
+  footer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+
+    background-color: var(--bg);
+    opacity: 0.3;
+
+    -webkit-mask-image: var(--footerPattern);
+    mask-image: var(--footerPattern);
+    mask-repeat: repeat;
+    mask-position: bottom left;
+    mask-size: auto;
+
+    z-index: 19;
+  }
+
+  .footer__content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(278px, 100%), 1fr));
+    gap: 2rem;
+    align-items: start;
+    max-width: 100%;
+  }
+
+  .footer__content > * {
+    z-index: 20;
+  }
+
+  .footer__brand,
+  .footer__actions,
+  .footer__contact,
+  .footer__nav ul,
+  .footer__contact a {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .footer__brand {
+    gap: 1rem;
+  }
+
+  .footer__logo {
+    display: grid;
+    place-items: center;
+    width: 80px;
+    height: 80px;
+    border: 1px solid var(--fg);
+    background: rgba(255, 255, 255, 0.08);
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .footer__social {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .footer__social a {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    transition: transform 0.2s ease;
+  }
+
+  .footer__social svg,
+  .footer__icon svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .footer__nav ul {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .footer__nav a,
+  .footer__actions a {
+    width: 100%;
+    text-align: center;
+  }
+
+  .footer__actions {
+    width: 100%;
+  }
+
+  .footer__contact {
+    align-items: flex-start;
+    gap: 1rem;
+    font-style: normal;
+  }
+
+  .footer__contact a {
+    flex-direction: row;
+    width: fit-content;
+    justify-content: flex-start;
+    gap: 4px;
+    text-align: left;
+  }
+
+  .footer__icon {
+    display: block;
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+  }
+
+  #copyright {
+    margin: 2.5rem 0 0;
+    text-align: left;
+    color: var(--fg--30);
+    position: relative;
+    z-index: 21;
+  }
+
+  /* Efeitos de Hover e Focus */
+  .footer__social a:hover,
+  .footer__social a:focus-visible {
+    transform: scale(1.2);
+  }
+
+  @media (max-width: 1278px) {
+    footer {
+      mask-size: 150% 1820px;
+    }
+
+    .footer__content {
+      grid-template-columns: repeat(2, minmax(min(278px, 100%), 1fr));
+    }
+
+    .footer__brand,
+    .footer__social,
+    .footer__nav ul,
+    .footer__actions,
+    .footer__contact {
+      align-items: flex-start;
+      justify-content: flex-start;
+    }
+
+    .footer__nav a,
+    .footer__actions a,
+    .footer__contact a {
+      text-align: left;
+    }
+  }
+
+  @media (max-width: 626px) {
+    footer {
+      mask-size: 200% 1820px;
+    }
+
+    .footer__content {
+      grid-template-columns: repeat(1, minmax(min(278px, 100%), 1fr));
+    }
+    .footer__brand,
+    .footer__social,
+    .footer__nav ul,
+    .footer__actions,
+    .footer__contact {
+      align-items: center;
+      justify-content: center;
+    }
+
+    .footer__nav a,
+    .footer__actions a,
+    .footer__contact a {
+      text-align: center;
+    }
+  }
+</style>
