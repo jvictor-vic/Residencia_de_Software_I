@@ -35,6 +35,12 @@ svg {
   max-width: 100%;
 }
 
+svg {
+  color: var(--fg);
+  fill: currentColor;
+  stroke: currentColor;
+}
+
 input,
 button,
 textarea,
