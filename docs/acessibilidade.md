@@ -1,4 +1,3 @@
-
 ## Decisões Tomadas
 
 - Tema padrão claro por padrão (diminui efeito halo, importante para pessoas comproblemas de visão, como astigmatismo. Mais facil leitura em ambientes claros);
