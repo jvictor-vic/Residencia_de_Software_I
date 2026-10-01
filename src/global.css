@@ -48,6 +48,11 @@ select {
   font: inherit;
 }
 
+a {
+  text-decoration: none;
+  color: var(--fg);
+}
+
 /* Tipografia */
 h1,
 h2,
@@ -109,4 +114,15 @@ h6 {
 
 p {
   text-wrap-style: pretty;
+}
+
+.marker-text {
+  font-family: var(--font-marker);
+  font-size: 42px;
+  letter-spacing: 2.94px;
+  text-transform: uppercase;
+
+  text-wrap-style: pretty;
+  leading-trim: both;
+  text-edge: cap;
 }

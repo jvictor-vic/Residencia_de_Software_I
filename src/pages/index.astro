@@ -1,15 +1,42 @@
 ---
 import Layout from '../layouts/Landing.astro';
+import heroLight from '../assets/landing/hero-light.jpg';
+import heroDark from '../assets/landing/hero-Dark.jpg';
+import cta from '../assets/landing/cta.svg';
 ---
 
 <Layout title="EducaHub" description="Bem-vindo ao EducaHub!" image="/images/home.jpg">
-  <section id="hero"></section>
+  <section id="hero">
+    <h2 class="marker-text">Conectando a rede de ensino de Sergipe.</h2>
+    <a href="">
+      <img set:html={cta} alt="Matricula Online" />
+    </a>
+  </section>
   <section id="Sobre"></section>
 </Layout>
 
-<style>
+<style define:vars={{ heroLight: `url("${heroLight.src}")`, heroDark: `url("${heroDark.src}")` }}>
   #hero {
     height: 100vh;
+
+    background-image: var(--heroLight);
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: top right;
+
+    @media (prefers-color-scheme: dark) {
+      background-image: var(--heroDark);
+    }
+
+    .marker-text {
+      border: 2px solid red;
+
+      position: relative;
+      left: 160px;
+      top: 320px;
+
+      width: 540px;
+    }
   }
   #Sobre {
     height: 100vh;

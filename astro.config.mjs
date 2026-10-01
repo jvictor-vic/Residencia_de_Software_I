@@ -21,6 +21,13 @@ export default defineConfig({
       weights: [500, 600],
       fallbacks: ['Trebuchet MS', 'Arial', 'sans-serif'],
     },
+    {
+      provider: fontProviders.google(),
+      name: 'Permanent Marker',
+      cssVariable: '--font-marker',
+      weights: [400],
+      fallbacks: ['Marker Felt', 'Brush Script MT', 'cursive', 'sans-serif'],
+    },
   ],
 
   prefetch: {
