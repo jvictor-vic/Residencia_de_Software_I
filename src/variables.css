@@ -1,8 +1,15 @@
 :root {
+  /* Tipografia */
+  /* --font-roboto: 'Roboto Variable', arial, sans-serif;
+  --font-cabin: 'Cabin Variable', 'Trebuchet MS', arial, sans-serif;
+  --font-permanent-marker: 'Permanent Marker', cursive; */
+
   /* Cores Principais da Identidade Visual */
   --primary: #2e8cff;
   --primary-darker: #2369bf;
   --secondary: #ea7a3e;
+  --light: #f9f3ec;
+  --dark: #120c07;
 
   /* Cores Semânticas de Estado */
   --success--bg: #8dd941;

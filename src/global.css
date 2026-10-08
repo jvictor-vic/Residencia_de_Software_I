@@ -20,7 +20,7 @@ body {
   color: var(--fg);
   width: 100vw;
   min-height: 100vh;
-  overflow-x: hidden;
+  overflow-x: clip;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
@@ -46,6 +46,11 @@ button,
 textarea,
 select {
   font: inherit;
+}
+
+a {
+  text-decoration: none;
+  color: var(--fg);
 }
 
 /* Tipografia */
@@ -85,7 +90,8 @@ h4 {
 
 h5,
 h6,
-p {
+p,
+li {
   overflow-wrap: break-word;
   font-family: var(--font-cabin);
   font-size: 16px;
@@ -107,6 +113,22 @@ h6 {
   font-weight: 500;
 }
 
-p {
+p,
+li {
+  font-weight: 500;
   text-wrap-style: pretty;
+
+  strong {
+    font-weight: 700;
+  }
+}
+
+.marker-text {
+  font-family: var(--font-permanent-marker);
+  text-transform: uppercase;
+
+  letter-spacing: 0.3rem;
+
+  text-wrap-style: pretty;
+  text-box: trim-both cap alphabetic;
 }

@@ -1,17 +1,112 @@
 ---
+import { Image } from 'astro:assets';
+
 import Layout from '../layouts/Landing.astro';
+import heroLight from '../assets/landing/hero-light.jpg';
+import heroDark from '../assets/landing/hero-Dark.jpg';
+import cta from '../assets/landing/cta.svg';
 ---
 
-<Layout title="EducaHub" description="Bem-vindo ao EducaHub!" image="/images/home.jpg">
-  <section id="hero"></section>
-  <section id="Sobre"></section>
+<Layout>
+  <section id="hero">
+    <h2 id="hero-title" class="marker-text">
+      Conectando a rede de ensino de Sergipe.
+    </h2>
+    <a href="" id="cta" aria-label="Matricula Online">
+      <Image src={cta} alt="Matricula Online" />
+    </a>
+  </section>
+  <section id="Sobre">
+    <h2 class="marker-text">Nosso Propósito</h2>
+    <div class="container">
+      <h3 class="marker-text">Missão</h3>
+      <p>
+        A nossa missão é aproximar alunos, famílias, professores e gestores por meio de uma
+        plataforma simples, acolhedora e eficiente.
+        <br />
+        Trabalhamos para que o acompanhamento do dia a dia escolar esteja ao alcance de qualquer
+        cidadão sergipano, garantindo que o acesso à educação pública seja um direito sem barreiras
+        — da matrícula online à celebração da formatura.
+      </p>
+    </div>
+    <div class="container">
+      <h3 class="marker-text">Valores</h3>
+      <ul>
+        <li>
+          <strong>Design Universal e Inclusão:</strong> Projetamos para todos, unindo
+          acessibilidade, recursos intuitivos e paletas semânticas. Uma plataforma pública deve ser
+          compreendida e utilizada por todos, independentemente de suas necessidades.
+        </li>
+        <li>
+          <strong>Respeito às Diversidades:</strong> Desenhamos nossa plataforma com recursos
+          intuitivos, garantindo que a informação seja compreendida por todos.
+        </li>
+        <li>
+          <strong>Tecnologia Leve:</strong> Desenvolvemos um portal que funciona em qualquer
+          aparelho e consome o mínimo de dados, respeitando a realidade de cada estudante.
+        </li>
+        <li>
+          <strong>Transparência:</strong> Conectamos a sala de aula, à gestão da SEDUC e à rotina da
+          família em um canal único direto, seguro e honesto.
+        </li>
+      </ul>
+    </div>
+    <div class="container">
+      <h3 class="marker-text">Visão</h3>
+      <p>
+        Uma rede de ensino onde todos possam participar igualmente. Queremos ser o portal
+        educacional de referência em acessibilidade e inclusão no Brasil.
+        <br />
+        Nosso horizonte é garantir que todo sergipano — independentemente de limitações visuais,
+        motoras, do nível de letramento ou do celular que possui — navegue com total autonomia,
+        acompanhe o aprendizado e se sinta pertencente à nossa rede de ensino.
+      </p>
+    </div>
+  </section>
 </Layout>
 
-<style>
+<style define:vars={{ heroLight: `url("${heroLight.src}")`, heroDark: `url("${heroDark.src}")` }}>
   #hero {
     height: 100vh;
+
+    background-image: var(--heroLight);
+    background-size: cover;
+    background-position: center;
+
+    @media (prefers-color-scheme: dark) {
+      background-image: var(--heroDark);
+    }
+
+    #hero-title {
+      position: relative;
+      left: 50%;
+      top: 40%;
+      transform: translate(-48%, -40%);
+      width: 620px;
+
+      color: var(--dark);
+
+      anchor-name: --hero-anchor;
+    }
+
+    #cta {
+      position: absolute;
+      position-anchor: --hero-anchor;
+      top: calc(anchor(bottom) + 12px);
+      right: anchor(right);
+    }
   }
   #Sobre {
-    height: 100vh;
+    min-height: 100vh;
+
+    padding: 120px var(--side-padding) 80px var(--side-padding);
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+
+    .container {
+      width: 100vw;
+    }
   }
 </style>

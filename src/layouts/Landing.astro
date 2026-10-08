@@ -14,7 +14,11 @@ interface Props {
   image?: string;
 }
 
-const { title, description, image } = Astro.props;
+const {
+  title = 'EducaHub',
+  description = 'Bem vindo ao EducaHub!',
+  image = '/social.jpg',
+} = Astro.props;
 ---
 
 <!doctype html>
@@ -163,21 +167,11 @@ const { title, description, image } = Astro.props;
     background-size: 20px 20px;
   }
 
-  nav {
-    height: 100%;
-    width: 100%;
-  }
-
   ul {
     height: 100%;
     width: 100%;
     padding: 0;
     list-style: none;
-  }
-
-  a {
-    text-decoration: none;
-    color: var(--fg);
   }
 
   /* Cabeçalho */
@@ -186,10 +180,15 @@ const { title, description, image } = Astro.props;
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
+    width: 100vw;
     height: 64px;
     padding: 12px var(--side-padding);
     background-color: rgb(from var(--fg--90) r g b / 0.5);
+
+    nav {
+      height: 100%;
+      width: 100%;
+    }
 
     ul {
       display: flex;
