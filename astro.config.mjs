@@ -18,8 +18,15 @@ export default defineConfig({
       provider: fontProviders.google(),
       name: 'Cabin',
       cssVariable: '--font-cabin',
-      weights: [500, 600],
+      weights: [500, 600, 700],
       fallbacks: ['Trebuchet MS', 'Arial', 'sans-serif'],
+    },
+    {
+      provider: fontProviders.google(),
+      name: 'Permanent Marker',
+      cssVariable: '--font-permanent-marker',
+      weights: [400],
+      fallbacks: ['cursive'],
     },
   ],
 
