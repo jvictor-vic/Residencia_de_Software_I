@@ -1,5 +1,5 @@
 // @ts-check
-import { defineConfig, fontProviders } from 'astro/config';
+import { defineConfig, fontProviders, svgoOptimizer } from 'astro/config';
 
 // https://astro.build/config
 export default defineConfig({
@@ -33,5 +33,9 @@ export default defineConfig({
   prefetch: {
     prefetchAll: true,
     defaultStrategy: 'viewport',
+  },
+
+  experimental: {
+    svgOptimizer: svgoOptimizer(),
   },
 });
