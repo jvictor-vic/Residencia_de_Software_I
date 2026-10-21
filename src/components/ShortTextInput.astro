@@ -1,0 +1,59 @@
+---
+interface Props {
+  id?: string;
+  name?: string;
+  placeholder?: string;
+  minlength?: number;
+  maxlength?: number;
+  size?: number;
+  pattern?: string;
+}
+
+const { id, name, placeholder, minlength, maxlength, size, pattern } = Astro.props;
+---
+
+<div class="wrapper">
+  <input
+    type="text"
+    id={id}
+    name={name}
+    placeholder={placeholder}
+    minlength={minlength}
+    maxlength={maxlength}
+    size={size}
+    pattern={pattern}
+  />
+</div>
+
+<style>
+  .wrapper {
+    position: relative;
+    display: inline-block;
+
+    transition: all 0.5s ease;
+  }
+
+  .wrapper::before {
+    content: '';
+
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+
+    background-color: var(--fg--20);
+    border-radius: 24px;
+
+    transition: all 0.5s ease;
+  }
+
+  .wrapper:focus-within::before {
+    transform: translate(2px, 4px);
+  }
+
+  input {
+    z-index: 2;
+    outline: transparent;
+  }
+</style>
