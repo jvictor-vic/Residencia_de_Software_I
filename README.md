@@ -79,11 +79,8 @@ npm install
 
 ### Execução do Ambiente de Desenvolvimento
 
-Para subir o servidor de documento execute no terminal
+Para subir o servidor de desenvolvimento execute no terminal
 
 ```bash
-npm run dev
-# ou
-npm run dev -- --host
-# para expor servidor para outros dispositivos na rede, útil para acessar pelo celular
+netlify dev
 ```
