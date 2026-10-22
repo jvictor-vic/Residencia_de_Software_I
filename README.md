@@ -61,7 +61,7 @@ O projeto possui uma pipeline automatizada de Integração Contínua e Entrega C
 
 #### Obrigatório
 
-- **[Node.js](https://nodejs.org/pt-br/download)** >=22.12.0
+- **[Node.js](https://nodejs.org/pt-br/download)** >=22.23.4
 - **[Extensão "Astro" para VSCode](https://marketplace.visualstudio.com/items?itemName=astro-build.astro-vscode)**
 
 #### Recomendados
