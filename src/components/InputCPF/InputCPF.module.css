@@ -36,15 +36,22 @@
   background-color: var(--success--bg);
 }
 
+.wrapper.valid input[type='text'] {
+  outline-color: var(--success--bg);
+}
+
 /* Estado Invalid (erro) */
 .wrapper.invalid::before {
   background-color: var(--error--bg);
 }
 
+.wrapper.valid input[type='text'] {
+  outline-color: var(--error--bg);
+}
+
 .input {
   position: relative;
   z-index: 2;
-  outline: transparent;
   width: 100%;
   background: transparent;
   border: none;
