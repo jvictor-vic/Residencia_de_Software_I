@@ -152,7 +152,8 @@ input:focus {
   outline: 2px dashed var(--secondary);
 }
 
-input[type='text'] {
+input[type='text'],
+input[type='email'] {
   position: relative;
   height: 48px;
 
