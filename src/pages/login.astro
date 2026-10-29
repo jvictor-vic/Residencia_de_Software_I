@@ -1,0 +1,85 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import { LoginForm } from '../components/LoginForm/LoginForm';
+---
+
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <BaseHead title="Entrar | EducaHub" description="Acesse o EducaHub com o seu CPF e senha." />
+  </head>
+  <body>
+    <div class="faixa" aria-hidden="true"></div>
+
+    <main class="pagina">
+      <section class="cartao" aria-labelledby="titulo-login">
+        <p class="logo" aria-label="EducaHub">
+          EDUCA<span class="logo-hub">HUB</span>
+        </p>
+
+        <h2 id="titulo-login">Entrar</h2>
+        <p class="subtitulo">Acesse com o CPF e a senha cadastrados na sua escola.</p>
+
+        <LoginForm client:load />
+      </section>
+
+      <p class="rodape">Rede estadual de ensino de Sergipe</p>
+    </main>
+  </body>
+</html>
+
+<style>
+  .faixa {
+    height: 8px;
+    background: var(--primary);
+  }
+
+  .pagina {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px var(--side-padding);
+  }
+
+  .cartao {
+    width: 100%;
+    max-width: 28rem;
+    padding: 32px 24px;
+    background: var(--bg);
+    border: 2px solid var(--fg--70);
+    border-top: 6px solid var(--primary);
+    border-radius: 20px;
+  }
+
+  .logo {
+    margin-bottom: 32px;
+    font-family: var(--font-roboto);
+    font-weight: 900;
+    font-size: 32px;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    color: var(--fg);
+  }
+
+  /* Texto grande (32px, peso 900): o azul da marca atende 3:1 para texto grande */
+  .logo-hub {
+    color: var(--primary);
+  }
+
+  .subtitulo {
+    margin: 8px 0 32px;
+    color: var(--fg--40);
+  }
+
+  .rodape {
+    margin-top: 24px;
+    color: var(--fg--40);
+    text-align: center;
+  }
+
+  @media (min-width: 40rem) {
+    .cartao {
+      padding: 48px 40px;
+    }
+  }
+</style>
