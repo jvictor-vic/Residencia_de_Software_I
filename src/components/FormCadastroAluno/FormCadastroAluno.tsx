@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { actions } from 'astro:actions';
@@ -8,11 +8,14 @@ import { DateField } from '../DateField/DateField';
 import { Combobox } from '../Combobox/Combobox';
 import { InputEmail } from '../InputEmail/InputEmail';
 import { InputTel } from '../InputTel/InputTel';
+import { InputCEP } from '../InputCEP/InputCEP';
+
 import styles from './FormCadastroAluno.module.css';
 
 const listaGeneros = ['Homem Cis', 'Homem Trans', 'Mulher Cis', 'Mulher Trans', 'Não-Binário'];
 const listaCorRaca = ['Amarela', 'Branca', 'Indígena', 'Parda', 'Preta'];
 const listaParentescos = ['Mãe', 'Pai', 'Tio / Tia', 'Avô / Avó', 'Diretor de Abrigo', 'Tutor'];
+const listaZonasMoradia = ['Urbana', 'Rural'];
 
 interface PaisItem {
   label: string;
@@ -45,7 +48,7 @@ export function FormCadastroAluno() {
     mode: 'onChange',
   });
 
-  // Controle de Etapas (1: Aluno, 2: Responsável)
+  // Controle de Etapas (1: Aluno, 2: Responsável, 2: Residencia)
   const [currentStep, setCurrentStep] = useState(1);
 
   // Watchers dados do Aluno
@@ -136,7 +139,20 @@ export function FormCadastroAluno() {
     }
   }, [estadoNatalSigla, estados, setValue]);
 
-  const handleNextStep = async () => {
+  const handleAddressFound = useCallback(
+    (address: { state: string; city: string; neighborhood: string; street: string }) => {
+      setValue('estadoResidencial', address.state, { shouldValidate: true });
+      setValue('municipioResidencial', address.city, { shouldValidate: true });
+      setValue('bairroResidencial', address.neighborhood, { shouldValidate: true });
+      if (address.street) {
+        setValue('logradouro', address.street, { shouldValidate: true });
+      }
+    },
+    [setValue],
+  );
+
+  // Validações e Navegação entre Etapas
+  const handleNextFromStep1 = async () => {
     const fieldsToValidate: (keyof AlunoFormData)[] = [
       'nomeCompleto',
       'genero',
@@ -156,18 +172,39 @@ export function FormCadastroAluno() {
       if (isMenorIdade) {
         setCurrentStep(2);
       } else {
-        // Se for maior de idade, finaliza direto
-        handleSubmit(onSubmit)();
+        setCurrentStep(3); // Maior de idade pula direto para a Etapa 3
       }
     }
   };
 
+  const handleNextFromStep2 = async () => {
+    const fieldsToValidate: (keyof AlunoFormData)[] = [
+      'responsavelParentesco',
+      'responsavelCpf',
+      'responsavelNomeCompleto',
+      'responsavelGenero',
+      'responsavelDataNascimento',
+      'responsavelEmail',
+      'responsavelTelefone',
+    ];
+
+    const isStepValid = await trigger(fieldsToValidate);
+
+    if (isStepValid) {
+      setCurrentStep(3);
+    }
+  };
+
   const handlePrevStep = () => {
-    setCurrentStep(1);
+    if (currentStep === 3) {
+      setCurrentStep(isMenorIdade ? 2 : 1);
+    } else if (currentStep === 2) {
+      setCurrentStep(1);
+    }
   };
 
   const onSubmit = (data: AlunoFormData) => {
-    console.log('Dados completos válidos enviados:', data);
+    console.log('Formulário Final Completo:', data);
   };
 
   return (
@@ -359,7 +396,7 @@ export function FormCadastroAluno() {
 
           {/* Botão de Avançar da Etapa 1 */}
           <div className={styles.buttonGroup}>
-            <button type="button" className={styles.button} onClick={handleNextStep}>
+            <button type="button" className={styles.button} onClick={handleNextFromStep1}>
               Continuar
             </button>
           </div>
@@ -502,6 +539,157 @@ export function FormCadastroAluno() {
           </div>
 
           {/* Botões de Voltar e Concluir da Etapa 2 */}
+          <div className={styles.buttonGroup}>
+            <button type="button" className={styles.secondaryButton} onClick={handlePrevStep}>
+              Voltar
+            </button>
+            <button type="button" className={styles.button} onClick={handleNextFromStep2}>
+              Continuar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ──────────────── ETAPA 3: DADOS RESIDENCIAIS ──────────────── */}
+      {currentStep === 3 && (
+        <div className={styles.stepContainer}>
+          <h2 className={styles.sectionTitle}>Dados Residenciais</h2>
+
+          <div className={styles.fieldGroup}>
+            <label className={styles.label} htmlFor="zonaMoradia">
+              Zona de Moradia *
+            </label>
+            <select
+              id="zonaMoradia"
+              className={styles.select}
+              defaultValue=""
+              {...register('zonaMoradia')}
+            >
+              <option value="" disabled hidden>
+                Selecione a zona
+              </option>
+              {listaZonasMoradia.map((z) => (
+                <option key={z} value={z}>
+                  {z}
+                </option>
+              ))}
+            </select>
+            {errors.zonaMoradia && (
+              <span className={styles.error}>{errors.zonaMoradia.message}</span>
+            )}
+          </div>
+
+          <div className={styles.fieldGroup}>
+            <label className={styles.label}>CEP *</label>
+            <Controller
+              name="cep"
+              control={control}
+              render={({ field }) => (
+                <InputCEP
+                  value={field.value || ''}
+                  onChange={field.onChange}
+                  onAddressFound={handleAddressFound}
+                  placeholder="00000-000"
+                />
+              )}
+            />
+            {errors.cep && <span className={styles.error}>{errors.cep.message}</span>}
+          </div>
+
+          <div className={styles.fieldGroup}>
+            <label htmlFor="estadoResidencial" className={styles.label}>
+              Estado *
+            </label>
+            <input
+              id="estadoResidencial"
+              type="text"
+              className={styles.input}
+              readOnly
+              placeholder="Preenchido via CEP"
+              {...register('estadoResidencial')}
+            />
+            {errors.estadoResidencial && (
+              <span className={styles.error}>{errors.estadoResidencial.message}</span>
+            )}
+          </div>
+
+          <div className={styles.fieldGroup}>
+            <label htmlFor="municipioResidencial" className={styles.label}>
+              Município *
+            </label>
+            <input
+              id="municipioResidencial"
+              type="text"
+              className={styles.input}
+              readOnly
+              placeholder="Preenchido via CEP"
+              {...register('municipioResidencial')}
+            />
+            {errors.municipioResidencial && (
+              <span className={styles.error}>{errors.municipioResidencial.message}</span>
+            )}
+          </div>
+
+          <div className={styles.fieldGroup}>
+            <label htmlFor="bairroResidencial" className={styles.label}>
+              Bairro *
+            </label>
+            <input
+              id="bairroResidencial"
+              type="text"
+              className={styles.input}
+              placeholder="Preenchido via CEP"
+              {...register('bairroResidencial')}
+            />
+            {errors.bairroResidencial && (
+              <span className={styles.error}>{errors.bairroResidencial.message}</span>
+            )}
+          </div>
+
+          <div className={styles.fieldGroup}>
+            <label htmlFor="logradouro" className={styles.label}>
+              Logradouro *
+            </label>
+            <input
+              id="logradouro"
+              type="text"
+              className={styles.input}
+              placeholder="Rua, Avenida, Alameda..."
+              {...register('logradouro')}
+            />
+            {errors.logradouro && <span className={styles.error}>{errors.logradouro.message}</span>}
+          </div>
+
+          <div className={styles.fieldGroup}>
+            <label htmlFor="numero" className={styles.label}>
+              Número (Opcional)
+            </label>
+            <input
+              id="numero"
+              type="text"
+              className={styles.input}
+              placeholder="Ex: 123"
+              {...register('numero')}
+            />
+            {errors.numero && <span className={styles.error}>{errors.numero.message}</span>}
+          </div>
+
+          <div className={styles.fieldGroup}>
+            <label htmlFor="complemento" className={styles.label}>
+              Complemento (Opcional)
+            </label>
+            <input
+              id="complemento"
+              type="text"
+              className={styles.input}
+              placeholder="Apto, Bloco, Casa..."
+              {...register('complemento')}
+            />
+            {errors.complemento && (
+              <span className={styles.error}>{errors.complemento.message}</span>
+            )}
+          </div>
+
           <div className={styles.buttonGroup}>
             <button type="button" className={styles.secondaryButton} onClick={handlePrevStep}>
               Voltar

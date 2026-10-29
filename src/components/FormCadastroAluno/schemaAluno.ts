@@ -50,6 +50,16 @@ export const alunoSchema = z
     responsavelDataNascimento: z.date().optional().nullable(),
     responsavelEmail: z.string().optional(),
     responsavelTelefone: z.string().optional(),
+
+    // Etapa 3: Dados Residenciais
+    zonaMoradia: z.string().min(1, { message: 'Selecione a zona de moradia.' }),
+    cep: z.string().min(9, { message: 'CEP inválido.' }),
+    estadoResidencial: z.string().min(1, { message: 'Estado é obrigatório.' }),
+    municipioResidencial: z.string().min(1, { message: 'Município é obrigatório.' }),
+    bairroResidencial: z.string().min(1, { message: 'Bairro é obrigatório.' }),
+    logradouro: z.string().min(3, { message: 'Logradouro é obrigatório.' }),
+    numero: z.string().optional(),
+    complemento: z.string().optional(),
   })
   .refine(
     (data) => {
