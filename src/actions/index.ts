@@ -1,6 +1,7 @@
 import { defineAction } from 'astro:actions';
 import { z } from 'zod';
 import { cpfValidator } from '../utils/cpfValidator';
+import { calcularIdade } from '../utils/calcularIdade';
 
 export const server = {
   validarCPF: defineAction({
@@ -17,8 +18,19 @@ export const server = {
           message: 'CPF inválido.',
         };
       }
+    },
+  }),
 
-      // 2. Simulação de checagem de unicidade no banco de dados
+  verificarMenorIdade: defineAction({
+    input: z.object({
+      dataNascimento: z.string(),
+    }),
+    handler: async ({ dataNascimento }) => {
+      const idade = calcularIdade(dataNascimento);
+      return {
+        idade,
+        isMenorDeIdade: idade < 18,
+      };
     },
   }),
 };

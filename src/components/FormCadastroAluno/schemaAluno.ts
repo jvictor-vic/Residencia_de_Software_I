@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { calcularIdade } from '../../utils/calcularIdade';
 
 const generosEnum = [
   'Homem Cis',
@@ -12,14 +13,13 @@ const racasEnum = ['Amarela', 'Branca', 'Indígena', 'Parda', 'Preta'] as const;
 
 export const alunoSchema = z
   .object({
-    // Nome completo: obrigatório, string não nula
+    // Etapa 1 - Dados do Aluno
     nomeCompleto: z.string().min(3, { message: 'O nome completo é obrigatório.' }),
 
     genero: z.enum(generosEnum, {
       message: 'Selecione um gênero válido.',
     }),
 
-    // Nome social: opcional, string não nula
     nomeSocial: z.string().optional(),
 
     corRaca: z.enum(racasEnum, {
@@ -30,18 +30,26 @@ export const alunoSchema = z
     estadoNatal: z.string().optional(),
     naturalidade: z.string().optional(),
 
-    // Data de nascimento: obrigatório, objeto date
     dataNascimento: z.date({
       message: 'Selecione uma data de nascimento válida.',
     }),
 
-    // CPF: obrigatório, padrão xxx.xxx.xxx-xx
     cpf: z
       .string()
       .min(1, { message: 'O CPF é obrigatório.' })
       .regex(/^\d{3}\.\d{3}\.\d{3}-\d{2}$/, {
         message: 'Formato de CPF inválido (xxx.xxx.xxx-xx).',
       }),
+
+    // Etapa 2 - Dados do Responsável (Condicional se menor de 18 anos))
+    responsavelParentesco: z.string().optional(),
+    responsavelCpf: z.string().optional(),
+    responsavelNomeCompleto: z.string().optional(),
+    responsavelGenero: z.string().optional(),
+    responsavelNomeSocial: z.string().optional(),
+    responsavelDataNascimento: z.date().optional().nullable(),
+    responsavelEmail: z.string().optional(),
+    responsavelTelefone: z.string().optional(),
   })
   .refine(
     (data) => {
@@ -68,6 +76,30 @@ export const alunoSchema = z
     {
       message: 'A naturalidade (cidade) é obrigatória para brasileiros.',
       path: ['naturalidade'],
+    },
+  )
+  .refine(
+    (data) => {
+      if (data.dataNascimento) {
+        const idade = calcularIdade(data.dataNascimento);
+        if (idade < 18) {
+          return (
+            !!data.responsavelParentesco &&
+            !!data.responsavelCpf &&
+            data.responsavelCpf.length >= 14 &&
+            !!data.responsavelNomeCompleto &&
+            !!data.responsavelGenero &&
+            !!data.responsavelDataNascimento &&
+            !!data.responsavelEmail &&
+            !!data.responsavelTelefone
+          );
+        }
+      }
+      return true;
+    },
+    {
+      message: 'Preencha todos os dados obrigatórios do responsável.',
+      path: ['responsavelNomeCompleto'],
     },
   );
 
