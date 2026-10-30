@@ -5,11 +5,13 @@ import react from '@astrojs/react';
 
 import netlify from '@astrojs/netlify';
 
+const siteUrl = process.env.URL || "https://www.localhost.com";
+
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://www.example.com',
-  trailingSlash: 'ignore',
-  output: 'server',
+  site: siteUrl,
+  base: "/docs",
+  trailingSlash: "always",
 
   fonts: [
     {

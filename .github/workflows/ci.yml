@@ -1,0 +1,69 @@
+name: CI - Validações e Correção Automática
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  validate:
+    name: Validações, Correções e Build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+
+      - name: Instalar dependências
+        run: npm ci
+
+      # --- 1. TENTA RODAR AS VALIDAÇÕES DIRETAMENTE ---
+      - name: Tentar verificar Prettier
+        id: run_prettier
+        continue-on-error: true
+        run: npm run format:check
+
+      - name: Tentar verificar ESLint
+        id: run_eslint
+        continue-on-error: true
+        run: npm run lint
+
+      # --- 2. SE HOUVER FALHAS, EXECUTA A CORREÇÃO AUTOMÁTICA ---
+      - name: Executar correções automáticas (Prettier & ESLint)
+        if: steps.run_prettier.outcome == 'failure' || steps.run_eslint.outcome == 'failure'
+        run: |
+          npx prettier --write .
+          npx eslint . --fix || true # O --fix pode retornar exit code se houver erros não corrigíveis
+
+      # --- 3. COMMITA E ENVIA AS CORREÇÕES DE VOLTA PARA O REPO ---
+      - name: Commitar e enviar correções automáticas
+        if: (steps.run_prettier.outcome == 'failure' || steps.run_eslint.outcome == 'failure') && github.event_name == 'push'
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: auto-fix code style (Prettier & ESLint)"
+          branch: ${{ github.head_ref || github.ref_name }}
+
+      # --- 4. VALIDA NOVAMENTE APÓS AS CORREÇÕES PARA GARANTIR LIMPEZA ---
+      - name: Revalidar Prettier
+        run: npm run format:check
+
+      - name: Revalidar ESLint
+        run: npm run lint
+
+      # --- 5. COMPILAÇÃO / BUILD DO ASTRO ---
+      - name: Checagem de compilação (Build do Astro)
+        run: npm run build
+        env:
+          URL: ${{ vars.SITE_URL }}
+          PUBLIC_SITE_URL: ${{ secrets.PUBLIC_SITE_URL }}
