@@ -154,7 +154,8 @@ input:focus {
 
 input[type='text'],
 input[type='email'],
-input[type='tel'] {
+input[type='tel'],
+input[type='password'] {
   position: relative;
   height: 48px;
 
@@ -266,12 +267,13 @@ button {
   cursor: pointer;
   transition: box-shadow 0.2s;
 }
+
 button:hover,
 button:focus-visible {
   box-shadow: 2px 3px 0 2px var(--primary);
 }
 
-button:focus{
+button:focus {
   outline: 2px dashed var(--primary);
 }
 
@@ -279,4 +281,24 @@ button:disabled {
   background: var(--fg--80);
   color: var(--fg--50);
   cursor: not-allowed;
+}
+
+/* links */
+a {
+  color: var(--primary-darker);
+
+  transition: color 0.2s ease;
+
+  @media (prefers-color-scheme: dark) {
+    color: var(--primary);
+  }
+}
+
+a:hover,
+a:focus-visible {
+  color: var(--secondary);
+}
+
+a:focus {
+  outline: 2px dashed var(--primary);
 }
