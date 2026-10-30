@@ -1,6 +1,5 @@
 import { useId, useRef, useState } from 'react';
 import { InputCPF } from '../InputCPF/InputCPF.jsx';
-import { entrar } from '../../services/auth.js';
 import styles from './LoginForm.module.css';
 
 /**
