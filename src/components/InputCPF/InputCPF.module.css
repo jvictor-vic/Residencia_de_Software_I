@@ -45,7 +45,7 @@
   background-color: var(--error--bg);
 }
 
-.wrapper.valid input[type='text'] {
+.wrapper.invalid input[type='text'] {
   outline-color: var(--error--bg);
 }
 
