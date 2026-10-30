@@ -2,6 +2,7 @@
 node_modules/
 dist/
 .astro/
+.netlify
 
 # Lockfiles
 package-lock.json
