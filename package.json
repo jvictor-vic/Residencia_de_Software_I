@@ -7,12 +7,19 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "start": "astro dev",
+    "build": "astro check && astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "format:check": "prettier --check .",
+    "lint": "eslint ."
   },
   "dependencies": {
     "astro": "^7.3.3"
+  },
+  "devDependencies": {
+    "eslint": "^9.39.5",
+    "prettier": "^3.9.10"
   },
   "allowScripts": {
     "esbuild": true
