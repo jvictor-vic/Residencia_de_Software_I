@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import type { InputHTMLAttributes, Ref } from 'react';
 import { IMaskInput } from 'react-imask';
 import { actions } from 'astro:actions';
 import styles from './InputCPF.module.css';
@@ -7,14 +8,25 @@ import { Spinner } from '../Spinner/Spinner';
 import validCheck from '../../assets/icons/validCheck.svg';
 import invalidCheck from '../../assets/icons/invalidCheck.svg';
 
-interface InputCPFProps {
+interface InputCPFProps
+  extends Pick<
+    InputHTMLAttributes<HTMLInputElement>,
+    'autoComplete' | 'className' | 'id' | 'inputMode' | 'required'
+  > {
   value: string;
   onChange: (value: string) => void;
   onValidationChange?: (isValid: boolean) => void;
   placeholder?: string;
+  inputRef?: Ref<HTMLInputElement>;
 }
 
 export function InputCPF({
+  autoComplete,
+  className,
+  id,
+  inputMode,
+  inputRef,
+  required,
   value,
   onChange,
   onValidationChange,
@@ -82,12 +94,18 @@ export function InputCPF({
     <div className={styles.container}>
       <div className={wrapperClasses}>
         <IMaskInput
+          id={id}
+          name="cpf"
           type="text"
           mask="000.000.000-00"
           value={value || ''}
           onAccept={(maskedValue: string) => onChange(maskedValue)}
           placeholder={placeholder}
-          className={styles.input}
+          autoComplete={autoComplete}
+          className={[styles.input, className].filter(Boolean).join(' ')}
+          inputMode={inputMode}
+          inputRef={inputRef}
+          required={required}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
         />

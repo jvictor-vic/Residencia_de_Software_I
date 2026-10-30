@@ -1,25 +1,9 @@
-/* As variáveis vêm de src/variables.css (carregado pelo BaseHead); o ESLint analisa
-   este arquivo isolado e não as enxerga, por isso a regra abaixo fica desligada aqui. */
-/* eslint-disable css/no-invalid-properties */
-
-/*
- * Estilos do formulário de login.
- * Usa as variáveis de src/variables.css (tema claro/escuro via prefers-color-scheme).
- *
- * Os estilos BASE do input ficam dentro de :where(), que tem especificidade zero:
- * quando a estilização global de inputs for aplicada no global.css, ela vence
- * automaticamente sem precisar apagar nada daqui.
- * Só o estado de erro tem especificidade normal, para continuar visível.
- */
-
 .form {
   --form-accent: var(--primary-darker); /* 4.96:1 sobre --bg claro */
-  --form-on-accent: var(--light);
-  --form-focus: var(--secondary);
 
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
   font-family: var(--font-cabin);
   font-weight: 500;
 }
@@ -27,7 +11,6 @@
 @media (prefers-color-scheme: dark) {
   .form {
     --form-accent: var(--primary); /* 5.84:1 sobre --bg escuro */
-    --form-on-accent: var(--dark);
   }
 }
 
@@ -41,24 +24,8 @@
   font-weight: 700;
 }
 
-/* ---------- Input: base provisória (especificidade zero) ---------- */
 :where(.input) {
   width: 100%;
-  min-height: 48px;
-  padding: 12px 16px;
-  background: var(--bg);
-  color: var(--fg);
-  border: 2px solid var(--fg--50);
-  border-radius: 12px;
-}
-
-:where(.input)::placeholder {
-  color: var(--fg--40);
-  opacity: 1;
-}
-
-:where(.input):hover {
-  border-color: var(--form-accent);
 }
 
 /* Erro: borda mais grossa + ícone + texto (não depende só da cor) */
@@ -67,12 +34,6 @@
 .inputErro:focus-visible {
   border-color: var(--error--fg);
   border-width: 3px;
-}
-
-/* ---------- Foco visível (teclado) ---------- */
-.form :focus-visible {
-  outline: 3px solid var(--form-focus);
-  outline-offset: 3px;
 }
 
 /* ---------- Senha + botão de mostrar ---------- */
@@ -87,44 +48,39 @@
 .olho {
   position: absolute;
   top: 50%;
-  right: 4px;
+  right: 8px;
   transform: translateY(-50%);
-  display: grid;
-  place-items: center;
-  width: 48px;
-  height: 45px;
-  background: transparent;
-  color: var(--fg--40);
-  border: 2px solid transparent;
-  border-radius: 10px;
-  cursor: pointer;
+  padding: 0;
+
+  width: 44px;
+  height: 44px;
+
+  align-items: center;
+  justify-items: center;
+
+  background: none;
+  border-radius: 12px;
+
+  svg {
+    color: var(--fg--20);
+    transition: color 0.2s ease;
+  }
 }
 
-.olho svg {
-  color: inherit;
+.olho:hover,
+.olho:focus-visible {
+  box-shadow: none;
+
+  svg {
+    color: var(--secondary);
+  }
 }
 
-.olho:hover {
-  color: var(--form-accent);
-  border-color: var(--form-accent);
+.olho:focus {
+  outline: transparent;
 }
 
 /* ---------- Mensagens ---------- */
-.erro {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  color: var(--error--fg);
-  font-weight: 700;
-}
-
-.erro svg,
-.aviso svg {
-  flex-shrink: 0;
-  margin-top: 0.15em;
-  color: inherit;
-}
-
 .aviso {
   display: flex;
   align-items: flex-start;
@@ -135,6 +91,11 @@
   border-left-width: 6px;
   background: var(--bg);
   font-weight: 700;
+
+  icon {
+    height: 48px;
+    width: fit-content;
+  }
 }
 
 .avisoErro {
@@ -147,39 +108,55 @@
   border-color: var(--success--fg);
 }
 
-/* ---------- Links e botão ---------- */
-.esqueci {
-  align-self: flex-start;
-  display: inline-flex;
+.erro {
+  padding-left: 12px;
+  display: flex;
   align-items: center;
-  min-height: 45px;
-  color: var(--form-accent);
+  gap: 8px;
+  color: var(--error--fg);
+  font-weight: 700;
+
+  icon {
+    height: 24px;
+    width: fit-content;
+  }
+}
+
+.erro svg,
+.aviso svg {
+  height: 100%;
+  width: auto;
+  color: inherit;
+}
+
+/* ---------- Links e botão ---------- */
+.quickLinks {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.esqueci,
+.cadastrar {
+  width: 130px;
   font-weight: 700;
   text-decoration: underline;
   text-underline-offset: 0.2em;
 }
 
-.esqueci:hover {
-  color: var(--fg);
+.cadastrar {
+  text-align: end;
+}
+
+.separador {
+  color: var(--fg--50);
 }
 
 .entrar {
-  min-height: 52px;
-  padding: 12px 24px;
-  background: var(--form-accent);
-  color: var(--form-on-accent);
-  border: 2px solid var(--form-accent);
-  border-radius: 12px;
-  font-family: var(--font-roboto);
-  font-weight: 800;
-  font-size: 20px;
-  letter-spacing: 0.04em;
-  cursor: pointer;
-}
-
-.entrar:hover {
-  background: transparent;
-  color: var(--form-accent);
+  height: 52px;
 }
 
 .entrar:disabled {
@@ -188,6 +165,6 @@
 }
 
 .ajuda {
-  color: var(--fg--40);
+  color: var(--fg--30);
   text-align: center;
 }
