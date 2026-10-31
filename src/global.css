@@ -299,9 +299,12 @@ button:disabled {
 /* links */
 a {
   color: var(--primary-darker);
+  font-family: var(--font-cabin);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
 
   transition: color 0.2s ease;
-
   @media (prefers-color-scheme: dark) {
     color: var(--primary);
   }

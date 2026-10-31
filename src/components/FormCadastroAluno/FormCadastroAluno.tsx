@@ -211,10 +211,26 @@ export function FormCadastroAluno() {
     <form className={styles.form} onSubmit={handleSubmit(onSubmit)}>
       {/* ──────────────── ETAPA 1: DADOS DO ALUNO ──────────────── */}
       {currentStep === 1 && (
-        <div className={styles.stepContainer}>
-          <h2 className={styles.sectionTitle}>Dados do Aluno</h2>
+        <div className={`${styles.stepContainer} ${styles.stepAluno}`}>
+          <h2 className={styles.sectionTitle}>Cadastro - Dados do Aluno</h2>
 
-          <div className={styles.fieldGroup}>
+          <div className={`${styles.fieldGroup} ${styles.cpf}`}>
+            <label className={styles.label}>CPF *</label>
+            <Controller
+              name="cpf"
+              control={control}
+              render={({ field }) => (
+                <InputCPF
+                  value={field.value || ''}
+                  onChange={field.onChange}
+                  placeholder="000.000.000-00"
+                />
+              )}
+            />
+            {errors.cpf && <span className={styles.error}>{errors.cpf.message}</span>}
+          </div>
+
+          <div className={`${styles.fieldGroup} ${styles.nomeCompleto}`}>
             <label htmlFor="nomeCompleto" className={styles.label}>
               Nome Completo *
             </label>
@@ -230,7 +246,7 @@ export function FormCadastroAluno() {
             )}
           </div>
 
-          <div className={styles.fieldGroup}>
+          <div className={`${styles.fieldGroup} ${styles.genero}`}>
             <label className={styles.label} htmlFor="genero">
               Gênero *
             </label>
@@ -248,7 +264,7 @@ export function FormCadastroAluno() {
           </div>
 
           {exibeNomeSocial && (
-            <div className={styles.fieldGroup}>
+            <div className={`${styles.fieldGroup} ${styles.nomeSocial}`}>
               <label className={styles.label} htmlFor="nomeSocial">
                 Nome Social
               </label>
@@ -265,23 +281,24 @@ export function FormCadastroAluno() {
             </div>
           )}
 
-          <div className={styles.fieldGroup}>
-            <label className={styles.label}>CPF *</label>
-            <Controller
-              name="cpf"
-              control={control}
-              render={({ field }) => (
-                <InputCPF
-                  value={field.value || ''}
-                  onChange={field.onChange}
-                  placeholder="000.000.000-00"
-                />
-              )}
-            />
-            {errors.cpf && <span className={styles.error}>{errors.cpf.message}</span>}
+          <div className={`${styles.fieldGroup} ${styles.corRaca}`}>
+            <label className={styles.label} htmlFor="corRaca">
+              Cor / Raça *
+            </label>
+            <select id="corRaca" className={styles.select} defaultValue="" {...register('corRaca')}>
+              <option value="" disabled hidden>
+                Selecione a cor/raça
+              </option>
+              {listaCorRaca.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+            {errors.corRaca && <span className={styles.error}>{errors.corRaca.message}</span>}
           </div>
 
-          <div className={styles.fieldGroup}>
+          <div className={`${styles.fieldGroup} ${styles.dataDeNascimento}`}>
             <label className={styles.label}>Data de Nascimento *</label>
             <Controller
               name="dataNascimento"
@@ -299,24 +316,7 @@ export function FormCadastroAluno() {
             )}
           </div>
 
-          <div className={styles.fieldGroup}>
-            <label className={styles.label} htmlFor="corRaca">
-              Cor / Raça *
-            </label>
-            <select id="corRaca" className={styles.select} defaultValue="" {...register('corRaca')}>
-              <option value="" disabled hidden>
-                Selecione a cor/raça
-              </option>
-              {listaCorRaca.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-            {errors.corRaca && <span className={styles.error}>{errors.corRaca.message}</span>}
-          </div>
-
-          <div className={styles.fieldGroup}>
+          <div className={`${styles.fieldGroup} ${styles.nacionalidade}`}>
             <label className={styles.label}>Nacionalidade *</label>
             <Controller
               name="nacionalidade"
@@ -340,7 +340,7 @@ export function FormCadastroAluno() {
 
           {isBrasileiro && (
             <>
-              <div className={styles.fieldGroup}>
+              <div className={`${styles.fieldGroup} ${styles.estadoNatal}`}>
                 <label className={styles.label}>Estado Natal *</label>
                 <Controller
                   name="estadoNatal"
@@ -366,7 +366,7 @@ export function FormCadastroAluno() {
                 )}
               </div>
 
-              <div className={styles.fieldGroup}>
+              <div className={`${styles.fieldGroup} ${styles.cidadeNatal}`}>
                 <label className={styles.label}>Cidade Natal *</label>
                 <Controller
                   name="naturalidade"
@@ -405,10 +405,10 @@ export function FormCadastroAluno() {
 
       {/* ──────────────── ETAPA 2: DADOS DO RESPONSÁVEL (Menor de 18 anos) ──────────────── */}
       {currentStep === 2 && isMenorIdade && (
-        <div className={styles.stepContainer}>
-          <h2 className={styles.sectionTitle}>Dados do Responsável</h2>
+        <div className={`${styles.stepContainer} ${styles.stepResponsavel}`}>
+          <h2 className={styles.sectionTitle}>Cadastro - Dados do Responsável</h2>
 
-          <div className={styles.fieldGroup}>
+          <div className={`${styles.fieldGroup} ${styles.parentesco}`}>
             <label className={styles.label} htmlFor="responsavelParentesco">
               Parentesco *
             </label>
@@ -429,7 +429,22 @@ export function FormCadastroAluno() {
             </select>
           </div>
 
-          <div className={styles.fieldGroup}>
+          <div className={`${styles.fieldGroup} ${styles.dataDeNascimento}`}>
+            <label className={styles.label}>Data de Nascimento *</label>
+            <Controller
+              name="responsavelDataNascimento"
+              control={control}
+              render={({ field }) => (
+                <DateField
+                  value={field.value || null}
+                  onChange={field.onChange}
+                  placeholder="DD/MM/AAAA"
+                />
+              )}
+            />
+          </div>
+
+          <div className={`${styles.fieldGroup} ${styles.cpfDoResponsavel}`}>
             <label className={styles.label}>CPF do Responsável *</label>
             <Controller
               name="responsavelCpf"
@@ -444,7 +459,7 @@ export function FormCadastroAluno() {
             />
           </div>
 
-          <div className={styles.fieldGroup}>
+          <div className={`${styles.fieldGroup} ${styles.nomeCompletoDoResponsavel}`}>
             <label htmlFor="responsavelNomeCompleto" className={styles.label}>
               Nome Completo do Responsável *
             </label>
@@ -457,7 +472,7 @@ export function FormCadastroAluno() {
             />
           </div>
 
-          <div className={styles.fieldGroup}>
+          <div className={`${styles.fieldGroup} ${styles.genero}`}>
             <label className={styles.label} htmlFor="responsavelGenero">
               Gênero *
             </label>
@@ -479,7 +494,7 @@ export function FormCadastroAluno() {
           </div>
 
           {exibeNomeSocialResp && (
-            <div className={styles.fieldGroup}>
+            <div className={`${styles.fieldGroup} ${styles.nomeSocial}`}>
               <label className={styles.label} htmlFor="responsavelNomeSocial">
                 Nome Social
               </label>
@@ -493,37 +508,7 @@ export function FormCadastroAluno() {
             </div>
           )}
 
-          <div className={styles.fieldGroup}>
-            <label className={styles.label}>Data de Nascimento *</label>
-            <Controller
-              name="responsavelDataNascimento"
-              control={control}
-              render={({ field }) => (
-                <DateField
-                  value={field.value || null}
-                  onChange={field.onChange}
-                  placeholder="DD/MM/AAAA"
-                />
-              )}
-            />
-          </div>
-
-          <div className={styles.fieldGroup}>
-            <label className={styles.label}>E-mail *</label>
-            <Controller
-              name="responsavelEmail"
-              control={control}
-              render={({ field }) => (
-                <InputEmail
-                  value={field.value || ''}
-                  onChange={field.onChange}
-                  placeholder="email@exemplo.com"
-                />
-              )}
-            />
-          </div>
-
-          <div className={styles.fieldGroup}>
+          <div className={`${styles.fieldGroup} ${styles.telefone}`}>
             <label className={styles.label}>Telefone *</label>
             <Controller
               name="responsavelTelefone"
@@ -533,6 +518,21 @@ export function FormCadastroAluno() {
                   value={field.value || ''}
                   onChange={field.onChange}
                   placeholder="(00) 00000-0000"
+                />
+              )}
+            />
+          </div>
+
+          <div className={`${styles.fieldGroup} ${styles.email}`}>
+            <label className={styles.label}>E-mail *</label>
+            <Controller
+              name="responsavelEmail"
+              control={control}
+              render={({ field }) => (
+                <InputEmail
+                  value={field.value || ''}
+                  onChange={field.onChange}
+                  placeholder="email@exemplo.com"
                 />
               )}
             />
@@ -552,10 +552,10 @@ export function FormCadastroAluno() {
 
       {/* ──────────────── ETAPA 3: DADOS RESIDENCIAIS ──────────────── */}
       {currentStep === 3 && (
-        <div className={styles.stepContainer}>
-          <h2 className={styles.sectionTitle}>Dados Residenciais</h2>
+        <div className={`${styles.stepContainer} ${styles.stepResidencia}`}>
+          <h2 className={styles.sectionTitle}>Cadastro - Dados Residenciais</h2>
 
-          <div className={styles.fieldGroup}>
+          <div className={`${styles.fieldGroup} ${styles.zonaDeMoradia}`}>
             <label className={styles.label} htmlFor="zonaMoradia">
               Zona de Moradia *
             </label>
@@ -579,7 +579,7 @@ export function FormCadastroAluno() {
             )}
           </div>
 
-          <div className={styles.fieldGroup}>
+          <div className={`${styles.fieldGroup} ${styles.cep}`}>
             <label className={styles.label}>CEP *</label>
             <Controller
               name="cep"
@@ -596,7 +596,7 @@ export function FormCadastroAluno() {
             {errors.cep && <span className={styles.error}>{errors.cep.message}</span>}
           </div>
 
-          <div className={styles.fieldGroup}>
+          <div className={`${styles.fieldGroup} ${styles.estado}`}>
             <label htmlFor="estadoResidencial" className={styles.label}>
               Estado *
             </label>
@@ -613,7 +613,7 @@ export function FormCadastroAluno() {
             )}
           </div>
 
-          <div className={styles.fieldGroup}>
+          <div className={`${styles.fieldGroup} ${styles.municipio}`}>
             <label htmlFor="municipioResidencial" className={styles.label}>
               Município *
             </label>
@@ -630,7 +630,7 @@ export function FormCadastroAluno() {
             )}
           </div>
 
-          <div className={styles.fieldGroup}>
+          <div className={`${styles.fieldGroup} ${styles.bairro}`}>
             <label htmlFor="bairroResidencial" className={styles.label}>
               Bairro *
             </label>
@@ -646,7 +646,7 @@ export function FormCadastroAluno() {
             )}
           </div>
 
-          <div className={styles.fieldGroup}>
+          <div className={`${styles.fieldGroup} ${styles.logradouro}`}>
             <label htmlFor="logradouro" className={styles.label}>
               Logradouro *
             </label>
@@ -660,7 +660,7 @@ export function FormCadastroAluno() {
             {errors.logradouro && <span className={styles.error}>{errors.logradouro.message}</span>}
           </div>
 
-          <div className={styles.fieldGroup}>
+          <div className={`${styles.fieldGroup} ${styles.numero}`}>
             <label htmlFor="numero" className={styles.label}>
               Número (Opcional)
             </label>
@@ -674,7 +674,7 @@ export function FormCadastroAluno() {
             {errors.numero && <span className={styles.error}>{errors.numero.message}</span>}
           </div>
 
-          <div className={styles.fieldGroup}>
+          <div className={`${styles.fieldGroup} ${styles.complemento}`}>
             <label htmlFor="complemento" className={styles.label}>
               Complemento (Opcional)
             </label>
@@ -695,7 +695,7 @@ export function FormCadastroAluno() {
               Voltar
             </button>
             <button type="submit" className={styles.button}>
-              Concluir Cadastro
+              Concluir
             </button>
           </div>
         </div>

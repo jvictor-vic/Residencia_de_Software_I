@@ -25,11 +25,13 @@
   transition: all 0.5s ease;
 }
 
+/* Estado Active / Focado */
 .wrapper:focus-within::before,
 .wrapper.active::before {
   transform: translate(2px, 4px);
 }
 
+/* Estado Valid (sucesso) */
 .wrapper.valid::before {
   background-color: var(--success--bg);
 }
@@ -38,6 +40,7 @@
   outline-color: var(--success--bg);
 }
 
+/* Estado Invalid (erro) */
 .wrapper.invalid::before {
   background-color: var(--error--bg);
 }
@@ -52,7 +55,7 @@
   width: 100%;
   background: transparent;
   border: none;
-  padding-right: 40px;
+  padding-right: 40px; /* Espaço para o ícone ou spinner */
 }
 
 .iconContainer {
@@ -80,6 +83,7 @@
 }
 
 .errorLabel {
+  font-family: var(--font-cabin);
   font-size: 12px;
   color: var(--error--fg);
   opacity: 0;
@@ -90,6 +94,7 @@
   pointer-events: none;
 }
 
+/* Exibe o erro no hover, foco ou clique */
 .container:hover .errorLabel,
 .wrapper:focus-within ~ .errorLabel,
 .container:active .errorLabel {

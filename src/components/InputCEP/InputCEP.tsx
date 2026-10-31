@@ -44,36 +44,35 @@ export function InputCEP({
       return;
     }
 
-    if (cleanCEP.length < 8) {
-      setStatus('invalid');
-      setErrorMessage('CEP incompleto.');
-      onValidationChange?.(false);
-      return;
-    }
-
-    setIsLoading(true);
-
     const timer = setTimeout(async () => {
-      try {
-        const res = await fetch(`https://brasilapi.com.br/api/cep/v2/${cleanCEP}`);
-
-        if (!res.ok) {
-          setStatus('invalid');
-          setErrorMessage('CEP não encontrado.');
-          onValidationChange?.(false);
-        } else {
-          const data: EnderecoBrasilAPI = await res.json();
-          setStatus('valid');
-          setErrorMessage('');
-          onAddressFound?.(data);
-          onValidationChange?.(true);
-        }
-      } catch (err) {
+      if (cleanCEP.length < 8) {
         setStatus('invalid');
-        setErrorMessage('Erro ao buscar CEP.');
+        setErrorMessage('CEP incompleto.');
         onValidationChange?.(false);
-      } finally {
-        setIsLoading(false);
+        return;
+      } else {
+        setIsLoading(true);
+        try {
+          const res = await fetch(`https://brasilapi.com.br/api/cep/v2/${cleanCEP}`);
+
+          if (!res.ok) {
+            setStatus('invalid');
+            setErrorMessage('CEP não encontrado.');
+            onValidationChange?.(false);
+          } else {
+            const data: EnderecoBrasilAPI = await res.json();
+            setStatus('valid');
+            setErrorMessage('');
+            onAddressFound?.(data);
+            onValidationChange?.(true);
+          }
+        } catch (err) {
+          setStatus('invalid');
+          setErrorMessage('Erro ao buscar CEP.');
+          onValidationChange?.(false);
+        } finally {
+          setIsLoading(false);
+        }
       }
     }, 500);
 

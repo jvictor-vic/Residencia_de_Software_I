@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { IMaskInput } from 'react-imask';
+
 import styles from './InputTel.module.css';
+import validCheck from '../../assets/icons/validCheck.svg';
+import invalidCheck from '../../assets/icons/invalidCheck.svg';
 
 interface InputTelProps {
   value: string;
@@ -63,6 +66,15 @@ export function InputTel({
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
         />
+        {status === 'valid' ? (
+          <span className={`${styles.iconContainer} ${styles.validIcon}`} aria-label="Válido">
+            <img src={validCheck.src} />
+          </span>
+        ) : status === 'invalid' ? (
+          <span className={`${styles.iconContainer} ${styles.invalidIcon}`} aria-label="Inválido">
+            <img src={invalidCheck.src} />
+          </span>
+        ) : null}
       </div>
       {status === 'invalid' && errorMessage && (
         <span className={styles.errorLabel}>{errorMessage}</span>

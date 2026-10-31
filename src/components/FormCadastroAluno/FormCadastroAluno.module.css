@@ -1,34 +1,201 @@
+.form {
+  width: 100%;
+}
+
+.stepContainer {
+  display: flex;
+  flex-flow: row wrap;
+  gap: 8px;
+}
+
+.sectionTitle {
+  width: 100%;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
 .fieldGroup {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
+
+  /* Largura do input padrão */
+  flex-basis: 180px;
 }
 
 .error {
+  font-family: var(--font-cabin);
   font-size: 12px;
-  color: var(--error--bg);
-  margin-top: 2px;
+  color: var(--error--fg);
+  margin-top: -2px;
 }
 
-.submitButton {
-  margin-top: 10px;
-  padding: 12px;
-  color: #fff;
-  background-color: #2563eb;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition:
-    background-color 0.2s,
-    opacity 0.2s;
+.buttonGroup {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  margin: 8px 0;
+
+  .secondaryButton {
+    background-color: var(--primary);
+    outline-color: var(--secondary);
+  }
+
+  .secondaryButton:hover,
+  .secondaryButton:focus-visible {
+    box-shadow: 2px 3px 0 2px var(--secondary);
+  }
 }
 
-.submitButton:hover:not(:disabled) {
-  background-color: #1d4ed8;
+/* Layout Etapas */
+/* Etapa 1 - Dados do Aluno */
+.stepAluno {
+  .cpf {
+    flex-shrink: 0;
+    flex-grow: 1;
+  }
+
+  .nomeCompleto {
+    flex-basis: 260px;
+    flex-shrink: 0;
+    flex-grow: 2;
+  }
+
+  .genero {
+    flex-shrink: 1;
+    flex-grow: 1;
+  }
+
+  .nomeSocial {
+    flex-basis: 260px;
+    flex-shrink: 0;
+    flex-grow: 2;
+  }
+
+  .corRaca {
+    flex-shrink: 1;
+    flex-grow: 1;
+  }
+
+  .dataDeNascimento {
+    flex-basis: 260px;
+    flex-shrink: 0;
+    flex-grow: 2;
+  }
+
+  .nacionalidade {
+    flex-basis: 280px;
+    flex-shrink: 0;
+    flex-grow: 2;
+  }
+
+  .estadoNatal {
+    flex-shrink: 0;
+    flex-grow: 1;
+  }
+
+  .cidadeNatal {
+    flex-shrink: 0;
+    flex-grow: 1;
+  }
+
+  .buttonGroup {
+    flex-direction: row-reverse;
+  }
 }
 
-.submitButton:disabled {
-  background-color: #9ca3af;
-  cursor: not-allowed;
-  opacity: 0.7;
+/* Etapa 2 - Dados do Responsavel */
+.stepResponsavel {
+  .parentesco {
+    flex-shrink: 0;
+    flex-grow: 1;
+  }
+
+  .dataDeNascimento {
+    flex-basis: 260px;
+    flex-shrink: 0;
+    flex-grow: 2;
+  }
+
+  .cpfDoResponsavel {
+    flex-shrink: 0;
+    flex-grow: 1;
+  }
+
+  .nomeCompletoDoResponsavel {
+    flex-basis: 260px;
+    flex-shrink: 0;
+    flex-grow: 2;
+  }
+
+  .genero {
+    flex-shrink: 2;
+    flex-grow: 1;
+  }
+
+  .nomeSocial {
+    flex-basis: 260px;
+    flex-shrink: 0;
+    flex-grow: 2;
+  }
+
+  .telefone {
+    flex-shrink: 0;
+    flex-grow: 2;
+  }
+
+  .email {
+    flex-basis: 260px;
+    flex-shrink: 0;
+    flex-grow: 2;
+  }
+}
+
+/* Etapa 3 - Dados Residenciais */
+.stepResidencia {
+  .zonaDeMoradia {
+    flex-shrink: 2;
+    flex-grow: 1;
+  }
+
+  .cep {
+    flex-shrink: 0;
+    flex-grow: 2;
+  }
+
+  .estado {
+    flex-shrink: 2;
+    flex-grow: 1;
+  }
+
+  .municipio {
+    flex-shrink: 0;
+    flex-grow: 2;
+  }
+
+  .bairro {
+    flex-shrink: 2;
+    flex-grow: 1;
+  }
+
+  .logradouro {
+    flex-shrink: 0;
+    flex-grow: 2;
+  }
+
+  .numero {
+    flex-shrink: 2;
+    flex-grow: 0;
+  }
+
+  .complemento {
+    flex-shrink: 0;
+    flex-grow: 2;
+  }
+}
+
+.button[type='submit'] {
+  padding: 0 58px;
+  text-decoration: underline wavy;
 }

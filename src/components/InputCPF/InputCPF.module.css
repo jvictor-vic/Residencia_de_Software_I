@@ -83,6 +83,7 @@
 }
 
 .errorLabel {
+  font-family: var(--font-cabin);
   font-size: 12px;
   color: var(--error--fg);
   opacity: 0;
