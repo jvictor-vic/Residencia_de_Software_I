@@ -55,100 +55,106 @@ const {
         </ul>
       </nav>
     </header>
-    <main>
-      <slot />
-    </main>
-    <footer aria-labelledby="footer-title">
-      <div class="footer__content">
-        <section class="footer__brand" aria-label="Identificação da EducaHub">
-          <div class="footer__logo" aria-label="Logo EducaHub">
-            <span>Logo</span>
+
+    <div id="smooth-wrapper">
+      <div id="smooth-content">
+        <main>
+          <slot />
+        </main>
+
+        <footer aria-labelledby="footer-title">
+          <div class="footer__content">
+            <section class="footer__brand" aria-label="Identificação da EducaHub">
+              <div class="footer__logo" aria-label="Logo EducaHub">
+                <span>Logo</span>
+              </div>
+
+              <ul class="footer__social" aria-label="Redes sociais">
+                <li>
+                  <a
+                    href="https://github.com/jvictor-vic/Residencia_de_Software_I"
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="GitHub"
+                  >
+                    <Fragment set:html={githubIcon} />
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://www.linkedin.com"
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="LinkedIn"
+                  >
+                    <Fragment set:html={linkedinIcon} />
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://www.instagram.com"
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="Instagram"
+                  >
+                    <Fragment set:html={instagramIcon} />
+                  </a>
+                </li>
+              </ul>
+            </section>
+
+            <nav class="footer__nav" aria-label="Navegação do rodapé">
+              <ul>
+                <li>
+                  <a href="#top">
+                    <h3>Voltar ao topo</h3>
+                  </a>
+                </li>
+                <li>
+                  <a href="#Sobre">
+                    <h3>Sobre</h3>
+                  </a>
+                </li>
+                <li>
+                  <a href="#contato">
+                    <h3>Contato</h3>
+                  </a>
+                </li>
+              </ul>
+            </nav>
+
+            <section class="footer__actions" aria-label="Acesso rápido">
+              <a href="#login">
+                <h3>Login</h3>
+              </a>
+              <a href="#matricula">
+                <h3>Matrícula Online</h3>
+              </a>
+            </section>
+
+            <address class="footer__contact" aria-label="Informações de contato">
+              <h3 id="contato">Contato</h3>
+
+              <a href="tel:+5579999676767">
+                <span class="footer__icon" aria-hidden="true">
+                  <Fragment set:html={phoneIcon} />
+                </span>
+                <h4>(79) 99967-6767</h4>
+              </a>
+
+              <a href="mailto:suporte@educahub.com.br">
+                <span class="footer__icon" aria-hidden="true">
+                  <Fragment set:html={mailIcon} />
+                </span>
+                <h4>suporte@educahub.com.br</h4>
+              </a>
+            </address>
           </div>
 
-          <ul class="footer__social" aria-label="Redes sociais">
-            <li>
-              <a
-                href="https://github.com/jvictor-vic/Residencia_de_Software_I"
-                target="_blank"
-                rel="noreferrer"
-                aria-label="GitHub"
-              >
-                <Fragment set:html={githubIcon} />
-              </a>
-            </li>
-            <li>
-              <a
-                href="https://www.linkedin.com"
-                target="_blank"
-                rel="noreferrer"
-                aria-label="LinkedIn"
-              >
-                <Fragment set:html={linkedinIcon} />
-              </a>
-            </li>
-            <li>
-              <a
-                href="https://www.instagram.com"
-                target="_blank"
-                rel="noreferrer"
-                aria-label="Instagram"
-              >
-                <Fragment set:html={instagramIcon} />
-              </a>
-            </li>
-          </ul>
-        </section>
-
-        <nav class="footer__nav" aria-label="Navegação do rodapé">
-          <ul>
-            <li>
-              <a href="#top">
-                <h3>Voltar ao topo</h3>
-              </a>
-            </li>
-            <li>
-              <a href="#Sobre">
-                <h3>Sobre</h3>
-              </a>
-            </li>
-            <li>
-              <a href="#contato">
-                <h3>Contato</h3>
-              </a>
-            </li>
-          </ul>
-        </nav>
-
-        <section class="footer__actions" aria-label="Acesso rápido">
-          <a href="/entrar">
-            <h3>Login</h3>
-          </a>
-          <a href="/cadastrar">
-            <h3>Matrícula Online</h3>
-          </a>
-        </section>
-
-        <address class="footer__contact" aria-label="Informações de contato">
-          <h3 id="contato">Contato</h3>
-
-          <a href="tel:+5579999676767">
-            <span class="footer__icon" aria-hidden="true">
-              <Fragment set:html={phoneIcon} />
-            </span>
-            <h4>(79) 99967-6767</h4>
-          </a>
-
-          <a href="mailto:suporte@educahub.com.br">
-            <span class="footer__icon" aria-hidden="true">
-              <Fragment set:html={mailIcon} />
-            </span>
-            <h4>suporte@educahub.com.br</h4>
-          </a>
-        </address>
+          <p id="copyright">&copy; 2026 EducaHub. Todos direitos reservados</p>
+        </footer>
       </div>
-
-      <p id="copyright">&copy; 2026 EducaHub. Todos direitos reservados</p>
-    </footer>
+    </div>
   </body>
 </html>
 
@@ -165,12 +171,6 @@ const {
 
   body {
     background-color: var(--bg);
-
-    /* Padrão do Body */
-    background-image:
-      linear-gradient(color-mix(in srgb, var(--fg) 20%, transparent) 2px, transparent 2px),
-      linear-gradient(90deg, color-mix(in srgb, var(--fg) 20%, transparent) 2px, transparent 2px);
-    background-size: 20px 20px;
   }
 
   ul {
@@ -178,6 +178,18 @@ const {
     width: 100%;
     padding: 0;
     list-style: none;
+  }
+
+  #smooth-content {
+    /* Padrão do Body */
+    background-image:
+      linear-gradient(color-mix(in srgb, var(--fg) 20%, transparent) 2px, transparent 2px),
+      linear-gradient(90deg, color-mix(in srgb, var(--fg) 20%, transparent) 2px, transparent 2px);
+    background-size: 20px 20px;
+  }
+
+  main {
+    padding-bottom: 40px;
   }
 
   /* Cabeçalho */
@@ -201,12 +213,36 @@ const {
       justify-content: space-between;
       align-items: center;
     }
+    h4 {
+      position: relative;
+    }
+
+    h4::after {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 2px;
+      bottom: 4px;
+      left: 0;
+      background-color: var(--fg);
+      transform: scaleX(0);
+      transform-origin: right;
+      transition: transform 0.8s cubic-bezier(0.65, 0, 0.35, 1);
+    }
+
+    a:hover {
+      h4::after {
+        transform: scaleX(1);
+        transform-origin: left;
+      }
+    }
   }
 
   /* Rodapé */
   footer {
     z-index: 20;
     position: relative;
+    bottom: 0;
     background-color: var(--primary);
     padding: 10rem var(--side-padding) 1rem;
     overflow: hidden;
@@ -217,6 +253,34 @@ const {
     mask-position: top center;
     mask-size: 100% 1820px;
     mask-repeat: no-repeat;
+
+    h3,
+    h4 {
+      width: fit-content;
+      position: relative;
+    }
+
+    h3::after,
+    h4::after {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 2px;
+      bottom: 4px;
+      left: 0;
+      background-color: var(--fg);
+      transform: scaleX(0);
+      transform-origin: right;
+      transition: transform 0.8s cubic-bezier(0.65, 0, 0.35, 1);
+    }
+
+    a:hover {
+      h3::after,
+      h4::after {
+        transform: scaleX(1);
+        transform-origin: left;
+      }
+    }
   }
 
   footer::before {
@@ -303,6 +367,11 @@ const {
     height: 100%;
   }
 
+  .footer__social a:hover,
+  .footer__social a:focus-visible {
+    transform: scale(1.2);
+  }
+
   .footer__nav ul {
     width: 100%;
     margin: 0;
@@ -314,6 +383,9 @@ const {
   .footer__actions a {
     width: 100%;
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 
   .footer__actions {
@@ -347,12 +419,6 @@ const {
     color: var(--fg--30);
     position: relative;
     z-index: 21;
-  }
-
-  /* Efeitos de Hover e Focus */
-  .footer__social a:hover,
-  .footer__social a:focus-visible {
-    transform: scale(1.2);
   }
 
   @media (max-width: 1278px) {

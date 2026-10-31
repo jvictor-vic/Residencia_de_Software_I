@@ -1,5 +1,5 @@
 // @ts-check
-import { defineConfig, fontProviders } from 'astro/config';
+import { defineConfig, fontProviders, svgoOptimizer } from 'astro/config';
 
 import react from '@astrojs/react';
 
@@ -42,4 +42,7 @@ export default defineConfig({
 
   integrations: [react()],
   adapter: netlify(),
+  experimental: {
+    svgOptimizer: svgoOptimizer(),
+  },
 });

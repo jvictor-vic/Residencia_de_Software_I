@@ -2,10 +2,19 @@
 import { Image } from 'astro:assets';
 
 import Layout from '../layouts/Landing.astro';
+
+//Assets Hero
 import heroLight from '../assets/landing/hero-light.jpg';
 import heroDark from '../assets/landing/hero-Dark.jpg';
 import cta from '../assets/landing/cta.svg';
 import arrowUpRight from '../assets/icons/arrow-up-right.svg';
+
+//Assets Sobre
+import missao from '../assets/landing/missao.svg';
+import valores from '../assets/landing/valores.svg';
+import visao from '../assets/landing/visao.svg';
+
+import PaintDivider from '../components/PaintDivider.astro';
 ---
 
 <Layout>
@@ -16,14 +25,46 @@ import arrowUpRight from '../assets/icons/arrow-up-right.svg';
       </h2>
       <a href="/cadastrar" id="cta" aria-label="Matricula Online">
         <h3>Matricula Online</h3>
-        <Image src={arrowUpRight} alt="Faça agora a matrícula online" />
+        <Image src={arrowUpRight} alt="Faça agora a matrícula online" priority />
       </a>
     </div>
   </section>
+
+  <PaintDivider class="paintDivider" />
+
   <section id="Sobre">
-    <h2 class="marker-text">Nosso Propósito</h2>
+    <div class="title-wrapper">
+      <h2 class="marker-text">Nosso Propósito</h2>
+      <svg
+        id="title-underline"
+        width="458"
+        height="10"
+        viewBox="0 0 458 10"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <defs>
+          <linearGradient id="underline-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <!-- Colored stop (fills from left to right) -->
+            <stop id="stop1" offset="0%" stop-color="var(--fg)" stop-opacity="0.9" />
+            <!-- Transparent stop -->
+            <stop id="stop2" offset="0%" stop-color="var(--fg)" stop-opacity="0" />
+          </linearGradient>
+        </defs>
+
+        <path
+          d="M434.816 4.44082C435.341 4.4511 436.101 4.63106 436.768 4.68208C439.471 4.89147 440.463 5.04859 442.878 5.2645C446.424 5.57512 457.314 6.19591 457.092 7.09197C457.092 7.09199 457.092 7.09201 457.092 7.09204C457.091 7.10084 457.09 7.10976 457.09 7.11877C457.084 7.16138 457.091 7.20593 456.983 7.24252C456.942 7.26178 456.801 7.27373 456.756 7.29313C456.714 7.31279 456.666 7.33214 456.612 7.35129C456.403 7.42825 456.082 7.49972 455.988 7.59C455.747 7.76681 455.954 9.03909 454.556 9.00593C452.666 8.95764 448.292 8.3227 447.192 8.2607C446.498 8.2218 445.722 8.28183 444.82 8.23965C441.991 8.10941 440.427 7.92018 437.972 8.06646C436.993 7.8376 435.882 7.60065 434.934 7.37497C433.656 7.36675 431.608 7.01869 430.79 6.97826C430.15 6.94696 429.762 7.05151 429.08 7.01414C428.321 6.97336 427.11 6.75715 425.696 6.68998C423.441 6.58343 422.993 6.89355 421.59 6.85055C420.112 6.8046 417.989 6.49341 416.104 6.50075C415.869 6.52394 415.633 6.54711 415.396 6.57026C415.559 6.66375 415.722 6.75723 415.884 6.8507C414.929 6.83339 414.581 6.64108 413.739 6.58883C412.755 6.52769 412.236 6.66075 411.564 6.62126C411.013 6.58875 410.268 6.41541 409.542 6.3823C408.506 6.33475 408.729 6.53615 408.174 6.54009C407.967 6.54137 403.834 6.41569 403.585 6.4043C401.822 6.3154 401.699 6.05067 400.291 5.95247C396.343 5.6792 392.36 5.68337 388.739 5.5838C387.133 5.53987 385.444 5.44322 383.819 5.32498C386.396 4.78636 380.812 4.00849 382.857 5.13855C381.085 4.90837 379.801 5.12841 378.096 5.00432C376.986 4.92365 376.247 4.74727 374.681 4.68267C371.904 4.56872 368.826 4.84938 368.066 4.08252C364.8 4.07925 361.966 3.70528 360.772 4.31069C359.93 4.31871 357.784 3.85362 356.838 3.76794C355.944 3.6837 349.096 3.28198 347.972 3.24122C346.851 3.19686 344.887 3.12852 343.94 3.15895C342.751 3.19601 341.905 3.84567 339.81 3.00347C337.348 3.00421 336.477 2.96088 334.193 2.81777C333.779 2.792 333.735 2.67413 333.492 2.66872C332.993 2.6578 332.142 2.72596 331.253 2.71845C329.791 2.70606 328.964 2.4451 329.119 2.82367C328.157 2.86855 327.193 2.91438 326.224 2.96114C325.886 2.88296 325.548 2.80492 325.21 2.727C324.693 2.79776 324.176 2.86883 323.66 2.94022C324.271 2.4047 320.649 2.67528 321.819 3.00339C319.97 2.86615 318.072 2.73248 316.213 2.60381C316.478 1.98641 312.124 2.50239 312.481 2.84205C312.266 2.84041 312.051 2.83883 311.837 2.83731C309.953 2.66436 308.262 2.79405 305.972 2.68582C303.676 2.57905 303.896 2.52016 303.2 2.23816C302.664 2.25658 302.129 2.27548 301.596 2.29485C298.824 3.09421 299.235 1.7337 294.459 2.39485C293.076 1.96986 289.761 2.19848 287.349 2.40716C287.097 2.42859 286.852 2.44958 286.618 2.46933C286.327 2.49387 286.325 2.58902 285.938 2.62804C284.992 2.72226 282.558 2.6609 282.649 2.96532C281.804 2.89769 280.958 2.83009 280.111 2.7625C279.422 2.83546 278.732 2.90843 278.041 2.98142C278.047 3.07701 278.052 3.17259 278.058 3.26818C276.653 2.97694 274.469 3.15664 273.401 3.10516C273.188 3.09465 273.138 2.96382 272.474 2.94429C271.698 2.92081 270.252 2.99577 269.323 2.97752C268.966 3.13264 268.609 3.28777 268.252 3.44291C266.594 3.56331 265.999 3.1919 265.02 3.18608C264.84 3.18535 261.644 3.29199 261.475 3.30438C260.07 3.40436 260.481 3.72324 256.399 3.75321C255.672 3.75834 255.081 3.65905 254.423 3.67064C253.259 3.691 249.762 4.03489 249.499 4.27985C248.089 4.01586 244.33 4.22982 243.217 4.17071C242.881 4.15238 242.801 3.96418 241.77 3.94887C240.935 3.93623 238.781 4.14101 237.729 4.14114C236.607 4.1407 236.203 3.99079 235.7 3.99172C235.225 3.99277 234.79 4.1323 234.143 4.14729C232.122 4.1919 230.285 4.02891 228.686 4.06387C226.371 4.11399 224.342 4.54488 222.413 4.76105C221.932 4.74791 221.459 4.6774 220.956 4.6888C214.734 4.82712 207.701 4.92592 201.465 4.99353C198.557 5.02572 191.342 4.67978 193.285 5.49809C192.289 5.67339 184.947 5.49976 183.554 5.5276C182.161 5.55554 181.062 5.73671 179.97 5.76495C176.688 5.84967 174.327 5.79397 170.314 6.024C169.277 6.08386 168.172 6.29372 167.559 6.30608C166.82 6.32055 166.022 6.16176 165.068 6.17303C162.766 6.20195 158.493 6.36124 156.308 6.38198C155.908 6.38539 155.764 6.23279 155.193 6.1975C152.981 6.05911 150.45 6.13516 150.91 6.62239C148.027 6.40745 145.388 6.72736 142.755 6.80495C137.127 6.96934 126.936 7.0914 122.045 7.41462C118.981 7.61808 119.098 7.83874 114.514 7.75267C113.502 7.73346 112.498 7.69916 111.28 7.67646C108.44 7.62247 105.808 7.2709 103.614 7.81905C100.407 7.76447 97.95 7.91282 95.5634 7.54279C95.2836 7.65126 95.0042 7.75972 94.7253 7.86817C94.331 7.87981 93.9376 7.89144 93.5449 7.90304C93.4202 7.80865 93.2955 7.71426 93.1709 7.61987C90.3353 7.65925 86.9351 8.13759 84.5011 8.19082C80.5099 8.27849 70.2625 8.35897 66.6067 8.31154C64.5637 8.28873 64.4662 8.4993 63.3039 8.0977C62.8556 8.13778 62.4091 8.17781 61.9645 8.2178C61.6879 8.31791 61.4121 8.41801 61.1369 8.5181C58.6414 8.57905 55.5344 8.50454 53.0995 8.56172C48.7557 8.66409 42.1316 9.07338 37.5283 9.00866C36.4082 8.99142 35.0355 8.82928 33.9872 8.8553C32.3342 8.8959 31.9316 9.22598 29.9165 9.27777C26.5965 9.36299 19.8723 9.14262 16.667 9.24359C15.7658 9.27223 15.2407 9.40351 14.5427 9.43204C11.708 9.55086 9.31733 9.59509 6.68937 9.83881C5.11186 9.72058 4.56301 9.5568 4.18605 9.37754C3.73008 9.20005 3.5144 9.00553 3.04619 8.81578C2.86861 8.7442 2.60785 8.64959 2.3367 8.54335C2.20097 8.49024 2.06243 8.43422 1.92813 8.37677C1.79447 8.31931 1.5277 8.2635 1.35694 8.20582C0.986381 8.09113 0.711027 7.97546 0.531889 7.87184C0.505124 7.85899 0.502354 7.84582 0.455728 7.83388C0.398723 7.82217 0.349142 7.81055 0.306005 7.79905C0.219726 7.77605 0.159242 7.75357 0.116289 7.73199C0.0307191 7.68882 0.0132343 7.64931 0.00618378 7.61637C0.00582786 7.52337 -0.033553 7.41793 0.0890758 7.30652C0.207097 7.19521 0.434092 7.07911 0.202971 6.98192C3.70536 6.73983 5.16067 6.88703 8.03767 7.11023C13.2886 6.98038 18.5481 6.84993 23.7422 6.72067C24.2189 6.82163 24.7018 6.92244 25.1908 7.02311C25.1908 7.02336 25.1908 7.0236 25.1908 7.02384C27.2999 7.10498 28.0729 6.79959 29.1404 6.71001C39.5065 5.8493 59.9804 5.8711 71.4195 5.67834C73.9389 5.63547 81.8715 5.30218 83.6109 5.44353C84.0547 5.48056 84.182 5.64996 84.6549 5.64655C88.8215 5.44794 92.9365 5.25035 97.1455 5.05043C105.636 5.12165 114.584 4.6926 123.149 4.45155C146.542 3.79412 169.58 3.1154 192.542 2.60851C196.97 2.51107 202.611 2.24691 206.947 2.22602C208.76 2.21701 209.522 2.47547 211.899 2.21202C211.926 2.28594 211.952 2.35986 211.979 2.43378C214.056 2.29378 215.379 2.09225 217.708 2.01882C219.67 1.9573 224.858 1.82082 226.591 1.80731C227.491 1.79975 227.159 1.94712 227.998 1.92609C229.435 1.88903 232.498 1.62208 234.476 1.57397C236.27 1.53038 239.289 1.61737 240.675 1.5603C245.655 1.35636 251.027 0.986953 256.344 0.919971C257.807 0.902024 259.689 1.03634 260.145 1.02005C261.037 0.987569 261.298 0.805632 261.896 0.76832C264.936 0.579361 269.73 0.66924 272.703 0.603656C277.451 0.498998 282.435 0.362992 287.295 0.22956C292.359 0.0902851 297.537 0.0115695 302.475 0.00450921C308.637 -0.016207 318.832 0.028881 324.493 0.257174C325.716 0.304822 325.386 0.491844 326.415 0.508931C327.559 0.528239 328.174 0.409752 328.704 0.409011C332.379 0.397738 340.514 0.461089 343.982 0.697225C344.643 0.741443 345.118 0.905903 345.514 0.916916C345.715 0.922774 346.171 0.83328 346.8 0.841612C352.361 0.916568 356.413 1.11555 361.852 1.35468C372.255 1.8116 384.377 2.16906 395.301 2.83977C397.639 2.98325 399.32 3.37146 399.643 3.38565C400.38 3.419 400.865 3.2441 402.343 3.27463C407.352 3.38243 413.914 3.97247 418.694 4.1596C420.949 4.24483 424.28 4.19425 426.505 4.27747C428.408 4.35068 432.645 4.72242 433.5 4.66686C433.996 4.63154 434.237 4.43007 434.816 4.44082ZM373.019 4.44342C373.363 4.11088 369.913 4.25324 371.195 4.49349C371.485 4.54745 372.932 4.52957 373.019 4.44342ZM212.61 4.28315C212.644 4.38133 212.678 4.4795 212.712 4.57767C213.161 4.52567 213.61 4.47366 214.06 4.42165C213.805 4.36827 213.551 4.3149 213.296 4.26152C213.068 4.26873 212.839 4.27594 212.61 4.28315Z"
+          fill="url(#underline-gradient)"
+          stroke="url(#underline-gradient)"
+        />
+      </svg>
+    </div>
+
     <div class="container" id="missao">
-      <h3 class="marker-text">Missão</h3>
+      <div class="wrapper">
+        <Image src={missao} alt="" />
+        <h3 class="marker-text">Missão</h3>
+      </div>
       <p>
         A nossa missão é aproximar alunos, famílias, professores e gestores por meio de uma
         plataforma simples, acolhedora e eficiente.
@@ -34,7 +75,10 @@ import arrowUpRight from '../assets/icons/arrow-up-right.svg';
       </p>
     </div>
     <div class="container" id="valores">
-      <h3 class="marker-text">Valores</h3>
+      <div class="wrapper">
+        <h3 class="marker-text">Valores</h3>
+        <Image src={valores} alt="" />
+      </div>
       <ul>
         <li>
           <strong>Design Universal e Inclusão:</strong> Projetamos para todos, unindo
@@ -56,7 +100,10 @@ import arrowUpRight from '../assets/icons/arrow-up-right.svg';
       </ul>
     </div>
     <div class="container" id="visao">
-      <h3 class="marker-text">Visão</h3>
+      <div class="wrapper">
+        <h3 class="marker-text">Visão</h3>
+        <Image src={visao} alt="" />
+      </div>
       <p>
         Uma rede de ensino onde todos possam participar igualmente. Queremos ser o portal
         educacional de referência em acessibilidade e inclusão no Brasil.
@@ -69,7 +116,85 @@ import arrowUpRight from '../assets/icons/arrow-up-right.svg';
   </section>
 </Layout>
 
+<script>
+  import { gsap } from 'gsap';
+  import { ScrollTrigger, ScrollSmoother } from 'gsap/all';
+
+  gsap.registerPlugin(ScrollTrigger, ScrollSmoother);
+
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const initGSAPanimations = () => {
+    // Scroll Suave
+    const smoothScroll = () => {
+      ScrollSmoother.create({
+        wrapper: '#smooth-wrapper',
+        content: '#smooth-content',
+        smooth: 1.5,
+        smoothTouch: 0.2,
+        effects: true,
+      });
+    };
+
+    // Animação do Traço sobre o Titulo "Nosso Propósito"
+    const underlineSectionTitle = () => {
+      const stop1 = '#title-underline #stop1';
+      const stop2 = '#title-underline #stop2';
+
+      gsap.fromTo(
+        [stop1, stop2],
+        {
+          attr: { offset: '0%' },
+        },
+        {
+          attr: { offset: '100%' },
+          ease: 'slow(0.3,0.4,false)',
+          scrollTrigger: {
+            trigger: '.title-wrapper',
+            start: 'top 70%',
+            end: 'bottom 30%',
+            scrub: true,
+            toggleActions: 'play none none none',
+            //markers: true,
+          },
+        },
+      );
+    };
+
+    // Revelar Footer
+    const footerReveal = () => {
+      gsap.fromTo(
+        'footer',
+        {
+          y: -100,
+        },
+        {
+          y: 0,
+          ease: 'circ.out',
+          scrollTrigger: {
+            trigger: 'body',
+            start: 'center top',
+            end: 'bottom bottom',
+            scrub: 1,
+            toggleActions: 'play none none reverse',
+            //markers: true,
+          },
+        },
+      );
+    };
+
+    smoothScroll();
+    underlineSectionTitle();
+    footerReveal();
+  };
+
+  if (!prefersReducedMotion) {
+    initGSAPanimations();
+  }
+</script>
+
 <style
+  is:global
   define:vars={{
     heroLight: `url("${heroLight.src}")`,
     heroDark: `url("${heroDark.src}")`,
@@ -122,8 +247,49 @@ import arrowUpRight from '../assets/icons/arrow-up-right.svg';
       padding: 8px;
 
       color: var(--light);
+
+      h3 {
+        position: relative;
+      }
+
+      h3::after {
+        content: '';
+        position: absolute;
+        width: 98%;
+        height: 2px;
+        bottom: 4px;
+        left: 4px;
+        background-color: var(--light);
+        transform: scaleX(0);
+        transform-origin: right;
+        transition: transform 0.8s cubic-bezier(0.65, 0, 0.35, 1);
+      }
+
+      img {
+        transition: transform 0.8s cubic-bezier(0.65, 0, 0.35, 1);
+      }
+    }
+
+    #cta:hover {
+      h3::after {
+        transform: scaleX(1);
+        transform-origin: left;
+      }
+
+      img {
+        transform: rotate(45deg); /* Turns the arrow into a crisp diagonal pointing gesture */
+      }
     }
   }
+
+  .paintDivider {
+    position: relative;
+    transform: translateY(-40%);
+    z-index: 2;
+
+    margin-bottom: -200px;
+  }
+
   #Sobre {
     --offset: round(nearest, 45vw, 2px);
     @media (max-width: 1278px) {
@@ -137,22 +303,42 @@ import arrowUpRight from '../assets/icons/arrow-up-right.svg';
     min-height: 100vh;
     width: 100vw;
 
-    padding: 120px var(--side-padding) 80px var(--side-padding);
+    padding: 20px var(--side-padding) 80px var(--side-padding);
 
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    gap: 12px;
+
+    .title-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      width: 100%;
+
+      h2 {
+        text-align: center;
+      }
+    }
 
     .container {
       width: 100%;
-    }
-  }
 
-  #missao,
-  #visao {
-    padding-right: var(--offset);
-  }
-  #valores {
-    padding-left: var(--offset);
+      .wrapper {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+      }
+    }
+
+    #missao,
+    #visao {
+      padding-right: var(--offset);
+    }
+    #valores {
+      padding-left: var(--offset);
+    }
   }
 </style>
