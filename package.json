@@ -7,11 +7,13 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "start": "astro dev",
+    "build": "astro check && astro build",
     "preview": "astro preview",
     "astro": "astro",
     "format:check": "prettier --check .",
     "format:fix": "prettier --write ."
+    "lint": "eslint ."
   },
   "dependencies": {
     "@astrojs/netlify": "^8.2.10",
@@ -28,6 +30,10 @@
     "react-imask": "^7.6.1",
     "zod": "^4.6.7"
     "gsap": "^3.15.0"
+  },
+  "devDependencies": {
+    "eslint": "^9.39.5",
+    "prettier": "^3.9.10"
   },
   "allowScripts": {
     "esbuild": true,
