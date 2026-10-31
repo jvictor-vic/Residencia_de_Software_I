@@ -1,0 +1,267 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import LoginForm from '../components/LoginForm/LoginForm';
+---
+
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <BaseHead title="Entrar | EducaHub" description="Acesse o EducaHub com o seu CPF e senha." />
+  </head>
+  <body>
+    <div class="faixa" aria-hidden="true"></div>
+
+    <main>
+      <section class="cartao" aria-labelledby="titulo-login">
+        <p class="logo" aria-label="EducaHub">
+          EDUCA<span class="logo-hub">HUB</span>
+        </p>
+
+        <h2 id="titulo-login">Entrar</h2>
+        <p class="subtitulo">Acesse com o CPF e a senha cadastrados na sua escola.</p>
+
+        <LoginForm client:load />
+      </section>
+
+      <footer><!-- Colocar elementos aqui, caso precise --></footer>
+    </main>
+  </body>
+</html>
+
+<style>
+  .faixa {
+    height: 8px;
+    background: var(--primary);
+
+    @media only screen and (max-width 425px) {
+      display: none;
+    }
+  }
+
+  main {
+    position: relative;
+    height: calc(100vh - 8px);
+    padding: 0 var(--side-padding);
+    overflow: hidden;
+  }
+
+  .cartao {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    max-width: 28rem;
+    padding: 32px 24px;
+
+    background: var(--bg);
+    border: 2px solid var(--fg--60);
+    border-top: 6px solid var(--primary);
+    border-radius: 24px;
+
+    z-index: 20;
+  }
+
+  .logo {
+    margin-bottom: 32px;
+    font-family: var(--font-roboto);
+    font-weight: 900;
+    font-size: 32px;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    color: var(--fg);
+  }
+
+  .logo-hub {
+    color: var(--primary);
+  }
+
+  .subtitulo {
+    margin: 8px 0 12px;
+    color: var(--fg--30);
+  }
+
+  footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: fit-content;
+
+    padding: 8px var(--side-padding);
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+
+    z-index: 10;
+  }
+
+  /* Efeito Background */
+
+  @media (prefers-reduced-motion: no-preference) {
+    @property --c-0 {
+      syntax: '<color>';
+      inherits: false;
+      initial-value: hsla(20, 80%, 58%, 1);
+    }
+
+    @property --x-0 {
+      syntax: '<percentage>';
+      inherits: false;
+      initial-value: 15%;
+    }
+
+    @property --y-0 {
+      syntax: '<percentage>';
+      inherits: false;
+      initial-value: 40%;
+    }
+
+    @property --s-start-0 {
+      syntax: '<percentage>';
+      inherits: false;
+      initial-value: 5%;
+    }
+
+    @property --s-end-0 {
+      syntax: '<percentage>';
+      inherits: false;
+      initial-value: 70%;
+    }
+
+    @property --c-1 {
+      syntax: '<color>';
+      inherits: false;
+      initial-value: hsla(213, 100%, 59%, 1);
+    }
+
+    @property --x-1 {
+      syntax: '<percentage>';
+      inherits: false;
+      initial-value: 85%;
+    }
+
+    @property --y-1 {
+      syntax: '<percentage>';
+      inherits: false;
+      initial-value: 100%;
+    }
+
+    @property --s-start-1 {
+      syntax: '<percentage>';
+      inherits: false;
+      initial-value: 10%;
+    }
+
+    @property --s-end-1 {
+      syntax: '<percentage>';
+      inherits: false;
+      initial-value: 70%;
+    }
+
+    @keyframes ani-bg-mesh {
+      0% {
+        --c-0: hsla(20, 80%, 58%, 1);
+        --x-0: 15%;
+        --y-0: 40%;
+        --s-start-0: 5%;
+        --s-end-0: 70%;
+        --c-1: hsla(213, 100%, 59%, 1);
+        --x-1: 85%;
+        --y-1: 100%;
+        --s-start-1: 10%;
+        --s-end-1: 70%;
+      }
+
+      25% {
+        --c-0: hsla(20, 80%, 58%, 1);
+        --x-0: 85%;
+        --y-0: 40%;
+        --s-start-0: 5%;
+        --s-end-0: 70%;
+        --c-1: hsla(213, 100%, 59%, 1);
+        --x-1: 15%;
+        --y-1: 100%;
+        --s-start-1: 10%;
+        --s-end-1: 70%;
+      }
+
+      50% {
+        --c-0: hsla(20, 80%, 58%, 1);
+        --x-0: 85%;
+        --y-0: 100%;
+        --s-start-0: 10%;
+        --s-end-0: 70%;
+        --c-1: hsla(213, 100%, 59%, 1);
+        --x-1: 15%;
+        --y-1: 40%;
+        --s-start-1: 5%;
+        --s-end-1: 70%;
+      }
+
+      75% {
+        --c-0: hsla(20, 80%, 58%, 1);
+        --x-0: 15%;
+        --y-0: 100%;
+        --s-start-0: 10%;
+        --s-end-0: 70%;
+        --c-1: hsla(213, 100%, 59%, 1);
+        --x-1: 85%;
+        --y-1: 40%;
+        --s-start-1: 5%;
+        --s-end-1: 70%;
+      }
+
+      100% {
+        --c-0: hsla(20, 80%, 58%, 1);
+        --x-0: 15%;
+        --y-0: 40%;
+        --s-start-0: 5%;
+        --s-end-0: 70%;
+        --c-1: hsla(213, 100%, 59%, 1);
+        --x-1: 85%;
+        --y-1: 100%;
+        --s-start-1: 10%;
+        --s-end-1: 70%;
+      }
+    }
+
+    main::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      opacity: 25%;
+
+      --c-0: hsla(20, 80%, 58%, 1);
+      --x-0: 15%;
+      --y-0: 40%;
+      --c-1: hsla(213, 100%, 59%, 1);
+      --x-1: 85%;
+      --y-1: 100%;
+
+      background-color: rgba(from var(--bg) r g b / 0);
+      background-image:
+        radial-gradient(
+          circle at var(--x-0) var(--y-0),
+          var(--c-0) var(--s-start-0),
+          transparent var(--s-end-0)
+        ),
+        radial-gradient(
+          circle at var(--x-1) var(--y-1),
+          var(--c-1) var(--s-start-1),
+          transparent var(--s-end-1)
+        );
+
+      animation: ani-bg-mesh 15s linear infinite normal;
+      background-blend-mode: overlay, overlay;
+      mask-image:
+        repeating-linear-gradient(45deg, #fff, #fff 1px, transparent 1px, transparent 8px),
+        repeating-linear-gradient(135deg, #fff, #fff 1px, transparent 1px, transparent 8px);
+
+      will-change: transform, opacity;
+      contain: paint;
+      pointer-events: none;
+    }
+  }
+</style>

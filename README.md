@@ -61,7 +61,7 @@ O projeto possui uma pipeline automatizada de Integração Contínua e Entrega C
 
 #### Obrigatório
 
-- **[Node.js](https://nodejs.org/pt-br/download)** >=22.12.0
+- **[Node.js](https://nodejs.org/pt-br/download)** >=22.23.4
 - **[Extensão "Astro" para VSCode](https://marketplace.visualstudio.com/items?itemName=astro-build.astro-vscode)**
 
 #### Recomendados
@@ -79,11 +79,8 @@ npm install
 
 ### Execução do Ambiente de Desenvolvimento
 
-Para subir o servidor de documento execute no terminal
+Para subir o servidor de desenvolvimento execute no terminal
 
 ```bash
-npm run dev
-# ou
-npm run dev -- --host
-# para expor servidor para outros dispositivos na rede, útil para acessar pelo celular
+netlify dev
 ```

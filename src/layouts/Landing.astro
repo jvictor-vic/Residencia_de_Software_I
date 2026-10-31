@@ -8,6 +8,8 @@ import instagramIcon from '../assets/icons/instagram.svg?raw';
 import phoneIcon from '../assets/icons/phone.svg?raw';
 import mailIcon from '../assets/icons/mail.svg?raw';
 
+export const prerender = true;
+
 interface Props {
   title?: string;
   description?: string;
@@ -33,7 +35,7 @@ const {
       <nav class="navBar">
         <ul>
           <li>
-            <a href="#hero">LOGO</a>
+            <a href="#top">LOGO</a>
           </li>
           <li>
             <a href="#Sobre">
@@ -46,7 +48,7 @@ const {
             </a>
           </li>
           <li>
-            <a href="">
+            <a href="/entrar">
               <h4>ENTRAR</h4>
             </a>
           </li>
@@ -163,6 +165,10 @@ const {
   }}
 >
   /* Globais */
+  a {
+    color: var(--fg);
+  }
+
   body {
     background-color: var(--bg);
   }

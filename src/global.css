@@ -63,13 +63,6 @@ svg {
   stroke: currentColor;
 }
 
-input,
-button,
-textarea,
-select {
-  font: inherit;
-}
-
 a {
   text-decoration: none;
   color: var(--fg);
@@ -145,6 +138,15 @@ li {
   }
 }
 
+input,
+button,
+textarea,
+select,
+label {
+  font-family: var(--font-cabin);
+  font-size: 1rem;
+}
+
 .marker-text {
   font-family: var(--font-permanent-marker);
   text-transform: uppercase;
@@ -153,4 +155,188 @@ li {
 
   text-wrap-style: pretty;
   text-box: trim-both cap alphabetic;
+}
+
+/* Estilos Padrões de Input */
+
+input {
+  font-size: 1rem;
+  color: var(--fg);
+}
+
+input::placeholder {
+  color: var(--fg--20);
+  opacity: 80%;
+}
+
+input:hover,
+input:focus {
+  outline: 2px dashed var(--secondary);
+}
+
+input[type='text'],
+input[type='email'],
+input[type='tel'],
+input[type='password'] {
+  position: relative;
+  height: 48px;
+
+  padding: 12px 18px;
+
+  border-radius: 24px;
+  border: 2px solid var(--fg--20);
+
+  background-color: var(--fg--90);
+}
+
+/* Select field */
+select {
+  color: var(--fg--20);
+  appearance: base-select;
+  position: relative;
+  height: 48px;
+
+  padding: 12px 60px 12px 18px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+
+  border-radius: 24px;
+  border: 2px solid var(--fg--20);
+
+  background-color: var(--fg--90);
+}
+
+select:focus,
+select:hover {
+  outline: 2px dashed var(--secondary);
+}
+
+/* Icone de seta */
+select::picker-icon {
+  content: '';
+
+  position: absolute;
+  /* Medida do border */
+  top: -2px;
+  right: -2px;
+  bottom: -2px;
+  aspect-ratio: 1 / 1;
+
+  background-color: var(--fg--20);
+
+  -webkit-mask-image: url('./assets/icons/arrow-down-circle.svg');
+  mask-image: url('./assets/icons/arrow-down-circle.svg');
+
+  mask-size: cover;
+  mask-repeat: no-repeat;
+  mask-position: center;
+
+  transition: all 0.5s ease-in-out;
+}
+
+select:open::picker-icon {
+  rotate: 180deg;
+}
+
+/* Dropdown do select */
+::picker(select) {
+  appearance: base-select;
+
+  top: anchor(top);
+  left: anchor(left);
+  right: anchor(right);
+
+  padding: 12px 18px;
+
+  border-radius: 24px;
+  border: 2px solid var(--fg--20);
+
+  background-color: var(--fg--90);
+}
+
+/* Item da seleção */
+select option {
+  color: var(--fg);
+  padding: 0;
+  padding-top: 8px;
+  border-bottom: 2px solid var(--fg--20);
+}
+
+select > :last-child {
+  border-bottom: none;
+}
+
+/* Opção selecionada */
+select option:checked {
+  background-color: rgb(from var(--secondary) r g b / 0.5);
+}
+
+option:focus {
+  outline: 2px dashed var(--secondary);
+}
+
+/* Ícone de Check, marca seleção */
+select option::checkmark {
+  color: var(--fg);
+}
+
+/* Button */
+button {
+  height: 55px;
+
+  padding: 0 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  border-radius: 24px;
+  background: var(--secondary);
+
+  font-family: var(--font-roboto);
+  font-weight: 800;
+  font-size: 24px;
+  color: var(--bg);
+
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+
+button:hover,
+button:focus-visible {
+  box-shadow: 2px 3px 0 2px var(--primary);
+}
+
+button:focus {
+  outline: 2px dashed var(--primary);
+}
+
+button:disabled {
+  background: var(--fg--80);
+  color: var(--fg--50);
+  cursor: not-allowed;
+}
+
+/* links */
+a {
+  color: var(--primary-darker);
+  font-family: var(--font-cabin);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+
+  transition: color 0.2s ease;
+  @media (prefers-color-scheme: dark) {
+    color: var(--primary);
+  }
+}
+
+a:hover,
+a:focus-visible {
+  color: var(--secondary);
+}
+
+a:focus {
+  outline: 2px dashed var(--primary);
 }

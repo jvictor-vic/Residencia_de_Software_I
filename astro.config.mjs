@@ -1,10 +1,15 @@
 // @ts-check
 import { defineConfig, fontProviders, svgoOptimizer } from 'astro/config';
 
+import react from '@astrojs/react';
+
+import netlify from '@astrojs/netlify';
+
 // https://astro.build/config
 export default defineConfig({
   site: 'https://www.example.com',
-  trailingSlash: 'always',
+  trailingSlash: 'ignore',
+  output: 'server',
 
   fonts: [
     {
@@ -32,9 +37,11 @@ export default defineConfig({
 
   prefetch: {
     prefetchAll: true,
-    defaultStrategy: 'viewport',
+    defaultStrategy: 'hover',
   },
 
+  integrations: [react()],
+  adapter: netlify(),
   experimental: {
     svgOptimizer: svgoOptimizer(),
   },
