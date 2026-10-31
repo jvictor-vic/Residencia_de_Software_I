@@ -1,3 +1,18 @@
+/* Reset Button */
+.button {
+  padding: 0;
+}
+
+.button:hover,
+.button:focus-visible {
+  box-shadow: none;
+}
+
+.button:focus {
+  outline: transparent;
+}
+
+/* Module Styles */
 .calendarPopoverCard {
   position: absolute;
   top: calc(100% + 8px);
@@ -57,6 +72,7 @@
   justify-content: center;
   width: 28px;
   height: 28px;
+  padding: 20px;
   border-radius: 12px;
   font-size: 24px;
   color: var(--fg--20);

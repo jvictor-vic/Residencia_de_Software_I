@@ -169,6 +169,7 @@ input[type='password'] {
 
 /* Select field */
 select {
+  color: var(--fg--20);
   appearance: base-select;
   position: relative;
   height: 48px;
@@ -200,10 +201,14 @@ select::picker-icon {
   bottom: -2px;
   aspect-ratio: 1 / 1;
 
-  background-image: url('./assets/icons/arrow-down-circle.svg');
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-position: center;
+  background-color: var(--fg--20);
+
+  -webkit-mask-image: url('./assets/icons/arrow-down-circle.svg');
+  mask-image: url('./assets/icons/arrow-down-circle.svg');
+
+  mask-size: cover;
+  mask-repeat: no-repeat;
+  mask-position: center;
 
   transition: all 0.5s ease-in-out;
 }
@@ -230,6 +235,7 @@ select:open::picker-icon {
 
 /* Item da seleção */
 select option {
+  color: var(--fg);
   padding: 0;
   padding-top: 8px;
   border-bottom: 2px solid var(--fg--20);
@@ -256,14 +262,21 @@ select option::checkmark {
 /* Button */
 button {
   height: 55px;
-  padding: 12px 42px;
+
+  padding: 0 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
   border: none;
   border-radius: 24px;
   background: var(--secondary);
-  color: var(--bg);
+
   font-family: var(--font-roboto);
   font-weight: 800;
   font-size: 24px;
+  color: var(--bg);
+
   cursor: pointer;
   transition: box-shadow 0.2s;
 }

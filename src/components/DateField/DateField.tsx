@@ -154,7 +154,7 @@ export function DateField({
         />
         <button
           type="button"
-          className={styles.calendarIconButton}
+          className={[styles.button, styles.calendarIconButton].join(' ')}
           onClick={() => setIsDatePickerOpen((isOpen) => !isOpen)}
           aria-label="Abrir calendário"
           aria-expanded={isDatePickerOpen}

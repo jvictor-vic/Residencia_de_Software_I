@@ -1,3 +1,17 @@
+/* Reset Button */
+.button {
+  padding: 0;
+}
+
+.button:hover,
+.button:focus-visible {
+  box-shadow: none;
+}
+
+.button:focus {
+  outline: transparent;
+}
+
 .container {
   display: flex;
   flex-direction: column;
@@ -69,12 +83,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--fg);
+
+  opacity: 0.7;
   transition: opacity 0.2s ease;
 }
 
-.calendarIconButton:hover {
-  opacity: 0.7;
+.calendarIconButton:hover,
+.calendarIconButton:focus-visible {
+  opacity: 1;
+  box-shadow: none;
+}
+
+.calendarIconButton:focus {
+  outline: transparent;
 }
 
 .errorLabel {

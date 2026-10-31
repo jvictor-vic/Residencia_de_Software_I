@@ -109,7 +109,7 @@ export function DatePicker({
           <button
             type="button"
             onClick={() => setDisplayedMonth((month) => addMonths(month, -1))}
-            className={styles.navButton}
+            className={[styles.button, styles.navButton].join(' ')}
             aria-label="Mês Anterior"
           >
             &lsaquo;
@@ -119,7 +119,7 @@ export function DatePicker({
             <button
               type="button"
               onClick={() => setNavView('months')}
-              className={styles.titleButton}
+              className={[styles.button, styles.titleButton].join(' ')}
               aria-label="Escolher Mês"
             >
               {MONTH_NAMES[displayedMonth.getMonth()]}
@@ -131,7 +131,7 @@ export function DatePicker({
                 setYearAnchor(displayedMonth.getFullYear());
                 setNavView('years');
               }}
-              className={styles.titleButton}
+              className={[styles.button, styles.titleButton].join(' ')}
               aria-label="Escolher Ano"
             >
               {displayedMonth.getFullYear()}
@@ -141,7 +141,7 @@ export function DatePicker({
           <button
             type="button"
             onClick={() => setDisplayedMonth((month) => addMonths(month, 1))}
-            className={styles.navButton}
+            className={[styles.button, styles.navButton].join(' ')}
             aria-label="Próximo mês"
           >
             &rsaquo;
@@ -175,6 +175,7 @@ export function DatePicker({
                         disabled={isDayDisabled}
                         onClick={() => selectDay(date)}
                         className={[
+                          styles.button,
                           styles.dayButton,
                           outsideMonth ? styles.outsideMonth : '',
                           isSelected ? styles.selectedDay : '',
@@ -199,7 +200,11 @@ export function DatePicker({
         <div>
           <div className={styles.pickerHeader}>
             <span className={styles.pickerTitle}>Selecione o mês</span>
-            <button type="button" className={styles.backButton} onClick={() => setNavView('days')}>
+            <button
+              type="button"
+              className={[styles.button, styles.backButton].join(' ')}
+              onClick={() => setNavView('days')}
+            >
               Voltar
             </button>
           </div>
@@ -213,6 +218,7 @@ export function DatePicker({
                   setNavView('days');
                 }}
                 className={[
+                  styles.button,
                   styles.pickerItem,
                   index === displayedMonth.getMonth() ? styles.pickerItemActive : '',
                 ]
@@ -232,7 +238,7 @@ export function DatePicker({
             <button
               type="button"
               onClick={() => setYearAnchor((year) => year - 12)}
-              className={styles.navButton}
+              className={[styles.button, styles.navButton].join(' ')}
               aria-label="Anos anteriores"
             >
               &lsaquo;
@@ -243,7 +249,7 @@ export function DatePicker({
             <button
               type="button"
               onClick={() => setYearAnchor((year) => year + 12)}
-              className={styles.navButton}
+              className={[styles.button, styles.navButton].join(' ')}
               aria-label="Anos posteriores"
             >
               &rsaquo;
@@ -259,6 +265,7 @@ export function DatePicker({
                   setNavView('months');
                 }}
                 className={[
+                  styles.button,
                   styles.pickerItem,
                   year === displayedMonth.getFullYear() ? styles.pickerItemActive : '',
                 ]
