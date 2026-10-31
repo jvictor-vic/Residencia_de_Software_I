@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import listaPaises from '../../data/lista_paises.json';
 
 function getFlagEmoji(countryCode: string): string {
   if (!countryCode || countryCode.length !== 2) return '';
@@ -9,10 +10,11 @@ function getFlagEmoji(countryCode: string): string {
 
 export const GET: APIRoute = async () => {
   try {
-    const response = await fetch('https://countries.dev/countries?fields=name,flag,translations');
-    const data = await response.json();
+    //const response = await fetch('https://countries.dev/countries?fields=name,flag,translations');
+    //const data = await response.json();
+    //const countriesList = Array.isArray(data) ? data : data.countries || [];
 
-    const countriesList = Array.isArray(data) ? data : data.countries || [];
+    const countriesList = listaPaises;
 
     const formattedPaises = countriesList.map((country: any) => {
       const nomePt = country.translations?.pt?.common || country.translations?.pt || country.name;
