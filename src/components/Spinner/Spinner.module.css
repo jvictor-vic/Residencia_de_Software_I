@@ -1,0 +1,53 @@
+.spinnerWrapper {
+  display: inline-block;
+}
+
+.spinnerSvg {
+  width: 100%;
+  height: 100%;
+  color: inherit;
+  stroke: none;
+}
+
+/* Tamanhos (Sizes) */
+.sizeSm {
+  width: 1rem;
+  height: 1rem;
+}
+
+.sizeDefault {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.sizeMd {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.sizeLg {
+  width: 2rem;
+  height: 2rem;
+}
+
+/* Animações (Speeds) */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.speedSlow {
+  animation: spin 2s linear infinite;
+}
+
+.speedNormal {
+  animation: spin 1s linear infinite;
+}
+
+.speedFast {
+  animation: spin 0.5s linear infinite;
+}

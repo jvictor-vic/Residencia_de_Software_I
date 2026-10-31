@@ -1,0 +1,170 @@
+.form {
+  --form-accent: var(--primary-darker); /* 4.96:1 sobre --bg claro */
+
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  font-family: var(--font-cabin);
+  font-weight: 500;
+}
+
+@media (prefers-color-scheme: dark) {
+  .form {
+    --form-accent: var(--primary); /* 5.84:1 sobre --bg escuro */
+  }
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-weight: 700;
+}
+
+:where(.input) {
+  width: 100%;
+}
+
+/* Erro: borda mais grossa + ícone + texto (não depende só da cor) */
+.inputErro,
+.inputErro:hover,
+.inputErro:focus-visible {
+  border-color: var(--error--fg);
+  border-width: 3px;
+}
+
+/* ---------- Senha + botão de mostrar ---------- */
+.senhaWrap {
+  position: relative;
+}
+
+.inputSenha {
+  padding-right: 56px;
+}
+
+.olho {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  padding: 0;
+
+  width: 44px;
+  height: 44px;
+
+  align-items: center;
+  justify-items: center;
+
+  background: none;
+  border-radius: 12px;
+
+  svg {
+    color: var(--fg--20);
+    transition: color 0.2s ease;
+  }
+}
+
+.olho:hover,
+.olho:focus-visible {
+  box-shadow: none;
+
+  svg {
+    color: var(--secondary);
+  }
+}
+
+.olho:focus {
+  outline: transparent;
+}
+
+/* ---------- Mensagens ---------- */
+.aviso {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 2px solid;
+  border-left-width: 6px;
+  background: var(--bg);
+  font-weight: 700;
+
+  icon {
+    height: 48px;
+    width: fit-content;
+  }
+}
+
+.avisoErro {
+  color: var(--error--fg);
+  border-color: var(--error--fg);
+}
+
+.avisoSucesso {
+  color: var(--success--fg);
+  border-color: var(--success--fg);
+}
+
+.erro {
+  padding-left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--error--fg);
+  font-weight: 700;
+
+  icon {
+    height: 24px;
+    width: fit-content;
+  }
+}
+
+.erro svg,
+.aviso svg {
+  height: 100%;
+  width: auto;
+  color: inherit;
+}
+
+/* ---------- Links e botão ---------- */
+.quickLinks {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.esqueci,
+.cadastrar {
+  width: 130px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.cadastrar {
+  text-align: end;
+}
+
+.separador {
+  color: var(--fg--50);
+}
+
+.entrar {
+  height: 52px;
+}
+
+.entrar:disabled {
+  cursor: progress;
+  opacity: 0.85;
+}
+
+.ajuda {
+  color: var(--fg--30);
+  text-align: center;
+}

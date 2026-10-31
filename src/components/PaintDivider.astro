@@ -1,0 +1,88 @@
+---
+interface Props {
+  color?: string;
+  height?: string;
+  class?: string;
+}
+
+const { color = '#EA7A3E', class: className = '' } = Astro.props;
+---
+
+<div class={`paint-divider-wrapper ${className}`}>
+  <svg
+    class="paint-svg"
+    width="1440"
+    height="359"
+    viewBox="0 0 1440 359"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    preserveAspectRatio="xMidyMid slice"
+  >
+    <g filter="url(#filter1_g_43_244)">
+      <path
+        d="M-41.5 171.5C25 264 98.0045 270.547 267.229 270C483.188 254.976 525.673 261.379 651 215.622C854.5 141.323 786.959 180.244 1031.23 215.622C1275.5 251 1415 274.393 1510.5 261C1606 247.607 1560.87 122.67 1461.5 86.5C1330.39 19.3568 1287 10.0855 1068 27.5C849 44.9145 770.766 33.3776 641.73 78.6219C489.449 142.265 420 111 283 96.5001C176.5 37.5 25 -16 -70.5 8.49997C-166 33 -108 79 -41.5 171.5Z"
+        fill={color}
+        stroke="none"
+      />
+    </g>
+    <defs>
+      <filter
+        id="filter1_g_43_244"
+        x="-20%"
+        y="-20%"
+        width="140%"
+        height="140%"
+        filterUnits="objectBoundingBox"
+        color-interpolation-filters="sRGB"
+      >
+        <feFlood flood-opacity="0" result="BackgroundImageFix" />
+        <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape" />
+        <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="3" seed="5184" />
+        <feDisplacementMap
+          in="shape"
+          scale="40"
+          xChannelSelector="R"
+          yChannelSelector="G"
+          result="displacedImage"
+        />
+        <feMerge>
+          <feMergeNode in="displacedImage" />
+        </feMerge>
+      </filter>
+    </defs>
+  </svg>
+</div>
+
+<script>
+  import { gsap } from 'gsap';
+
+  window.addEventListener('DOMContentLoaded', () => {
+    gsap.fromTo(
+      '.paint-divider-wrapper',
+      { clipPath: 'inset(0 100% 0 0)' },
+      {
+        clipPath: 'inset(0 0% 0 0)',
+        duration: 3,
+        ease: 'slow(0.1,0.7,false)',
+        delay: 1,
+      },
+    );
+  });
+</script>
+
+<style>
+  .paint-divider-wrapper {
+    width: 100%;
+    height: fit-content;
+    overflow: hidden;
+    line-height: 0;
+    clip-path: inset(0 100% 0 0);
+  }
+
+  .paint-svg {
+    width: 100%;
+    display: block;
+
+    outline: none;
+  }
+</style>
