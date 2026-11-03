@@ -40,7 +40,7 @@
 body {
   background-color: var(--bg);
   color: var(--fg);
-  width: 100vw;
+  width: 100%;
   min-height: 100vh;
   overflow-x: clip;
   line-height: 1.5;
