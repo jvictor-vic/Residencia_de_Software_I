@@ -5,6 +5,7 @@
 - [Sobre o projeto](#sobre-o-projeto)
 - [Stack e arquitetura](#stack-e-arquitetura)
 - [Dependências](#dependências)
+- [Aliases de importação](#aliases-de-importação)
 - [Estrutura de arquivos](#estrutura-de-arquivos)
 - [Estrutura de branches](#estrutura-de-branches)
 - [Ambiente de desenvolvimento](#ambiente-de-desenvolvimento)
@@ -44,6 +45,20 @@ As versões instaladas e seus intervalos estão definidos em `package.json`; `pa
 
 - `eslint`: análise estática;
 - `prettier`: formatação e compatibilidade entre formatador e linter.
+
+## Aliases de importação
+
+O `tsconfig.json` configura aliases para importar módulos de `src/` sem precisar usar caminhos relativos longos:
+
+| Alias           | Diretório de destino |
+| --------------- | -------------------- |
+| `@utils/*`      | `src/utils/*`        |
+| `@assets/*`     | `src/assets/*`       |
+| `@components/*` | `src/components/*`   |
+| `@data/*`       | `src/data/*`         |
+| `@services/*`   | `src/services/*`     |
+
+Por exemplo, `@utils/calcularIdade` aponta para `src/utils/calcularIdade`. O alias `@services/*` já está configurado; os módulos correspondentes podem ser adicionados em `src/services/` conforme necessário.
 
 ## Estrutura de arquivos
 
