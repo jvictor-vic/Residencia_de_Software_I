@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { calcularIdade } from '../../utils/calcularIdade';
+import { calcularIdade } from '@utils/calcularIdade';
 
 const generosEnum = [
   'Homem Cis',
