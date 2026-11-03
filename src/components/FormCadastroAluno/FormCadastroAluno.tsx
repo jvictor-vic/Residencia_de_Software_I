@@ -12,6 +12,8 @@ import { InputCEP } from '../InputCEP/InputCEP';
 
 import styles from './FormCadastroAluno.module.css';
 
+import listaPaises from '../../data/lista_paises-formatada.json';
+
 const listaGeneros = ['Homem Cis', 'Homem Trans', 'Mulher Cis', 'Mulher Trans', 'Não-Binário'];
 const listaCorRaca = ['Amarela', 'Branca', 'Indígena', 'Parda', 'Preta'];
 const listaParentescos = ['Mãe', 'Pai', 'Tio / Tia', 'Avô / Avó', 'Diretor de Abrigo', 'Tutor'];
@@ -88,21 +90,9 @@ export function FormCadastroAluno() {
   }, [dataNascimentoAluno]);
 
   // Estados para dados externos (Países, Estados e Municípios)
-  const [paises, setPaises] = useState<PaisItem[]>([]);
+  const [paises] = useState<PaisItem[]>(listaPaises);
   const [estados, setEstados] = useState<EstadoItem[]>([]);
   const [municipios, setMunicipios] = useState<MunicipioItem[]>([]);
-
-  // 1. Buscar Países e Bandeiras da API
-  useEffect(() => {
-    fetch('/api/listapaises')
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setPaises(data);
-        }
-      })
-      .catch((err) => console.error('Erro ao buscar países:', err));
-  }, []);
 
   // 2. Buscar Estados do IBGE quando for Brasil
   useEffect(() => {
