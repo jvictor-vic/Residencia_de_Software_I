@@ -19,6 +19,7 @@
     "@astrojs/netlify": "^8.2.10",
     "@astrojs/react": "^7.1.0",
     "@hookform/resolvers": "^5.9.1",
+    "@netlify/blobs": "^11.1.7",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "astro": "^7.3.3",
