@@ -5,7 +5,9 @@
 - [Sobre o projeto](#sobre-o-projeto)
 - [Stack e arquitetura](#stack-e-arquitetura)
 - [Dependências](#dependências)
+- [Aliases de importação](#aliases-de-importação)
 - [Estrutura de arquivos](#estrutura-de-arquivos)
+- [Autenticação demonstrativa](#autenticação-demonstrativa)
 - [Estrutura de branches](#estrutura-de-branches)
 - [Ambiente de desenvolvimento](#ambiente-de-desenvolvimento)
 - [Instalação e execução](#instalação-e-execução)
@@ -36,6 +38,7 @@ As versões instaladas e seus intervalos estão definidos em `package.json`; `pa
 - `astro`: framework da aplicação;
 - `@astrojs/react`, `react` e `react-dom`: integração e componentes React;
 - `@astrojs/netlify` e `netlify-cli`: adaptador de deploy e ferramentas locais da Netlify;
+- `@netlify/blobs`: armazenamento demonstrativo de contas, perfis e sessões no servidor;
 - `react-hook-form`, `@hookform/resolvers` e `zod`: formulários e validação de dados;
 - `imask` e `react-imask`: máscaras de entrada;
 - `gsap`: animações;
@@ -44,6 +47,20 @@ As versões instaladas e seus intervalos estão definidos em `package.json`; `pa
 
 - `eslint`: análise estática;
 - `prettier`: formatação e compatibilidade entre formatador e linter.
+
+## Aliases de importação
+
+O `tsconfig.json` configura aliases para importar módulos de `src/` sem precisar usar caminhos relativos longos:
+
+| Alias           | Diretório de destino |
+| --------------- | -------------------- |
+| `@utils/*`      | `src/utils/*`        |
+| `@assets/*`     | `src/assets/*`       |
+| `@components/*` | `src/components/*`   |
+| `@data/*`       | `src/data/*`         |
+| `@services/*`   | `src/services/*`     |
+
+Por exemplo, `@utils/calcularIdade` aponta para `src/utils/calcularIdade`. O alias `@services/*` já está configurado; os módulos correspondentes podem ser adicionados em `src/services/` conforme necessário.
 
 ## Estrutura de arquivos
 
@@ -66,11 +83,25 @@ As versões instaladas e seus intervalos estão definidos em `package.json`; `pa
 │   ├── data/                      # Dados usados pela aplicação
 │   ├── layouts/                   # Layouts compartilhados
 │   ├── pages/                     # Páginas e rotas Astro
+│   │   └── api/auth/              # Endpoints de cadastro, login e logout
+│   ├── services/                  # Serviços executados no servidor (inclui autenticação)
 │   ├── utils/                     # Funções utilitárias e validações
 │   ├── global.css                 # Estilos globais
 │   └── variables.css              # Variáveis CSS globais
 ...
 ```
+
+## Autenticação demonstrativa
+
+O cadastro, login e logout usam endpoints Astro no servidor e Netlify Blobs. A autenticação serve apenas para demonstração com dados fictícios; não use com dados pessoais reais nem como solução de produção. Consulte [docs/autenticacao.md](./docs/autenticacao.md) para o fluxo, estrutura de dados, configuração local/Netlify e limitações.
+
+Para testar o fluxo localmente, inicie o ambiente da Netlify:
+
+```bash
+npx netlify dev
+```
+
+O servidor Astro isolado (`npm run dev`) pode ser usado para páginas sem Blobs, mas não substitui o ambiente local da Netlify para testar a persistência de autenticação.
 
 ## Estrutura de branches
 

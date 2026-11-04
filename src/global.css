@@ -300,7 +300,7 @@ button {
   color: var(--bg);
 
   cursor: pointer;
-  transition: box-shadow 0.2s;
+  transition: all 0.2s ease;
 }
 
 button:hover,
