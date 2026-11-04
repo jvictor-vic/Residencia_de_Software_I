@@ -1,0 +1,25 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import { readSession } from '../services/auth';
+
+export const prerender = false;
+
+const session = await readSession(Astro.request);
+if (!session) {
+  return Astro.redirect('/entrar');
+}
+Astro.response.headers.set('Cache-Control', 'private, no-store');
+---
+
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <BaseHead title="Área autenticada | EducaHub" description="Área demonstrativa autenticada." />
+  </head>
+  <body>
+    <main>
+      <h1>Área autenticada</h1>
+      <p>Login realizado com sucesso. Esta é uma página provisória do EducaHub.</p>
+    </main>
+  </body>
+</html>
