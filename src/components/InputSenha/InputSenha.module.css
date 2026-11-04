@@ -1,0 +1,125 @@
+.container {
+  display: flex;
+  position: relative;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.wrapper {
+  position: relative;
+  width: 100%;
+  transition: background-color 0.2s ease;
+}
+
+.wrapper::before {
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  background-color: var(--fg--20);
+  content: '';
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.wrapper:focus-within::before,
+.wrapper.active::before {
+  transform: translate(2px, 4px);
+}
+
+.wrapper.valid::before {
+  background-color: var(--success--bg);
+}
+
+.wrapper.invalid::before {
+  background-color: var(--error--bg);
+}
+
+.input {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  padding-right: 64px;
+  border: none;
+  outline: transparent;
+  background: transparent;
+}
+
+.wrapper.valid .input {
+  outline-color: var(--success--bg);
+}
+
+.wrapper.invalid .input {
+  outline-color: var(--error--bg);
+}
+
+.input[aria-invalid='true'] {
+  border: 3px solid var(--error--fg);
+}
+
+.statusIcon {
+  position: absolute;
+  top: 50%;
+  right: 52px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.statusIcon img {
+  width: 20px;
+  height: 20px;
+}
+
+.validIcon {
+  color: var(--success--fg);
+}
+
+.invalidIcon {
+  color: var(--error--fg);
+}
+
+.visibilityToggle {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  z-index: 3;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  padding: 8px;
+  place-items: center;
+  transform: translateY(-50%);
+  border-radius: 12px;
+  background: transparent;
+}
+
+.visibilityToggle:hover,
+.visibilityToggle:focus-visible {
+  box-shadow: none;
+}
+
+.visibilityToggle:focus-visible {
+  outline: 2px solid var(--secondary);
+}
+
+.visibilityToggle svg {
+  width: 28px;
+  height: 24px;
+  color: var(--fg--20);
+  transition: color 0.2s ease;
+}
+
+.visibilityToggle:hover svg,
+.visibilityToggle:focus-visible svg {
+  color: var(--secondary);
+}
+
+.errorMessage {
+  font-family: var(--font-cabin);
+  font-size: 12px;
+  color: var(--error--fg);
+}
