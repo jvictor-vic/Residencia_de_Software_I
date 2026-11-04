@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { calcularIdade } from '@utils/calcularIdade';
+import { senhaSchema } from '@components/CadastroSenha/senhaSchema';
 
 const generosEnum = [
   'Homem Cis',
@@ -60,6 +61,10 @@ export const alunoSchema = z
     logradouro: z.string().min(3, { message: 'Logradouro é obrigatório.' }),
     numero: z.string().optional(),
     complemento: z.string().optional(),
+    senhaAluno: senhaSchema,
+    confirmarSenhaAluno: z.string().min(1, { message: 'Confirme a senha do aluno.' }),
+    senhaResponsavel: z.string().optional(),
+    confirmarSenhaResponsavel: z.string().optional(),
   })
   .refine(
     (data) => {
@@ -111,6 +116,73 @@ export const alunoSchema = z
       message: 'Preencha todos os dados obrigatórios do responsável.',
       path: ['responsavelNomeCompleto'],
     },
-  );
+  )
+  .superRefine((data, context) => {
+    if (data.senhaAluno !== data.confirmarSenhaAluno) {
+      context.addIssue({
+        code: 'custom',
+        message: 'As senhas do aluno não coincidem.',
+        path: ['confirmarSenhaAluno'],
+      });
+    }
+
+    if (calcularIdade(data.dataNascimento) >= 18) {
+      if (
+        !data.responsavelEmail?.trim() ||
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.responsavelEmail)
+      ) {
+        context.addIssue({
+          code: 'custom',
+          message: 'Informe um e-mail válido para a conta de responsável.',
+          path: ['responsavelEmail'],
+        });
+      }
+
+      const telefone = data.responsavelTelefone?.replace(/\D/g, '') ?? '';
+      if (![10, 11].includes(telefone.length)) {
+        context.addIssue({
+          code: 'custom',
+          message: 'Informe um telefone válido para a conta de responsável.',
+          path: ['responsavelTelefone'],
+        });
+      }
+      return;
+    }
+
+    const cpfAluno = data.cpf.replace(/\D/g, '');
+    const cpfResponsavel = data.responsavelCpf?.replace(/\D/g, '');
+    if (cpfResponsavel && cpfAluno === cpfResponsavel) {
+      context.addIssue({
+        code: 'custom',
+        message: 'O aluno menor e o responsável precisam ter CPFs diferentes.',
+        path: ['responsavelCpf'],
+      });
+    }
+
+    const senhaResponsavelValida = senhaSchema.safeParse(data.senhaResponsavel);
+    if (!senhaResponsavelValida.success) {
+      for (const issue of senhaResponsavelValida.error.issues) {
+        context.addIssue({
+          code: 'custom',
+          message: issue.message,
+          path: ['senhaResponsavel'],
+        });
+      }
+    }
+
+    if (!data.confirmarSenhaResponsavel) {
+      context.addIssue({
+        code: 'custom',
+        message: 'Confirme a senha do responsável.',
+        path: ['confirmarSenhaResponsavel'],
+      });
+    } else if (data.senhaResponsavel !== data.confirmarSenhaResponsavel) {
+      context.addIssue({
+        code: 'custom',
+        message: 'As senhas do responsável não coincidem.',
+        path: ['confirmarSenhaResponsavel'],
+      });
+    }
+  });
 
 export type AlunoFormData = z.infer<typeof alunoSchema>;
