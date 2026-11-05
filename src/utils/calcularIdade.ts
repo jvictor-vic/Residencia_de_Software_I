@@ -1,5 +1,5 @@
 export function calcularIdade(dataNascimento: Date | string): number {
-  const dataNasc = new Date(dataNascimento);
+  const dataNasc = parseDataNascimento(dataNascimento);
 
   if (isNaN(dataNasc.getTime())) {
     return 0;
@@ -18,4 +18,25 @@ export function calcularIdade(dataNascimento: Date | string): number {
   return Math.max(0, idade);
   // retorna idade completa
   // ou 0 se a data de nascimento for inválida
+}
+
+function parseDataNascimento(dataNascimento: Date | string): Date {
+  if (typeof dataNascimento === 'string') {
+    const partes = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dataNascimento);
+    if (partes) {
+      const [, ano, mes, dia] = partes;
+      const dataLocal = new Date(Number(ano), Number(mes) - 1, Number(dia));
+      if (
+        dataLocal.getFullYear() !== Number(ano) ||
+        dataLocal.getMonth() !== Number(mes) - 1 ||
+        dataLocal.getDate() !== Number(dia)
+      ) {
+        return new Date(Number.NaN);
+      }
+
+      return dataLocal;
+    }
+  }
+
+  return new Date(dataNascimento);
 }

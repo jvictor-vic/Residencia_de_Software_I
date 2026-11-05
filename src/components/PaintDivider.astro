@@ -16,7 +16,7 @@ const { color = '#EA7A3E', class: className = '' } = Astro.props;
     viewBox="0 0 1440 359"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
-    preserveAspectRatio="xMidyMid slice"
+    preserveAspectRatio="none"
   >
     <g filter="url(#filter1_g_43_244)">
       <path
@@ -73,16 +73,32 @@ const { color = '#EA7A3E', class: className = '' } = Astro.props;
 <style>
   .paint-divider-wrapper {
     width: 100%;
-    height: fit-content;
+    aspect-ratio: 1440 / 359;
     overflow: hidden;
     line-height: 0;
     clip-path: inset(0 100% 0 0);
+    position: relative;
   }
 
   .paint-svg {
-    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 125%;
+    height: 100%;
     display: block;
-
     outline: none;
+  }
+
+  @media (max-width: 720px) {
+    .paint-divider-wrapper {
+      width: 150%;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .paint-divider-wrapper {
+      width: 200%;
+    }
   }
 </style>

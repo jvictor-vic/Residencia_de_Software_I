@@ -33,6 +33,8 @@
   --fg: #120c07;
 
   /* Cores de Identificação */
+  --bg-size: 46px;
+
   --id-00-bg: #e46767;
   --id-01-bg: #e49167;
   --id-02-bg: #e4ba67;
