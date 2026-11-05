@@ -13,6 +13,13 @@ export type Genero = 'Homem Cis' | 'Homem Trans' | 'Mulher Cis' | 'Mulher Trans'
 export type CorRaca = 'Amarela' | 'Branca' | 'Indígena' | 'Parda' | 'Preta';
 export type ZonaMoradia = 'Urbana' | 'Rural';
 
+export interface DadosPessoaisUsuario {
+  nomeCompleto: string;
+  genero: Genero;
+  dataNascimento: Date | string;
+  nomeSocial?: string;
+}
+
 export interface DadosContaUsuario {
   cpf: string;
   senhaHash: string;
@@ -153,13 +160,9 @@ export interface VinculoFamiliar {
 }
 
 export interface DadosAluno {
-  nomeCompleto: string;
-  genero: Genero;
   corRaca: CorRaca;
   nacionalidade: string;
-  dataNascimento: Date | string;
   residencia: ResidenciaAluno;
-  nomeSocial?: string;
   estadoNatal?: string;
   naturalidade?: string;
   responsavel?: VinculoFamiliar;
@@ -168,13 +171,9 @@ export interface DadosAluno {
 }
 
 export class Aluno {
-  readonly nomeCompleto: string;
-  readonly genero: Genero;
   readonly corRaca: CorRaca;
   readonly nacionalidade: string;
-  readonly dataNascimento: DataNascimentoISO;
   readonly residencia: ResidenciaAluno;
-  readonly nomeSocial?: string;
   readonly estadoNatal?: string;
   readonly naturalidade?: string;
   readonly responsavel?: VinculoFamiliar;
@@ -182,7 +181,6 @@ export class Aluno {
   readonly avisos: unknown[];
 
   constructor(dados: DadosAluno) {
-    const dataNascimento = serializarDataNascimento(dados.dataNascimento);
     if (
       dados.nacionalidade === 'Brasil' &&
       (!dados.estadoNatal?.trim() || !dados.naturalidade?.trim())
@@ -190,17 +188,9 @@ export class Aluno {
       throw new Error('Estado e naturalidade são obrigatórios para alunos brasileiros.');
     }
 
-    if (calcularIdade(dataNascimento) < 18 && !dados.responsavel) {
-      throw new Error('Dados do responsável são obrigatórios para alunos menores de 18 anos.');
-    }
-
-    this.nomeCompleto = dados.nomeCompleto;
-    this.genero = dados.genero;
     this.corRaca = dados.corRaca;
     this.nacionalidade = dados.nacionalidade;
-    this.dataNascimento = dataNascimento;
     this.residencia = { ...dados.residencia };
-    this.nomeSocial = dados.nomeSocial;
     this.estadoNatal = dados.estadoNatal;
     this.naturalidade = dados.naturalidade;
 
@@ -217,50 +207,27 @@ export class Aluno {
 }
 
 export interface DadosResponsavel {
-  nomeCompleto: string;
-  genero: Genero;
-  dataNascimento: Date | string;
   telefone?: string;
   email?: string;
-  nomeSocial?: string;
   tutelados?: VinculoFamiliar[];
   avisos?: unknown[];
 }
 
 export class Responsavel {
-  readonly nomeCompleto: string;
-  readonly genero: Genero;
-  readonly dataNascimento: DataNascimentoISO;
   readonly telefone?: string;
   readonly email?: string;
-  readonly nomeSocial?: string;
   readonly tutelados: VinculoFamiliar[];
   readonly avisos: unknown[];
 
   constructor(dados: DadosResponsavel) {
-    this.nomeCompleto = dados.nomeCompleto;
-    this.genero = dados.genero;
-    this.dataNascimento = serializarDataNascimento(dados.dataNascimento);
     this.telefone = dados.telefone;
     this.email = dados.email;
-    this.nomeSocial = dados.nomeSocial;
     this.tutelados = (dados.tutelados ?? []).map((tutelado) => ({
       ...tutelado,
       cpfContaRelacionada: normalizarCpf(tutelado.cpfContaRelacionada),
     }));
     this.avisos = [...(dados.avisos ?? [])];
   }
-}
-
-export function criarContaDeAluno(
-  cpf: string,
-  senhaHash: string,
-  dataNascimento: Date | string,
-): ContaUsuario {
-  const idade = calcularIdade(dataNascimento);
-  const papeis: PapelUsuario[] = idade >= 18 ? ['aluno', 'responsavel'] : ['aluno'];
-
-  return new ContaUsuario({ cpf, senhaHash, papeis });
 }
 
 function normalizarCpf(cpf: string): string {

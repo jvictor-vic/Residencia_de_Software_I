@@ -8,14 +8,16 @@ O fluxo é renderizado no servidor Astro e persiste em Netlify Blobs. O navegado
 
 As páginas e endpoints são:
 
-| Rota                 | Método/uso       | Comportamento                                                               |
-| -------------------- | ---------------- | --------------------------------------------------------------------------- |
-| `/cadastrar`         | Página           | Formulário de cadastro do aluno e, para menores, do responsável             |
-| `/entrar`            | Página           | Formulário de login por CPF e senha                                         |
-| `/api/auth/register` | `POST`           | Valida e cria conta(s) e perfil(is)                                         |
-| `/api/auth/login`    | `POST`           | Verifica credenciais, cria sessão e envia cookie                            |
-| `/api/auth/logout`   | `POST`           | Invalida sessão e limpa cookie                                              |
-| `/painel`            | Página protegida | Verifica a sessão no servidor; sem sessão válida redireciona para `/entrar` |
+| Rota                 | Método/uso         | Comportamento                                                                                                     |
+| -------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| `/cadastrar`         | Página             | Formulário de cadastro do aluno e, para menores, do responsável                                                   |
+| `/entrar`            | Página             | Formulário de login por CPF e senha                                                                               |
+| `/api/auth/register` | `POST`             | Valida e cria conta(s) e perfil(is)                                                                               |
+| `/api/auth/login`    | `POST`             | Verifica credenciais, cria sessão e envia cookie                                                                  |
+| `/api/auth/logout`   | `POST`             | Invalida sessão e limpa cookie                                                                                    |
+| `/painel`            | Página protegida   | Verifica a sessão no servidor; sem sessão válida redireciona para `/entrar`                                       |
+| `/academico/*`       | Páginas protegidas | Middleware carrega conta e perfis; redireciona sessões ausentes para `/entrar` e papéis sem permissão para `/403` |
+| `/403`               | Página             | Informa que o tipo de usuário não tem permissão para acessar a área                                               |
 
 As páginas e endpoints que dependem de autenticação não são pré-renderizados. As respostas das APIs usam `Cache-Control: no-store`; a página protegida também usa `private, no-store`.
 
@@ -80,16 +82,27 @@ A confirmação é validada pelo formulário e não é enviada à API. No login,
 
 O store usado pelo serviço chama-se `educahub-auth-demo`. As chaves seguem estes formatos:
 
-| Chave                        | Conteúdo                                                             |
-| ---------------------------- | -------------------------------------------------------------------- |
-| `accounts/{cpf}`             | CPF, hash da senha e papéis da conta                                 |
-| `profiles/aluno/{cpf}`       | Perfil do aluno, endereço e vínculo com responsável quando aplicável |
-| `profiles/responsavel/{cpf}` | Perfil do responsável e lista de vínculos                            |
-| `sessions/{sha256-do-token}` | CPF da conta e horário de expiração da sessão                        |
+| Chave                        | Conteúdo                                                                            |
+| ---------------------------- | ----------------------------------------------------------------------------------- |
+| `accounts/{cpf}`             | CPF, hash, papéis, dados pessoais compartilhados e perfis específicos de cada papel |
+| `sessions/{sha256-do-token}` | CPF da conta e horário de expiração da sessão                                       |
 
-Datas de nascimento são serializadas como strings `YYYY-MM-DD`. Senhas nunca são armazenadas em texto puro: o serviço gera hashes com `scrypt`, salt aleatório e comparação de hash em tempo constante. O token aleatório da sessão é enviado apenas pelo cookie; o Blob guarda seu SHA-256, o CPF associado e a expiração.
+Cada pessoa possui um único documento `accounts/{cpf}`. Nome, gênero, data de
+nascimento e nome social são armazenados uma vez em `dadosPessoais`; os dados
+específicos ficam em `perfis.aluno` e/ou `perfis.responsavel`. Todo papel listado
+deve ter seu perfil correspondente. Datas de nascimento são serializadas como
+strings `YYYY-MM-DD`. Senhas nunca são armazenadas em texto puro: o serviço gera
+hashes com `scrypt`, salt aleatório e comparação de hash em tempo constante. O
+token aleatório da sessão é enviado apenas pelo cookie; o Blob guarda seu
+SHA-256, o CPF associado e a expiração.
 
-Blobs é armazenamento chave-valor, não um banco relacional: não há transação atômica entre a gravação de perfil(is) e conta(s), nem restrições relacionais. O cadastro usa gravações condicionais por chave (`onlyIfNew`) e tenta remover gravações anteriores se uma etapa falhar; essa compensação é best-effort e pode falhar, exigindo verificação administrativa. Registros de sessão também não recebem TTL automático: sessões expiradas são rejeitadas e removidas quando consultadas.
+Blobs é armazenamento chave-valor, não um banco relacional: não há transação
+atômica entre a gravação das contas do aluno e do responsável, nem restrições
+relacionais. O cadastro usa gravações condicionais por chave (`onlyIfNew`) e
+tenta remover gravações anteriores se uma etapa falhar; essa compensação é
+best-effort e pode falhar, exigindo verificação administrativa. Registros de
+sessão também não recebem TTL automático: sessões expiradas são rejeitadas e
+removidas quando consultadas.
 
 ## Sessão, cookie e autorização
 
@@ -104,6 +117,10 @@ Após login bem-sucedido, o servidor cria um token aleatório de 32 bytes e o en
 O token não é retornado no corpo JSON. Para cada pedido autenticado, o servidor deve validar o cookie e ler a sessão com `readSession`. Logout exclui o registro de sessão e devolve o cookie expirado. As rotas API verificam a origem da requisição quando o cabeçalho `Origin` está presente.
 
 Uma sessão válida identifica o CPF; ela não deve ser interpretada como prova de um papel solicitado pelo cliente. Uma rota que exija um papel específico precisa carregar o estado associado à conta no servidor e verificar o papel lá. Não autorize operações com base em CPF, papel ou ID recebido do navegador.
+
+As rotas em `/academico` e seus subcaminhos são protegidas por `src/middleware.ts`. O middleware valida a sessão, carrega a conta e os perfis associados no servidor e permite apenas contas com o papel `aluno` ou `responsavel`. Sem sessão válida, redireciona para `/entrar`; sem papel permitido, redireciona para `/403` (resposta 403). Falhas ao ler ou validar os dados persistidos não são tratadas como autorização bem-sucedida.
+
+Páginas protegidas podem reutilizar `src/layouts/Academico.astro` e acessar `Astro.locals.authenticatedUser` no frontmatter. O objeto contém `cpf`, `papeis`, `dadosPessoais` e os perfis existentes (`perfis.aluno` e/ou `perfis.responsavel`). Por exemplo, nome completo é acessado por `Astro.locals.authenticatedUser?.dadosPessoais.nomeCompleto`; campos específicos do aluno ficam em `Astro.locals.authenticatedUser?.perfis.aluno`. A leitura acontece no servidor e as respostas das rotas acadêmicas recebem `Cache-Control: private, no-store`.
 
 ## Configuração e execução
 
