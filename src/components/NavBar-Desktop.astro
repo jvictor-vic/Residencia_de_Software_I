@@ -1,0 +1,64 @@
+---
+import iconBoletim from '@assets/icons/boletim.svg?raw';
+import iconAgenda from '@assets/icons/calendario.svg?raw';
+import iconHorario from '@assets/icons/horario.svg?raw';
+import iconMaterias from '@assets/icons/materias.svg?raw';
+import iconSecretaria from '@assets/icons/secretaria.svg?raw';
+
+import open from '@assets/icons/sidebar-open.svg?raw';
+import close from '@assets/icons/sidebar-close.svg?raw';
+
+import separadorHorizontal from '@assets/icons/separador-horizontal.svg?raw';
+---
+
+<nav class="closed">
+  <button class="sidebar-toggle" aria-label="Abrir/Fechar menu" set:html={open} />
+  <a href="/boletim" aria-label="Boletim" set:html={iconBoletim} />
+  <div inert set:html={separadorHorizontal} />
+  <a href="/agenda" aria-label="Agenda" set:html={iconAgenda} />
+  <div inert set:html={separadorHorizontal} />
+  <a href="/horario" aria-label="Horários" set:html={iconHorario} />
+  <div inert set:html={separadorHorizontal} />
+  <a aria-label="Matérias" set:html={iconMaterias} />
+  <div inert set:html={separadorHorizontal} />
+  <a href="/secretaria" aria-label="Secretaria" set:html={iconSecretaria} />
+</nav>
+
+<style>
+  nav {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+
+    padding: 12px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+
+    background-color: var(--primary);
+  }
+
+  nav.closed {
+    width: 90px;
+  }
+
+  nav.open {
+    width: 190px;
+  }
+
+  nav > * {
+    color: var(--bg);
+  }
+
+  .sidebar-toggle {
+    background: none;
+  }
+
+  svg {
+    color: inherit;
+  }
+</style>

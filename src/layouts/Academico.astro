@@ -1,0 +1,39 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { title = 'Área acadêmica | EducaHub', description = 'Área acadêmica do EducaHub.' } =
+  Astro.props;
+const user = Astro.locals.authenticatedUser;
+
+if (!user) {
+  return Astro.redirect('/entrar');
+}
+
+if (!user.papeis.every((papel) => papel === 'aluno' || papel === 'responsavel')) {
+  return Astro.redirect('/403');
+}
+
+const nome =
+  user.aluno?.nomeSocial ||
+  user.aluno?.nomeCompleto ||
+  user.responsavel?.nomeSocial ||
+  user.responsavel?.nomeCompleto;
+---
+
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <BaseHead title={title} description={description} />
+  </head>
+  <body>
+    <header>{nome && <p>Olá, {nome}.</p>}</header>
+    <main>
+      <slot />
+    </main>
+  </body>
+</html>

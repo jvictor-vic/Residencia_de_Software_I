@@ -1,0 +1,11 @@
+---
+import Academico from '../../layouts/Academico.astro';
+
+const { authenticatedUser } = Astro.locals;
+---
+
+<Academico title="Área acadêmica | EducaHub">
+  <h1>Área acadêmica</h1>
+  {authenticatedUser?.perfis.aluno && <p>Perfil de aluno carregado.</p>}
+  {authenticatedUser?.perfis.responsavel && <p>Perfil de responsável carregado.</p>}
+</Academico>

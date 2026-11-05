@@ -83,6 +83,7 @@ Por exemplo, `@utils/calcularIdade` aponta para `src/utils/calcularIdade`. O ali
 │   ├── data/                      # Dados usados pela aplicação
 │   ├── layouts/                   # Layouts compartilhados
 │   ├── pages/                     # Páginas e rotas Astro
+│   │   ├── academico/             # Plataforma do aluno e responsável (rotas protegidas)
 │   │   └── api/auth/              # Endpoints de cadastro, login e logout
 │   ├── services/                  # Serviços executados no servidor (inclui autenticação)
 │   ├── utils/                     # Funções utilitárias e validações

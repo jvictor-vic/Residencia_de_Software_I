@@ -1,0 +1,55 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import NavBarDesktop from '@components/NavBar-Desktop.astro';
+
+// const end = 16;
+// let count = 0;
+// const list = [];
+// while (count <= end) {
+//   if (count < 10) {
+//     const id = '0' + count;
+//     list.push(id);
+//   } else {
+//     list.push(count);
+//   }
+//   count++;
+// }
+---
+
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <BaseHead />
+  </head>
+  <body>
+    <!-- {list.map((id) => (
+      <div class={'pattern-id-' + id}>
+        <h3>{'id-' + id}</h3>
+      </div>
+    ))} -->
+    <NavBarDesktop />
+  </body>
+</html>
+
+<style>
+  /* body {
+    padding: 8px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-content: center;
+  }
+  div {
+    height: 220px;
+    width: 220px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  h3 {
+    color: var(--bg);
+  } */
+</style>
