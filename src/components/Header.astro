@@ -1,0 +1,46 @@
+---
+import notificação from '../assets/icons/Notificação.svg?raw';
+import perfil from '../assets/icons/Perfil.svg?raw';
+
+let notiNUM = 3;
+---
+
+<header>
+  <button>
+    <Fragment set:html={notificação} />
+    <div class="badge">{notiNUM}</div>
+  </button>
+  <button>
+    <Fragment set:html={perfil} />
+  </button>
+</header>
+<style>
+  header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 16px;
+  }
+  button {
+    all: unset;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .badge {
+    background-color: var(--error--fg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    position: relative;
+    top: -5px;
+    right: 15px;
+  }
+</style>
+
+
