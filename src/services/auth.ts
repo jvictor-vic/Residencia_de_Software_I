@@ -1,7 +1,7 @@
 import { getStore } from '@netlify/blobs';
 import { createHash, randomBytes, scrypt as nodeScrypt, timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
-import { Aluno, ContaUsuario, Responsavel, criarContaDeAluno } from '@data/users/classes';
+import { Aluno, ContaUsuario, PAPEIS_USUARIO, Responsavel } from '@data/users/classes';
 import { calcularIdade } from '@utils/calcularIdade';
 import { cpfValidator } from '@utils/cpfValidator';
 import { senhaSchema } from '@components/CadastroSenha/senhaSchema';
@@ -38,6 +38,17 @@ const dataNascimentoSchema = z
   .refine((data) => data.getFullYear() >= 1900);
 
 const store = () => getStore(STORE_NAME, { consistency: 'strong' });
+
+async function loadAccount(cpf: string): Promise<z.infer<typeof accountSchema> | null> {
+  const stored = await store().get(`accounts/${cpf}`, { type: 'json' });
+  if (stored === null) return null;
+
+  const account = accountSchema.parse(stored);
+  if (account.cpf !== cpf) {
+    throw new Error('O CPF armazenado não corresponde à chave da conta.');
+  }
+  return account;
+}
 
 const registrationSchema = z.object({
   aluno: z.object({
@@ -76,11 +87,87 @@ const loginSchema = z.object({
   senha: z.string().min(1).max(256),
 });
 
-const accountSchema = z.object({
-  cpf: z.string().regex(/^\d{11}$/),
-  senhaHash: z.string(),
-  papeis: z.array(z.enum(['aluno', 'responsavel'])).min(1),
-});
+const accountSchema = z
+  .object({
+    cpf: z.string().regex(/^\d{11}$/),
+    senhaHash: z.string(),
+    papeis: z.array(z.enum(PAPEIS_USUARIO)).min(1),
+    dadosPessoais: z.object({
+      nomeCompleto: z.string(),
+      genero: z.enum(GENEROS),
+      dataNascimento: z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}$/)
+        .refine(isDataISOValida),
+      nomeSocial: z.string().optional(),
+    }),
+    perfis: z.object({
+      aluno: z
+        .object({
+          corRaca: z.enum(RACAS),
+          nacionalidade: z.string(),
+          residencia: z.object({
+            zonaMoradia: z.enum(ZONAS),
+            cep: z.string(),
+            estadoResidencial: z.string(),
+            municipioResidencial: z.string(),
+            bairroResidencial: z.string(),
+            logradouro: z.string(),
+            numero: z.string().optional(),
+            complemento: z.string().optional(),
+          }),
+          estadoNatal: z.string().optional(),
+          naturalidade: z.string().optional(),
+          responsavel: z
+            .object({
+              cpfContaRelacionada: z.string().regex(/^\d{11}$/),
+              parentesco: z.string(),
+            })
+            .optional(),
+          academico: z.array(z.unknown()),
+          avisos: z.array(z.unknown()),
+        })
+        .optional(),
+      responsavel: z
+        .object({
+          telefone: z.string().optional(),
+          email: z.string().optional(),
+          tutelados: z.array(
+            z.object({
+              cpfContaRelacionada: z.string().regex(/^\d{11}$/),
+              parentesco: z.string(),
+            }),
+          ),
+          avisos: z.array(z.unknown()),
+        })
+        .optional(),
+    }),
+  })
+  .superRefine((account, context) => {
+    const papeis = new Set(account.papeis);
+    if (papeis.size !== account.papeis.length) {
+      context.addIssue({ code: 'custom', message: 'A conta contém papéis duplicados.' });
+    }
+    if (papeis.has('aluno') !== Boolean(account.perfis.aluno)) {
+      context.addIssue({ code: 'custom', message: 'O papel de aluno não corresponde ao perfil.' });
+    }
+    if (papeis.has('responsavel') !== Boolean(account.perfis.responsavel)) {
+      context.addIssue({
+        code: 'custom',
+        message: 'O papel de responsável não corresponde ao perfil.',
+      });
+    }
+    if (
+      account.perfis.aluno &&
+      calcularIdade(account.dadosPessoais.dataNascimento) < 18 &&
+      !account.perfis.aluno.responsavel
+    ) {
+      context.addIssue({
+        code: 'custom',
+        message: 'Alunos menores de 18 anos precisam de um vínculo com responsável.',
+      });
+    }
+  });
 
 const sessionSchema = z.object({
   cpf: z.string().regex(/^\d{11}$/),
@@ -88,6 +175,11 @@ const sessionSchema = z.object({
 });
 
 type JsonRecord = Record<string, unknown>;
+
+export type PerfilAutenticado = Pick<
+  z.infer<typeof accountSchema>,
+  'cpf' | 'papeis' | 'dadosPessoais' | 'perfis'
+>;
 
 export class AuthRequestError extends Error {
   constructor(
@@ -217,39 +309,52 @@ export async function registerAccount(input: unknown): Promise<void> {
   }
 
   const senhaAlunoHash = await hashPassword(senha);
-  const contaAluno = criarContaDeAluno(cpfAluno, senhaAlunoHash, dataNascimento);
-  const perfis: Array<{ key: string; value: Aluno | Responsavel }> = [
-    {
-      key: `profiles/aluno/${cpfAluno}`,
-      value: new Aluno({
-        nomeCompleto: form.nomeCompleto,
-        genero: form.genero,
-        nomeSocial: form.nomeSocial,
-        corRaca: form.corRaca,
-        nacionalidade: form.nacionalidade,
-        estadoNatal: form.estadoNatal,
-        naturalidade: form.naturalidade,
-        dataNascimento,
-        residencia: {
-          zonaMoradia: form.zonaMoradia,
-          cep: form.cep,
-          estadoResidencial: form.estadoResidencial,
-          municipioResidencial: form.municipioResidencial,
-          bairroResidencial: form.bairroResidencial,
-          logradouro: form.logradouro,
-          numero: form.numero,
-          complemento: form.complemento,
-        },
-        responsavel:
-          dadosResponsavel && cpfResponsavel
-            ? {
-                cpfContaRelacionada: cpfResponsavel,
-                parentesco: dadosResponsavel.parentesco,
-              }
-            : undefined,
-      }),
+  const aluno = new Aluno({
+    corRaca: form.corRaca,
+    nacionalidade: form.nacionalidade,
+    estadoNatal: form.estadoNatal,
+    naturalidade: form.naturalidade,
+    residencia: {
+      zonaMoradia: form.zonaMoradia,
+      cep: form.cep,
+      estadoResidencial: form.estadoResidencial,
+      municipioResidencial: form.municipioResidencial,
+      bairroResidencial: form.bairroResidencial,
+      logradouro: form.logradouro,
+      numero: form.numero,
+      complemento: form.complemento,
     },
-  ];
+    responsavel:
+      dadosResponsavel && cpfResponsavel
+        ? {
+            cpfContaRelacionada: cpfResponsavel,
+            parentesco: dadosResponsavel.parentesco,
+          }
+        : undefined,
+  });
+  const perfisAluno = {
+    aluno,
+    ...(idade >= 18
+      ? {
+          responsavel: new Responsavel({
+            telefone: form.responsavelTelefone?.trim(),
+            email: form.responsavelEmail?.trim(),
+          }),
+        }
+      : {}),
+  };
+  const contaAluno = new ContaUsuario({
+    cpf: cpfAluno,
+    senhaHash: senhaAlunoHash,
+    papeis: idade >= 18 ? ['aluno', 'responsavel'] : ['aluno'],
+    dadosPessoais: {
+      nomeCompleto: form.nomeCompleto,
+      genero: form.genero,
+      nomeSocial: form.nomeSocial,
+      dataNascimento,
+    },
+    perfis: perfisAluno,
+  });
 
   const accounts: Array<{ key: string; value: ContaUsuario }> = [
     { key: `accounts/${cpfAluno}`, value: contaAluno },
@@ -262,35 +367,24 @@ export async function registerAccount(input: unknown): Promise<void> {
         cpf: cpfResponsavel,
         senhaHash: senhaResponsavelHash,
         papeis: ['responsavel'],
-      }),
-    });
-    perfis.push({
-      key: `profiles/responsavel/${cpfResponsavel}`,
-      value: new Responsavel({
-        nomeCompleto: dadosResponsavel.nome,
-        genero: dadosResponsavel.genero,
-        nomeSocial: dadosResponsavel.nomeSocial,
-        dataNascimento: dadosResponsavel.dataNascimento,
-        telefone: dadosResponsavel.telefone,
-        email: dadosResponsavel.email,
-        tutelados: [
-          {
-            cpfContaRelacionada: cpfAluno,
-            parentesco: dadosResponsavel.parentesco,
-          },
-        ],
-      }),
-    });
-  } else {
-    perfis.push({
-      key: `profiles/responsavel/${cpfAluno}`,
-      value: new Responsavel({
-        nomeCompleto: form.nomeCompleto,
-        genero: form.genero,
-        nomeSocial: form.nomeSocial,
-        dataNascimento,
-        telefone: form.responsavelTelefone?.trim(),
-        email: form.responsavelEmail?.trim(),
+        dadosPessoais: {
+          nomeCompleto: dadosResponsavel.nome,
+          genero: dadosResponsavel.genero,
+          nomeSocial: dadosResponsavel.nomeSocial,
+          dataNascimento: dadosResponsavel.dataNascimento,
+        },
+        perfis: {
+          responsavel: new Responsavel({
+            telefone: dadosResponsavel.telefone,
+            email: dadosResponsavel.email,
+            tutelados: [
+              {
+                cpfContaRelacionada: cpfAluno,
+                parentesco: dadosResponsavel.parentesco,
+              },
+            ],
+          }),
+        },
       }),
     });
   }
@@ -305,19 +399,6 @@ export async function registerAccount(input: unknown): Promise<void> {
 
   const createdKeys: string[] = [];
   try {
-    // Blobs is key-value storage without relational constraints or multi-key transactions.
-    // Conditional writes protect individual keys; rollback is best-effort and may need cleanup.
-    for (const profile of perfis) {
-      const result = await blobStore.setJSON(profile.key, profile.value, { onlyIfNew: true });
-      if (!result.modified) {
-        throw new AuthRequestError(
-          'Já existe um perfil cadastrado para um dos CPFs informados.',
-          409,
-        );
-      }
-      createdKeys.push(profile.key);
-    }
-
     for (const account of accounts) {
       const result = await blobStore.setJSON(account.key, account.value, { onlyIfNew: true });
       if (!result.modified) {
@@ -356,10 +437,7 @@ export async function login(input: unknown): Promise<{ cookie: string }> {
   let account: z.infer<typeof accountSchema> | null = null;
 
   if (cpf && cpfValidator(cpf)) {
-    const stored = await store().get(`accounts/${cpf}`, { type: 'json' });
-    if (stored !== null) {
-      account = accountSchema.parse(stored);
-    }
+    account = await loadAccount(cpf);
   }
 
   const senhaValida = account
@@ -410,6 +488,22 @@ export async function readSession(request: Request): Promise<{ cpf: string } | n
     return null;
   }
   return { cpf: session.cpf };
+}
+
+export async function readAuthenticatedProfile(
+  request: Request,
+): Promise<PerfilAutenticado | null> {
+  const session = await readSession(request);
+  if (!session) return null;
+
+  const account = await loadAccount(session.cpf);
+  if (!account) return null;
+  return {
+    cpf: account.cpf,
+    papeis: account.papeis,
+    dadosPessoais: account.dadosPessoais,
+    perfis: account.perfis,
+  };
 }
 
 export async function readJsonBody(request: Request): Promise<JsonRecord> {

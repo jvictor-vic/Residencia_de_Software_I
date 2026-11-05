@@ -1,23 +1,41 @@
 import { calcularIdade } from '@utils/calcularIdade';
 
-export type PapelUsuario = 'aluno' | 'responsavel';
+export const PAPEIS_USUARIO = ['aluno', 'responsavel'] as const;
+export type PapelUsuario = (typeof PAPEIS_USUARIO)[number];
 export type DataNascimentoISO = string;
 export type Genero = 'Homem Cis' | 'Homem Trans' | 'Mulher Cis' | 'Mulher Trans' | 'Não-Binário';
 export type CorRaca = 'Amarela' | 'Branca' | 'Indígena' | 'Parda' | 'Preta';
 export type ZonaMoradia = 'Urbana' | 'Rural';
 
+export interface DadosPessoaisUsuario {
+  nomeCompleto: string;
+  genero: Genero;
+  dataNascimento: Date | string;
+  nomeSocial?: string;
+}
+
 export interface DadosContaUsuario {
   cpf: string;
   senhaHash: string;
   papeis: readonly PapelUsuario[];
+  dadosPessoais: DadosPessoaisUsuario;
+  perfis: {
+    aluno?: DadosAluno;
+    responsavel?: DadosResponsavel;
+  };
 }
 
 export class ContaUsuario {
   readonly cpf: string;
   readonly senhaHash: string;
   readonly papeis: readonly PapelUsuario[];
+  readonly dadosPessoais: DadosPessoaisUsuario & { dataNascimento: DataNascimentoISO };
+  readonly perfis: {
+    aluno?: Aluno;
+    responsavel?: Responsavel;
+  };
 
-  constructor({ cpf, senhaHash, papeis }: DadosContaUsuario) {
+  constructor({ cpf, senhaHash, papeis, dadosPessoais, perfis }: DadosContaUsuario) {
     if (!senhaHash.trim()) {
       throw new Error('O hash da senha é obrigatório.');
     }
@@ -26,10 +44,36 @@ export class ContaUsuario {
     if (papeisUnicos.length === 0) {
       throw new Error('A conta deve ter ao menos um papel.');
     }
+    if (papeisUnicos.some((papel) => !PAPEIS_USUARIO.includes(papel))) {
+      throw new Error('A conta contém um papel inválido.');
+    }
+
+    const aluno = perfis.aluno ? new Aluno(perfis.aluno) : undefined;
+    const responsavel = perfis.responsavel ? new Responsavel(perfis.responsavel) : undefined;
+    if (papeisUnicos.includes('aluno') !== Boolean(aluno)) {
+      throw new Error('O papel de aluno deve corresponder a um perfil de aluno.');
+    }
+    if (papeisUnicos.includes('responsavel') !== Boolean(responsavel)) {
+      throw new Error('O papel de responsável deve corresponder a um perfil de responsável.');
+    }
+
+    const dadosPessoaisNormalizados = {
+      ...dadosPessoais,
+      dataNascimento: serializarDataNascimento(dadosPessoais.dataNascimento),
+    };
+    if (
+      aluno &&
+      calcularIdade(dadosPessoaisNormalizados.dataNascimento) < 18 &&
+      !aluno.responsavel
+    ) {
+      throw new Error('Dados do responsável são obrigatórios para alunos menores de 18 anos.');
+    }
 
     this.cpf = normalizarCpf(cpf);
     this.senhaHash = senhaHash;
     this.papeis = papeisUnicos;
+    this.dadosPessoais = dadosPessoaisNormalizados;
+    this.perfis = { aluno, responsavel };
   }
 }
 
@@ -50,13 +94,9 @@ export interface VinculoFamiliar {
 }
 
 export interface DadosAluno {
-  nomeCompleto: string;
-  genero: Genero;
   corRaca: CorRaca;
   nacionalidade: string;
-  dataNascimento: Date | string;
   residencia: ResidenciaAluno;
-  nomeSocial?: string;
   estadoNatal?: string;
   naturalidade?: string;
   responsavel?: VinculoFamiliar;
@@ -65,13 +105,9 @@ export interface DadosAluno {
 }
 
 export class Aluno {
-  readonly nomeCompleto: string;
-  readonly genero: Genero;
   readonly corRaca: CorRaca;
   readonly nacionalidade: string;
-  readonly dataNascimento: DataNascimentoISO;
   readonly residencia: ResidenciaAluno;
-  readonly nomeSocial?: string;
   readonly estadoNatal?: string;
   readonly naturalidade?: string;
   readonly responsavel?: VinculoFamiliar;
@@ -79,7 +115,6 @@ export class Aluno {
   readonly avisos: unknown[];
 
   constructor(dados: DadosAluno) {
-    const dataNascimento = serializarDataNascimento(dados.dataNascimento);
     if (
       dados.nacionalidade === 'Brasil' &&
       (!dados.estadoNatal?.trim() || !dados.naturalidade?.trim())
@@ -87,17 +122,9 @@ export class Aluno {
       throw new Error('Estado e naturalidade são obrigatórios para alunos brasileiros.');
     }
 
-    if (calcularIdade(dataNascimento) < 18 && !dados.responsavel) {
-      throw new Error('Dados do responsável são obrigatórios para alunos menores de 18 anos.');
-    }
-
-    this.nomeCompleto = dados.nomeCompleto;
-    this.genero = dados.genero;
     this.corRaca = dados.corRaca;
     this.nacionalidade = dados.nacionalidade;
-    this.dataNascimento = dataNascimento;
     this.residencia = { ...dados.residencia };
-    this.nomeSocial = dados.nomeSocial;
     this.estadoNatal = dados.estadoNatal;
     this.naturalidade = dados.naturalidade;
 
@@ -114,50 +141,27 @@ export class Aluno {
 }
 
 export interface DadosResponsavel {
-  nomeCompleto: string;
-  genero: Genero;
-  dataNascimento: Date | string;
   telefone?: string;
   email?: string;
-  nomeSocial?: string;
   tutelados?: VinculoFamiliar[];
   avisos?: unknown[];
 }
 
 export class Responsavel {
-  readonly nomeCompleto: string;
-  readonly genero: Genero;
-  readonly dataNascimento: DataNascimentoISO;
   readonly telefone?: string;
   readonly email?: string;
-  readonly nomeSocial?: string;
   readonly tutelados: VinculoFamiliar[];
   readonly avisos: unknown[];
 
   constructor(dados: DadosResponsavel) {
-    this.nomeCompleto = dados.nomeCompleto;
-    this.genero = dados.genero;
-    this.dataNascimento = serializarDataNascimento(dados.dataNascimento);
     this.telefone = dados.telefone;
     this.email = dados.email;
-    this.nomeSocial = dados.nomeSocial;
     this.tutelados = (dados.tutelados ?? []).map((tutelado) => ({
       ...tutelado,
       cpfContaRelacionada: normalizarCpf(tutelado.cpfContaRelacionada),
     }));
     this.avisos = [...(dados.avisos ?? [])];
   }
-}
-
-export function criarContaDeAluno(
-  cpf: string,
-  senhaHash: string,
-  dataNascimento: Date | string,
-): ContaUsuario {
-  const idade = calcularIdade(dataNascimento);
-  const papeis: PapelUsuario[] = idade >= 18 ? ['aluno', 'responsavel'] : ['aluno'];
-
-  return new ContaUsuario({ cpf, senhaHash, papeis });
 }
 
 function normalizarCpf(cpf: string): string {
