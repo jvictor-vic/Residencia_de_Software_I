@@ -44,94 +44,22 @@ Temos duas listas das matérias da matriz currícular do estado de Sergipe:
   - História
   - Sociologia
 
-## Elementos Visuais de Cada Matéria
+## ID de Cada Matéria
 
-### Arte
-
-- Cor:
-- Ícone:
-- Padrão:
-
-### Educação Física
-
-- Cor:
-- Ícone:
-- Padrão:
-
-### Língua Espanhola
-
-- Cor:
-- Ícone:
-- Padrão:
-
-### Língua Inglesa
-
-- Cor:
-- Ícone:
-- Padrão:
-
-### Língua Portuguesa
-
-- Cor:
-- Ícone:
-- Padrão:
-
-### Matemática
-
-- Cor:
-- Ícone:
-- Padrão:
-
-### Ciências
-
-- Cor:
-- Ícone:
-- Padrão:
-
-### Biologia
-
-- Cor:
-- Ícone:
-- Padrão:
-
-### Física
-
-- Cor:
-- Ícone:
-- Padrão:
-
-### Química
-
-- Cor:
-- Ícone:
-- Padrão:
-
-### Filosofia
-
-- Cor:
-- Ícone:
-- Padrão:
-
-### Geografia
-
-- Cor:
-- Ícone:
-- Padrão:
-
-### História
-
-- Cor:
-- Ícone:
-- Padrão:
-
-### Sociologia
-
-- Cor:
-- Ícone:
-- Padrão:
-
-### Ensino Religioso
-
-- Cor:
-- Ícone:
-- Padrão:
+- 00
+- Língua Espanhola => 01
+- História => 02
+- Química => 03
+- Biologia => 04
+- Educação Física => 05
+- 06
+- Filosofia => 07
+- Geografia => 08
+- Ciências => 09
+- Sociologia => 10
+- Língua Inglesa => 11
+- Física => 12
+- Arte => 13
+- Língua Portuguesa => 14
+- Ensino Religioso => 15
+- Matemática => 16
