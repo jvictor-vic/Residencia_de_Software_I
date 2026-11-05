@@ -115,7 +115,7 @@ As validações de CI são executadas em pushes e pull requests direcionados a `
 
 ## Ambiente de desenvolvimento
 
-- **Node.js:** versão `>=22.12.0`;
+- **Node.js:** versão `>=22.12.0` ([download](https://nodejs.org/pt-br/download));
 - **Editor recomendado:** [Visual Studio Code](https://code.visualstudio.com) com as extensões [Astro](https://marketplace.visualstudio.com/items?itemName=astro-build.astro-vscode), [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode) e [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint).
 
 ## Instalação e execução
