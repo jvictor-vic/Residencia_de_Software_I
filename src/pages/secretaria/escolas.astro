@@ -1,0 +1,485 @@
+---
+/** Escolas da rede, com busca por nome/município e filtro por região. */
+import AppLayout from '../../layouts/AppLayout.astro';
+import Status from '../../components/Status.astro';
+import Icone from '../../components/Icone.astro';
+import { escolasRede as escolasFixture, paraBusca } from '../../data/dados';
+import { readModuleData } from '../../services/modulos';
+
+export const prerender = false;
+const modulo = await readModuleData(Astro.request, 'secretaria');
+const escolasRede = modulo.escolas as typeof escolasFixture;
+const META_IDEB = 4.6;
+const regioes = [...new Set(escolasRede.map((e) => e.regiao))].sort();
+---
+
+<AppLayout
+  perfil="secretaria"
+  ativo="escolas"
+  titulo="Escolas da rede"
+  subtitulo={`${escolasRede.length} escolas exibidas nesta demonstração`}
+  ajuda="Lista das escolas da rede estadual. Você pode procurar pelo nome da escola ou do município e escolher uma região. A coluna IDEB mostra se a escola atingiu a meta."
+>
+  <section class="card">
+    <div class="cabecalho-lista">
+      <div>
+        <h2>Escolas cadastradas</h2>
+        <p class="suave">Consulte a rede e registre novas unidades escolares.</p>
+      </div>
+      <button
+        class="btn btn-primario"
+        type="button"
+        id="abrir-cadastro"
+        aria-expanded="false"
+        aria-controls="formulario-escola"
+      >
+        Adicionar escola
+      </button>
+    </div>
+    <form id="formulario-escola" class="formulario-escola" hidden>
+      <h2>Cadastro de nova escola</h2>
+      <p>
+        Cadastro exclusivamente demonstrativo. Os metadados dos arquivos serão registrados, mas o
+        conteúdo dos arquivos não será enviado. Não representa autorização oficial de funcionamento.
+      </p>
+      <div class="campos">
+        <div class="campo">
+          <label for="nome-escola">Nome da escola *</label>
+          <input id="nome-escola" name="nome" required maxlength="140" />
+        </div>
+        <div class="campo">
+          <label for="codigo-escola">Código INEP (se houver)</label>
+          <input id="codigo-escola" name="inep" inputmode="numeric" maxlength="8" />
+        </div>
+        <div class="campo">
+          <label for="cnpj-escola">CNPJ da mantenedora *</label>
+          <input
+            id="cnpj-escola"
+            name="cnpj"
+            required
+            inputmode="numeric"
+            placeholder="00.000.000/0000-00"
+          />
+        </div>
+        <div class="campo">
+          <label for="responsavel-escola">Responsável legal *</label>
+          <input id="responsavel-escola" name="responsavel" required />
+        </div>
+        <div class="campo">
+          <label for="email-escola">E-mail institucional</label>
+          <input id="email-escola" name="email" type="email" />
+        </div>
+        <div class="campo">
+          <label for="telefone-escola">Telefone</label>
+          <input id="telefone-escola" name="telefone" type="tel" />
+        </div>
+        <div class="campo campo-largo">
+          <label for="endereco-escola">Endereço completo *</label>
+          <input
+            id="endereco-escola"
+            name="endereco"
+            required
+            placeholder="Logradouro, número, complemento e bairro"
+          />
+        </div>
+        <div class="campo">
+          <label for="municipio-escola">Município *</label>
+          <input id="municipio-escola" name="municipio" required />
+        </div>
+        <div class="campo">
+          <label for="uf-escola">UF *</label>
+          <select id="uf-escola" name="uf" required>
+            <option value="">Selecione</option>
+            {[
+              'AC',
+              'AL',
+              'AP',
+              'AM',
+              'BA',
+              'CE',
+              'DF',
+              'ES',
+              'GO',
+              'MA',
+              'MT',
+              'MS',
+              'MG',
+              'PA',
+              'PB',
+              'PR',
+              'PE',
+              'PI',
+              'RJ',
+              'RN',
+              'RS',
+              'RO',
+              'RR',
+              'SC',
+              'SP',
+              'SE',
+              'TO',
+            ].map((uf) => (
+              <option value={uf}>{uf}</option>
+            ))}
+          </select>
+        </div>
+        <div class="campo">
+          <label for="regiao-escola">Região demonstrativa *</label>
+          <select id="regiao-escola" name="regiao" required>
+            <option value="">Selecione</option>
+            {[
+              'Grande Aracaju',
+              'Leste',
+              'Agreste',
+              'Sul',
+              'Centro-Sul',
+              'Alto Sertão',
+              'Baixo São Francisco',
+            ].map((regiao) => (
+              <option value={regiao}>{regiao}</option>
+            ))}
+          </select>
+        </div>
+        <div class="campo">
+          <label for="etapa-escola">Etapas/modalidades *</label>
+          <input
+            id="etapa-escola"
+            name="etapas"
+            required
+            placeholder="Ex.: Educação Infantil e Ensino Fundamental"
+          />
+        </div>
+        <div class="campo">
+          <label for="dependencia-escola">Dependência administrativa *</label>
+          <select id="dependencia-escola" name="dependencia" required>
+            <option value="">Selecione</option>
+            <option>Municipal</option>
+            <option>Estadual</option>
+            <option>Federal</option>
+          </select>
+        </div>
+      </div>
+      <h3>Documentos para análise</h3>
+      <p class="suave">Anexe PDF ou imagem. É possível selecionar vários arquivos por categoria.</p>
+      <div class="documentos">
+        <fieldset>
+          <legend>1. Jurídica e institucional</legend>
+          <label for="docs-juridicos">
+            Ato de criação/autorização, CNPJ e atos constitutivos da mantenedora, identificação do
+            responsável legal
+          </label>
+          <input
+            id="docs-juridicos"
+            type="file"
+            multiple
+            accept=".pdf,.png,.jpg,.jpeg,.webp"
+            data-categoria="Jurídica e institucional"
+          />
+        </fieldset>
+        <fieldset>
+          <legend>2. Infraestrutura e imóvel</legend>
+          <label for="docs-imovel">
+            Comprovação de propriedade/cessão/locação, planta aprovada, laudo de habitabilidade e
+            segurança, acessibilidade e descrição das instalações
+          </label>
+          <input
+            id="docs-imovel"
+            type="file"
+            multiple
+            accept=".pdf,.png,.jpg,.jpeg,.webp"
+            data-categoria="Infraestrutura e imóvel"
+          />
+        </fieldset>
+        <fieldset>
+          <legend>3. Pedagógica e equipe</legend>
+          <label for="docs-pedagogicos">
+            Projeto político-pedagógico, regimento escolar, organização curricular e comprovação de
+            habilitação da direção e equipe técnica
+          </label>
+          <input
+            id="docs-pedagogicos"
+            type="file"
+            multiple
+            accept=".pdf,.png,.jpg,.jpeg,.webp"
+            data-categoria="Pedagógica e equipe"
+          />
+        </fieldset>
+        <fieldset>
+          <legend>4. Sistemas e cadastros</legend>
+          <label for="docs-sistemas">
+            Comprovantes de cadastro nos sistemas locais/nacionais e protocolos ou pareceres de
+            autorização aplicáveis
+          </label>
+          <input
+            id="docs-sistemas"
+            type="file"
+            multiple
+            accept=".pdf,.png,.jpg,.jpeg,.webp"
+            data-categoria="Sistemas e cadastros"
+          />
+        </fieldset>
+      </div>
+      <p id="arquivos-selecionados" class="suave" aria-live="polite">
+        Nenhum arquivo selecionado.
+      </p>
+      <div class="acoes-form">
+        <button class="btn btn-fantasma" type="button" id="cancelar-cadastro">
+          Cancelar
+        </button>
+        <button class="btn btn-primario" type="submit">
+          Cadastrar escola
+        </button>
+      </div>
+      <p class="nota-fonte">
+        Esta lista serve como referência para instrução do processo. Confirme os requisitos vigentes
+        junto ao Conselho de Educação e à Secretaria competente.
+      </p>
+    </form>
+    <div class="ferramentas">
+      <div class="campo">
+        <label for="busca-escola">Buscar escola ou município</label>
+        <input id="busca-escola" type="search" placeholder="Ex.: Lagarto" autocomplete="off" />
+      </div>
+      <div class="campo">
+        <label for="regiao">Região</label>
+        <select id="regiao">
+          <option value="">Todas as regiões</option>
+          {regioes.map((r) => (
+            <option value={r}>{r}</option>
+          ))}
+        </select>
+      </div>
+    </div>
+    <p class="suave" id="contagem" aria-live="polite">
+      Mostrando {escolasRede.length} escolas
+    </p>
+    <div class="tabela-wrap">
+      <table class="tabela">
+        <caption class="sr-only">Escolas da rede estadual</caption>
+        <thead>
+          <tr>
+            <th scope="col">Escola</th>
+            <th scope="col">Município</th>
+            <th scope="col">Região</th>
+            <th scope="col" class="centro">
+              Alunos
+            </th>
+            <th scope="col">IDEB (meta {META_IDEB.toLocaleString('pt-BR')})</th>
+          </tr>
+        </thead>
+        <tbody id="corpo-escolas">
+          {escolasRede.map((e) => (
+            <tr data-regiao={e.regiao} data-busca={paraBusca(`${e.nome} ${e.municipio}`)}>
+              <th scope="row">
+                <span class="escola-nome">
+                  <Icone nome="escola" tamanho={20} /> {e.nome}
+                </span>
+              </th>
+              <td>{e.municipio}</td>
+              <td>{e.regiao}</td>
+              <td class="centro numero">{e.alunos.toLocaleString('pt-BR')}</td>
+              <td>
+                {e.ideb >= META_IDEB ? (
+                  <Status tom="sucesso" texto={`${e.ideb.toLocaleString('pt-BR')} — na meta`} />
+                ) : (
+                  <Status tom="alerta" texto={`${e.ideb.toLocaleString('pt-BR')} — abaixo`} />
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</AppLayout>
+
+<style>
+  .ferramentas {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--e-4);
+  }
+  @media (max-width: 700px) {
+    .ferramentas {
+      grid-template-columns: 1fr;
+    }
+  }
+  .escola-nome {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--e-2);
+  }
+  .cabecalho-lista,
+  .acoes-form {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--e-4);
+  }
+  .cabecalho-lista h2,
+  .formulario-escola h2 {
+    margin: 0 0 var(--e-2);
+  }
+  .formulario-escola {
+    margin: var(--e-5) 0;
+    padding: var(--e-5);
+    border: 1px solid var(--borda);
+    border-radius: var(--raio);
+    background: var(--fundo);
+  }
+  .formulario-escola[hidden] {
+    display: none;
+  }
+  .campos {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--e-4);
+    margin: var(--e-4) 0 var(--e-5);
+  }
+  .campo-largo {
+    grid-column: 1/-1;
+  }
+  .documentos {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--e-3);
+  }
+  .documentos fieldset {
+    min-width: 0;
+    padding: var(--e-4);
+    border: 1px solid var(--borda);
+    border-radius: var(--raio);
+  }
+  .documentos legend {
+    font-weight: 700;
+  }
+  .documentos label {
+    display: block;
+    margin-bottom: var(--e-3);
+  }
+  .documentos input[type='file'] {
+    max-width: 100%;
+    min-height: 48px;
+  }
+  .nota-fonte {
+    font-size: 0.9rem;
+  }
+  @media (max-width: 700px) {
+    .campos,
+    .documentos {
+      grid-template-columns: 1fr;
+    }
+    .campo-largo {
+      grid-column: auto;
+    }
+    .cabecalho-lista {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+  }
+</style>
+
+<script>
+  const busca = document.getElementById('busca-escola') as HTMLInputElement;
+  const regiao = document.getElementById('regiao') as HTMLSelectElement;
+  const contagem = document.getElementById('contagem')!;
+  const linhas = [...document.querySelectorAll<HTMLTableRowElement>('#corpo-escolas tr')];
+  const form = document.getElementById('formulario-escola') as HTMLFormElement;
+  const abrir = document.getElementById('abrir-cadastro') as HTMLButtonElement;
+  const anexosInfo = document.getElementById('arquivos-selecionados')!;
+  const categoriaInputs = [...form.querySelectorAll<HTMLInputElement>('input[type="file"]')];
+
+  abrir.addEventListener('click', () => {
+    const expandido = abrir.getAttribute('aria-expanded') === 'true';
+    abrir.setAttribute('aria-expanded', String(!expandido));
+    form.hidden = expandido;
+    if (!expandido) document.getElementById('nome-escola')?.focus();
+  });
+  document.getElementById('cancelar-cadastro')?.addEventListener('click', () => {
+    form.reset();
+    anexosInfo.textContent = 'Nenhum arquivo selecionado.';
+    form.hidden = true;
+    abrir.setAttribute('aria-expanded', 'false');
+  });
+  categoriaInputs.forEach((input) =>
+    input.addEventListener('change', () => {
+      const n = categoriaInputs.reduce((total, item) => total + (item.files?.length ?? 0), 0);
+      anexosInfo.textContent = n
+        ? `${n} arquivo${n === 1 ? '' : 's'} selecionado${n === 1 ? '' : 's'}.`
+        : 'Nenhum arquivo selecionado.';
+    }),
+  );
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const dados = new FormData(form);
+    const nome = String(dados.get('nome') ?? '').trim();
+    const municipio = String(dados.get('municipio') ?? '').trim();
+    const regiaoNova = String(dados.get('regiao') ?? '');
+    const anexos = categoriaInputs.flatMap((input) =>
+      [...(input.files ?? [])].map((file) => ({
+        categoria: input.dataset.categoria,
+        nome: file.name,
+        tipo: file.type,
+        bytes: file.size,
+      })),
+    );
+    const botao = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+    if (botao) botao.disabled = true;
+    try {
+      const response = await fetch('/api/modulos?perfil=secretaria', {
+        method: 'POST',
+        credentials: 'same-origin',
+        cache: 'no-store',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          operacao: 'escola:cadastrar',
+          nome,
+          municipio,
+          uf: String(dados.get('uf') ?? ''),
+          regiao: regiaoNova,
+          endereco: String(dados.get('endereco') ?? ''),
+          inep: String(dados.get('inep') ?? ''),
+          cnpj: String(dados.get('cnpj') ?? ''),
+          responsavel: String(dados.get('responsavel') ?? ''),
+          email: String(dados.get('email') ?? ''),
+          telefone: String(dados.get('telefone') ?? ''),
+          etapas: String(dados.get('etapas') ?? ''),
+          dependencia: String(dados.get('dependencia') ?? ''),
+          anexos,
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Não foi possível cadastrar a escola.');
+      contagem.textContent = result.aviso;
+      form.reset();
+      anexosInfo.textContent = 'Metadados registrados; conteúdo dos arquivos não enviado.';
+      window.location.reload();
+    } catch (error) {
+      contagem.textContent =
+        error instanceof Error ? error.message : 'Não foi possível cadastrar a escola.';
+    } finally {
+      if (botao) botao.disabled = false;
+    }
+  });
+
+  function filtrar() {
+    const termo = busca.value
+      .trim()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+    let n = 0;
+    linhas.forEach((l) => {
+      const ok =
+        (!termo || (l.dataset.busca ?? '').includes(termo)) &&
+        (!regiao.value || l.dataset.regiao === regiao.value);
+      l.hidden = !ok;
+      if (ok) n++;
+    });
+    contagem.textContent = n
+      ? `Mostrando ${n} escola${n === 1 ? '' : 's'}`
+      : 'Nenhuma escola encontrada.';
+  }
+  busca.addEventListener('input', filtrar);
+  regiao.addEventListener('change', filtrar);
+</script>

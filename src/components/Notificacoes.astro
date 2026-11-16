@@ -1,0 +1,210 @@
+---
+/**
+ * Sino de notificações com contador de não lidas (H7.1 do backlog).
+ * O que já foi lido fica salvo no navegador (localStorage).
+ */
+import Icone from './Icone.astro';
+import { notificacoes } from '../data/dados';
+import type { PerfilId } from '../data/perfis';
+
+interface Props {
+  perfil: PerfilId;
+}
+const { perfil } = Astro.props;
+const lista = notificacoes[perfil];
+---
+
+<div class="notif" data-notificacoes data-perfil={perfil}>
+  <button
+    type="button"
+    class="btn btn-icone btn-fantasma notif-botao"
+    aria-expanded="false"
+    aria-controls="notif-painel"
+    data-notif-botao
+  >
+    <Icone nome="sino" />
+    <span class="notif-contador numero" data-notif-contador>
+      {lista.length}
+    </span>
+    <span class="sr-only" data-notif-rotulo>
+      Notificações
+    </span>
+  </button>
+
+  <div class="notif-painel card" id="notif-painel" hidden>
+    <div class="notif-topo">
+      <h2>Notificações</h2>
+      <button type="button" class="btn btn-fantasma" data-notif-todas>
+        Marcar todas como lidas
+      </button>
+    </div>
+    <ul class="lista">
+      {lista.map((n) => (
+        <li class="notif-item" data-notif-id={n.id}>
+          <span class="azulejo">
+            <Icone nome={n.icone} />
+          </span>
+          <div class="notif-corpo">
+            <p class="notif-titulo">{n.titulo}</p>
+            <p class="suave">{n.quando}</p>
+          </div>
+          <button
+            type="button"
+            class="btn btn-icone btn-fantasma notif-ler"
+            aria-label={`Marcar como lida: ${n.titulo}`}
+          >
+            <Icone nome="check" />
+          </button>
+          <span class="notif-lida suave">Lida</span>
+        </li>
+      ))}
+    </ul>
+  </div>
+</div>
+
+<style>
+  .notif {
+    position: relative;
+  }
+  .notif-botao {
+    position: relative;
+  }
+  .notif-contador {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 6px;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    border: 2px solid var(--superficie);
+    background: var(--error--bg);
+    color: var(--dark);
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+  :global([data-tema='escuro']) .notif-contador {
+    color: var(--light);
+  }
+  .notif-contador[hidden] {
+    display: none;
+  }
+  .notif-painel {
+    position: absolute;
+    right: 0;
+    top: calc(100% + var(--e-2));
+    z-index: 40;
+    width: min(420px, calc(100vw - 2rem));
+    padding: var(--e-4);
+    box-shadow: var(--sombra-forte);
+  }
+  .notif-topo {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--e-2);
+    margin-bottom: var(--e-2);
+  }
+  .notif-topo h2 {
+    margin: 0;
+    font-size: var(--texto-md);
+  }
+  .notif-item {
+    align-items: center !important;
+  }
+  .notif-corpo {
+    flex: 1;
+  }
+  .notif-corpo p {
+    margin: 0;
+  }
+  .notif-titulo {
+    font-weight: 700;
+  }
+  .notif-lida {
+    display: none;
+  }
+  .notif-item.lida .notif-titulo {
+    font-weight: 400;
+  }
+  .notif-item.lida .notif-ler {
+    display: none;
+  }
+  .notif-item.lida .notif-lida {
+    display: inline;
+  }
+  @media (max-width: 600px) {
+    .notif-painel {
+      position: fixed;
+      left: 1rem;
+      right: 1rem;
+      top: 76px;
+      width: auto;
+    }
+  }
+</style>
+
+<script>
+  import { gravar, ler } from '../scripts/armazenamento';
+
+  document.querySelectorAll<HTMLElement>('[data-notificacoes]').forEach((raiz) => {
+    const chave = `lidas:${raiz.dataset.perfil}`;
+    const botao = raiz.querySelector<HTMLButtonElement>('[data-notif-botao]')!;
+    const painel = raiz.querySelector<HTMLElement>('.notif-painel')!;
+    const contador = raiz.querySelector<HTMLElement>('[data-notif-contador]')!;
+    const rotulo = raiz.querySelector<HTMLElement>('[data-notif-rotulo]')!;
+    const itens = [...raiz.querySelectorAll<HTMLElement>('[data-notif-id]')];
+    let lidas = new Set(ler<string[]>(chave, []));
+
+    function atualizar() {
+      let naoLidas = 0;
+      itens.forEach((item) => {
+        const lida = lidas.has(item.dataset.notifId!);
+        item.classList.toggle('lida', lida);
+        if (!lida) naoLidas++;
+      });
+      contador.textContent = String(naoLidas);
+      contador.hidden = naoLidas === 0;
+      rotulo.textContent = naoLidas
+        ? `Notificações: ${naoLidas} não lidas`
+        : 'Notificações: nenhuma nova';
+      gravar(chave, [...lidas]);
+    }
+
+    function abrirFechar(abrir: boolean) {
+      painel.hidden = !abrir;
+      botao.setAttribute('aria-expanded', String(abrir));
+    }
+
+    botao.addEventListener('click', () => abrirFechar(painel.hidden !== false));
+    raiz.querySelector('[data-notif-todas]')?.addEventListener('click', () => {
+      itens.forEach((i) => lidas.add(i.dataset.notifId!));
+      atualizar();
+    });
+    itens.forEach((item) => {
+      item.querySelector('.notif-ler')?.addEventListener('click', () => {
+        lidas.add(item.dataset.notifId!);
+        atualizar();
+        botao.focus();
+      });
+    });
+
+    // Fecha ao clicar fora ou apertar Esc
+    document.addEventListener('click', (e) => {
+      if (!raiz.contains(e.target as Node)) abrirFechar(false);
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !painel.hidden) {
+        abrirFechar(false);
+        botao.focus();
+      }
+    });
+
+    lidas = new Set([...lidas].filter((id) => itens.some((i) => i.dataset.notifId === id)));
+    atualizar();
+  });
+</script>

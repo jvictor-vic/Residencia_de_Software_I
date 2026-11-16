@@ -1,0 +1,48 @@
+---
+/** Nome da matéria com o "selo" visual dela (cor + ícone + padrão). */
+import Icone from './Icone.astro';
+import { materias, type MateriaId } from '../data/materias';
+
+interface Props {
+  materia: MateriaId;
+  compacto?: boolean;
+}
+
+const { materia, compacto = false } = Astro.props;
+const m = materias[materia];
+---
+
+<span class="materia" data-materia={m.id}>
+  <span
+    class:list={['materia-selo', `pad-${m.padrao}`, { compacto }]}
+    style={`background-color:${m.cor}`}
+    aria-hidden="true"
+  >
+    <Icone nome={m.icone} tamanho={compacto ? 16 : 20} />
+  </span>
+  <span class="materia-nome">{m.nome}</span>
+</span>
+
+<style>
+  .materia {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--e-3);
+    font-weight: 700;
+  }
+  .materia-selo {
+    display: inline-grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    border: 2px solid var(--fg);
+    color: var(--fg);
+  }
+  .materia-selo.compacto {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+  }
+</style>

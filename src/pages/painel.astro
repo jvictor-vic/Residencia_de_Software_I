@@ -1,6 +1,6 @@
 ---
 import BaseHead from '../components/BaseHead.astro';
-import { readSession } from '../services/auth';
+import { getModuleLanding, readSession } from '../services/auth';
 
 export const prerender = false;
 
@@ -8,6 +8,8 @@ const session = await readSession(Astro.request);
 if (!session) {
   return Astro.redirect('/entrar');
 }
+const destination = await getModuleLanding(Astro.request);
+if (destination !== '/painel') return Astro.redirect(destination, 302);
 Astro.response.headers.set('Cache-Control', 'private, no-store');
 ---
 

@@ -1,0 +1,132 @@
+---
+/** Panorama da rede (H6.1): escolas, alunos, servidores, vagas e frequência por região. */
+import AppLayout from '../../layouts/AppLayout.astro';
+import Indicador from '../../components/Indicador.astro';
+import GraficoBarras from '../../components/GraficoBarras.astro';
+import AcessoRapido from '../../components/AcessoRapido.astro';
+import Icone from '../../components/Icone.astro';
+import {
+  panoramaRede as panoramaFixture,
+  frequenciaRegiao as frequenciaFixture,
+} from '../../data/dados';
+import { readModuleData } from '../../services/modulos';
+import { link } from '../../data/perfis';
+
+export const prerender = false;
+const modulo = await readModuleData(Astro.request, 'secretaria');
+const rede = modulo.rede as {
+  panoramaRede: typeof panoramaFixture;
+  frequenciaRegiao: typeof frequenciaFixture;
+};
+const panoramaRede = rede.panoramaRede;
+const frequenciaRegiao = rede.frequenciaRegiao;
+const p = panoramaRede;
+const n = (v: number) => v.toLocaleString('pt-BR');
+const piores = [...frequenciaRegiao].sort((a, b) => a.valor - b.valor).slice(0, 2);
+---
+
+<AppLayout
+  perfil="secretaria"
+  ativo=""
+  titulo="Panorama da rede"
+  subtitulo="Rede estadual de Sergipe · dados de outubro de 2026"
+  ajuda="Este é o panorama da rede de ensino. Em cima ficam o número de escolas, alunos, servidores e vagas disponíveis. O gráfico mostra a frequência média dos alunos em cada região do estado."
+>
+  <div class="pilha">
+    <section class="grade" aria-label="Números da rede">
+      <Indicador
+        rotulo="Escolas"
+        valor={n(p.escolas)}
+        icone="escola"
+        cor="var(--perfil-secretaria)"
+      />
+      <Indicador rotulo="Alunos" valor={n(p.alunos)} icone="usuarios" />
+      <Indicador
+        rotulo="Servidores"
+        valor={n(p.servidores)}
+        icone="maleta"
+        cor="var(--perfil-professor)"
+      />
+      <Indicador
+        rotulo="Vagas disponíveis"
+        valor={n(p.vagas)}
+        icone="mais"
+        cor="var(--perfil-escola)"
+      />
+    </section>
+
+    <div class="grade-2">
+      <section class="card" aria-labelledby="titulo-regioes">
+        <h2 id="titulo-regioes">
+          <Icone nome="local" /> Frequência média por região
+        </h2>
+        <GraficoBarras
+          titulo="Frequência média por região"
+          dados={frequenciaRegiao}
+          unidade="%"
+          max={100}
+          orientacao="horizontal"
+        />
+      </section>
+
+      <section class="card" aria-labelledby="titulo-atencao">
+        <h2 id="titulo-atencao">
+          <Icone nome="alerta" /> Pontos de atenção
+        </h2>
+        <div class="pilha">
+          {piores.map((r) => (
+            <div class="alerta-faixa tom-alerta">
+              <Icone nome="local" />
+              <div>
+                <p class="negrito sem-margem">{r.rotulo}</p>
+                <p class="sem-margem">Frequência média de {r.valor}%, abaixo da média da rede.</p>
+              </div>
+            </div>
+          ))}
+          <div class="alerta-faixa">
+            <Icone nome="tendencia" />
+            <div>
+              <p class="negrito sem-margem">IDEB abaixo da meta</p>
+              <p class="sem-margem">
+                Anos finais: 4,1 (meta 4,6).{' '}
+                <a href={link('secretaria', 'indicadores')}>Ver indicadores</a>
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <section aria-labelledby="titulo-modulos">
+      <h2 id="titulo-modulos">Módulos</h2>
+      <AcessoRapido
+        itens={[
+          {
+            rotulo: 'Indicadores',
+            href: link('secretaria', 'indicadores'),
+            icone: 'tendencia',
+            descricao: 'IDEB, alfabetização e metas',
+          },
+          {
+            rotulo: 'Escolas',
+            href: link('secretaria', 'escolas'),
+            icone: 'escola',
+            descricao: 'Lista das escolas da rede',
+          },
+          {
+            rotulo: 'Comunicados',
+            href: link('secretaria', 'comunicados'),
+            icone: 'megafone',
+            descricao: 'Avisos para toda a rede',
+          },
+          {
+            rotulo: 'Calendário escolar',
+            href: link('secretaria', 'calendario'),
+            icone: 'calendario',
+            descricao: 'Feriados e prazos',
+          },
+        ]}
+      />
+    </section>
+  </div>
+</AppLayout>

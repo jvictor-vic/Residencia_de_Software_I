@@ -1,6 +1,13 @@
 import { calcularIdade } from '@utils/calcularIdade';
 
-export type PapelUsuario = 'aluno' | 'responsavel';
+export const PAPEIS_USUARIO = [
+  'aluno',
+  'responsavel',
+  'professor',
+  'escola',
+  'secretaria',
+] as const;
+export type PapelUsuario = (typeof PAPEIS_USUARIO)[number];
 export type DataNascimentoISO = string;
 export type Genero = 'Homem Cis' | 'Homem Trans' | 'Mulher Cis' | 'Mulher Trans' | 'Não-Binário';
 export type CorRaca = 'Amarela' | 'Branca' | 'Indígena' | 'Parda' | 'Preta';
@@ -10,14 +17,92 @@ export interface DadosContaUsuario {
   cpf: string;
   senhaHash: string;
   papeis: readonly PapelUsuario[];
+  perfis?: PerfisContaUsuario;
+}
+
+export interface DadosProfessor {
+  escolaId: string;
+  atribuicoes: { turmaId: string; disciplina: string }[];
+}
+export interface DadosPerfilEscola {
+  escolaIds: string[];
+  funcao: 'direcao' | 'coordenacao';
+}
+export interface DadosPerfilSecretaria {
+  redeId: string;
+}
+export interface PerfisContaUsuario {
+  professor?: DadosProfessor;
+  escola?: DadosPerfilEscola;
+  secretaria?: DadosPerfilSecretaria;
+}
+
+export interface DadosEscola {
+  id: string;
+  nome: string;
+  municipio: string;
+  uf: string;
+  regiao: string;
+}
+
+export class PerfilProfessor {
+  readonly escolaId: string;
+  readonly atribuicoes: DadosProfessor['atribuicoes'];
+  constructor(dados: DadosProfessor) {
+    if (
+      !dados.escolaId.trim() ||
+      dados.atribuicoes.length === 0 ||
+      dados.atribuicoes.some((a) => !a.turmaId.trim() || !a.disciplina.trim())
+    )
+      throw new Error('Vínculos do professor inválidos.');
+    this.escolaId = dados.escolaId;
+    this.atribuicoes = dados.atribuicoes.map((a) => ({ ...a }));
+  }
+}
+
+export class PerfilEscola {
+  readonly escolaIds: string[];
+  readonly funcao: DadosPerfilEscola['funcao'];
+  constructor(dados: DadosPerfilEscola) {
+    if (!dados.escolaIds.length || dados.escolaIds.some((id) => !id.trim()))
+      throw new Error('O perfil da escola precisa de ao menos um vínculo.');
+    this.escolaIds = [...new Set(dados.escolaIds)];
+    this.funcao = dados.funcao;
+  }
+}
+
+export class PerfilSecretaria {
+  readonly redeId: string;
+  constructor(dados: DadosPerfilSecretaria) {
+    if (!dados.redeId.trim()) throw new Error('A rede vinculada é obrigatória.');
+    this.redeId = dados.redeId;
+  }
+}
+
+export class Escola implements DadosEscola {
+  readonly id: string;
+  readonly nome: string;
+  readonly municipio: string;
+  readonly uf: string;
+  readonly regiao: string;
+  constructor(dados: DadosEscola) {
+    if ([dados.id, dados.nome, dados.municipio, dados.uf, dados.regiao].some((v) => !v.trim()))
+      throw new Error('Dados da escola incompletos.');
+    this.id = dados.id;
+    this.nome = dados.nome;
+    this.municipio = dados.municipio;
+    this.uf = dados.uf;
+    this.regiao = dados.regiao;
+  }
 }
 
 export class ContaUsuario {
   readonly cpf: string;
   readonly senhaHash: string;
   readonly papeis: readonly PapelUsuario[];
+  readonly perfis?: PerfisContaUsuario;
 
-  constructor({ cpf, senhaHash, papeis }: DadosContaUsuario) {
+  constructor({ cpf, senhaHash, papeis, perfis }: DadosContaUsuario) {
     if (!senhaHash.trim()) {
       throw new Error('O hash da senha é obrigatório.');
     }
@@ -27,9 +112,27 @@ export class ContaUsuario {
       throw new Error('A conta deve ter ao menos um papel.');
     }
 
+    if (perfis) {
+      for (const papel of ['professor', 'escola', 'secretaria'] as const) {
+        if (papeisUnicos.includes(papel) !== Boolean(perfis[papel]))
+          throw new Error(`O papel ${papel} deve corresponder ao seu perfil.`);
+      }
+    } else if (
+      papeisUnicos.some((papel) => ['professor', 'escola', 'secretaria'].includes(papel))
+    ) {
+      throw new Error('Perfis dos módulos são obrigatórios para os papéis declarados.');
+    }
+
     this.cpf = normalizarCpf(cpf);
     this.senhaHash = senhaHash;
     this.papeis = papeisUnicos;
+    this.perfis = perfis
+      ? {
+          ...(perfis.professor ? { professor: new PerfilProfessor(perfis.professor) } : {}),
+          ...(perfis.escola ? { escola: new PerfilEscola(perfis.escola) } : {}),
+          ...(perfis.secretaria ? { secretaria: new PerfilSecretaria(perfis.secretaria) } : {}),
+        }
+      : undefined;
   }
 }
 

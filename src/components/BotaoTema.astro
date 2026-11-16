@@ -1,0 +1,66 @@
+---
+/** Alterna entre tema claro e escuro (preferência salva no navegador). */
+import Icone from './Icone.astro';
+
+interface Props {
+  claro?: boolean; // versão para fundo escuro (tela de login)
+}
+const { claro = false } = Astro.props;
+---
+
+<button
+  type="button"
+  class:list={['btn btn-icone btn-fantasma botao-tema', { claro }]}
+  data-botao-tema
+  aria-label="Ativar tema escuro"
+>
+  <span class="icone-lua">
+    <Icone nome="lua" />
+  </span>
+  <span class="icone-sol">
+    <Icone nome="sol" />
+  </span>
+</button>
+
+<style>
+  .botao-tema .icone-sol {
+    display: none;
+  }
+  :global([data-tema='escuro']) .botao-tema .icone-sol {
+    display: block;
+  }
+  :global([data-tema='escuro']) .botao-tema .icone-lua {
+    display: none;
+  }
+  .botao-tema.claro {
+    color: var(--menu-texto);
+    border-color: rgb(255 255 255 / 0.35);
+  }
+  .botao-tema.claro:hover {
+    background: rgb(255 255 255 / 0.1);
+  }
+</style>
+
+<script>
+  import { alternarTema, lerPreferencias } from '../scripts/preferencias';
+
+  function atualizarRotulos() {
+    const tema = lerPreferencias().tema;
+    document.querySelectorAll<HTMLButtonElement>('[data-botao-tema]').forEach((botao) => {
+      botao.setAttribute(
+        'aria-label',
+        tema === 'claro' ? 'Ativar tema escuro' : 'Ativar tema claro',
+      );
+      botao.title = tema === 'claro' ? 'Tema escuro' : 'Tema claro';
+    });
+  }
+
+  document.querySelectorAll<HTMLButtonElement>('[data-botao-tema]').forEach((botao) => {
+    botao.addEventListener('click', () => {
+      alternarTema();
+      atualizarRotulos();
+    });
+  });
+  document.addEventListener('preferencias-alteradas', atualizarRotulos);
+  atualizarRotulos();
+</script>

@@ -1,0 +1,109 @@
+---
+/** Indicadores pedagógicos (H6.2): IDEB, alfabetização e distorção idade-série, com metas. */
+import AppLayout from '../../layouts/AppLayout.astro';
+import Status from '../../components/Status.astro';
+import Icone from '../../components/Icone.astro';
+import { indicadoresPedagogicos as indicadoresFixture } from '../../data/dados';
+import { readModuleData } from '../../services/modulos';
+
+export const prerender = false;
+const modulo = await readModuleData(Astro.request, 'secretaria');
+const rede = modulo.rede as { indicadoresPedagogicos: typeof indicadoresFixture };
+const indicadoresPedagogicos = rede.indicadoresPedagogicos.map((ind) => {
+  const atingiu = ind.melhorQuandoMaior ? ind.atual >= ind.meta : ind.atual <= ind.meta;
+  const progresso = ind.melhorQuandoMaior
+    ? Math.min(100, Math.round((ind.atual / ind.meta) * 100))
+    : Math.min(100, Math.round((ind.meta / ind.atual) * 100));
+  return { ...ind, atingiu, progresso };
+});
+const fmt = (v: number, unidade: string) => `${v.toLocaleString('pt-BR')}${unidade}`;
+---
+
+<AppLayout
+  perfil="secretaria"
+  ativo="indicadores"
+  titulo="Indicadores pedagógicos"
+  subtitulo="Situação atual comparada com as metas de 2026"
+  ajuda="Aqui estão os indicadores da rede, como o IDEB e a taxa de alfabetização. Cada cartão mostra o valor atual, a meta e se a rede está perto ou longe de atingir a meta."
+>
+  <ul class="indicadores">
+    {indicadoresPedagogicos.map((ind) => (
+      <li class="card indicador-ped surgir">
+        <h2 class="sem-margem">{ind.nome}</h2>
+        <p class="valor numero">{fmt(ind.atual, ind.unidade)}</p>
+        <p class="suave sem-margem">
+          Meta: <strong>{fmt(ind.meta, ind.unidade)}</strong> ·{' '}
+          {ind.melhorQuandoMaior ? 'quanto maior, melhor' : 'quanto menor, melhor'}
+        </p>
+        <div
+          class="progresso"
+          role="progressbar"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          aria-valuenow={ind.progresso}
+          aria-label={`Progresso até a meta: ${ind.progresso}%`}
+        >
+          <span
+            class:list={[ind.atingiu ? 'pad-pontos' : 'pad-diagonal']}
+            style={`width:${ind.progresso}%;background-color:${ind.atingiu ? 'var(--sucesso)' : 'var(--alerta)'}`}
+          ></span>
+        </div>
+        <p class="sem-margem">
+          <Status
+            tom={ind.atingiu ? 'sucesso' : 'alerta'}
+            texto={ind.atingiu ? 'Meta atingida' : `${ind.progresso}% da meta`}
+          />
+        </p>
+      </li>
+    ))}
+  </ul>
+
+  <section class="card nota" aria-labelledby="titulo-sobre">
+    <h2 id="titulo-sobre">
+      <Icone nome="info" /> Sobre os indicadores
+    </h2>
+    <dl>
+      <dt>IDEB</dt>
+      <dd>
+        Índice de Desenvolvimento da Educação Básica (0 a 10), calculado pelo INEP com aprovação e
+        desempenho na prova Saeb.
+      </dd>
+      <dt>Distorção idade-série</dt>
+      <dd>
+        Percentual de alunos com 2 anos ou mais de atraso escolar em relação à idade esperada.
+      </dd>
+    </dl>
+    <p class="suave sem-margem">Valores fictícios, usados apenas para demonstração.</p>
+  </section>
+</AppLayout>
+
+<style>
+  .indicadores {
+    list-style: none;
+    margin: 0 0 var(--e-5);
+    padding: 0;
+    display: grid;
+    gap: var(--e-5);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  }
+  .indicador-ped {
+    display: flex;
+    flex-direction: column;
+    gap: var(--e-3);
+  }
+  .indicador-ped h2 {
+    font-size: var(--texto-md);
+  }
+  .valor {
+    margin: 0;
+    font-size: var(--texto-2xl);
+    font-weight: 700;
+    line-height: 1.1;
+  }
+  dt {
+    font-weight: 700;
+  }
+  dd {
+    margin: 0 0 var(--e-3);
+  }
+</style>

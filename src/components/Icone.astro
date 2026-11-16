@@ -1,0 +1,35 @@
+---
+/**
+ * Ícone SVG. Se `rotulo` for informado o ícone é anunciado por leitores de tela;
+ * caso contrário ele é decorativo (aria-hidden).
+ */
+import { icones, type IconeNome } from '../data/icones';
+
+interface Props {
+  nome: IconeNome;
+  tamanho?: number;
+  rotulo?: string;
+  class?: string;
+}
+
+const { nome, tamanho = 24, rotulo, class: classe } = Astro.props;
+const conteudo = icones[nome];
+---
+
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width={tamanho}
+  height={tamanho}
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  class={classe}
+  role={rotulo ? 'img' : undefined}
+  aria-label={rotulo}
+  aria-hidden={rotulo ? undefined : 'true'}
+  focusable="false"
+  set:html={conteudo}
+/>

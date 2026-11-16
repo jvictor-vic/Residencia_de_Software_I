@@ -1,0 +1,82 @@
+---
+/**
+ * Marca do EducaHub: símbolo (livro aberto sobre a "etiqueta" laranja) + nome
+ * no estilo do login da identidade visual — EDUCA em tinta e HUB em azul.
+ * `sobreAzul`: versão para fundos azuis (menu lateral / faixa lateral).
+ */
+interface Props {
+  tamanho?: number;
+  mostrarNome?: boolean;
+  sobreAzul?: boolean;
+}
+const { tamanho = 40, mostrarNome = true, sobreAzul = false } = Astro.props;
+---
+
+<span class:list={['logo', { 'sobre-azul': sobreAzul }]}>
+  <svg width={tamanho} height={tamanho} viewBox="0 0 40 40" aria-hidden="true" focusable="false">
+    <rect
+      x="1"
+      y="1"
+      width="38"
+      height="38"
+      rx="11"
+      fill="#ea7a3e"
+      stroke="#120c07"
+      stroke-width="2"
+    ></rect>
+    <path
+      d="M8 13.5c4-1.6 8-1.2 12 1.5v15c-4-2.7-8-3.1-12-1.5z"
+      fill="#f9f3ec"
+      stroke="#120c07"
+      stroke-width="1.6"
+    ></path>
+    <path
+      d="M32 13.5c-4-1.6-8-1.2-12 1.5v15c4-2.7 8-3.1 12-1.5z"
+      fill="#2e8cff"
+      stroke="#120c07"
+      stroke-width="1.6"
+    ></path>
+    <circle cx="20" cy="8.5" r="3" fill="#120c07"></circle>
+  </svg>
+  {mostrarNome && (
+    <span class="logo-nome">
+      EDUCA<span class="logo-hub">HUB</span>
+    </span>
+  )}
+</span>
+
+<style>
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--e-3);
+  }
+  .logo svg {
+    flex-shrink: 0;
+  }
+  .logo-nome {
+    font-family: var(--fonte-titulo);
+    font-size: var(--texto-lg);
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    color: var(--fg);
+  }
+  /* Texto grande (peso 900): o azul atende 3:1 para texto grande */
+  .logo-hub {
+    color: var(--primary-darker);
+  }
+  :global([data-tema='escuro']) .logo-hub {
+    color: var(--primary);
+  }
+  .sobre-azul .logo-nome {
+    color: var(--light);
+  }
+  .sobre-azul .logo-hub {
+    color: var(--light);
+    text-decoration: underline;
+    text-decoration-color: var(--secondary);
+    text-decoration-thickness: 4px;
+    text-underline-offset: 4px;
+  }
+</style>

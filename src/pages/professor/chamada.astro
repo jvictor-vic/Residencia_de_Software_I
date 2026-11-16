@@ -1,0 +1,337 @@
+---
+/**
+ * Chamada (H3.1): "Como professor, quero registrar a frequência por turma."
+ * Cada aluno tem dois botões grandes: Presente / Falta. Os contadores atualizam na hora.
+ */
+import AppLayout from '../../layouts/AppLayout.astro';
+import Icone from '../../components/Icone.astro';
+import { readModuleData } from '../../services/modulos';
+
+export const prerender = false;
+const modulo = await readModuleData(Astro.request, 'professor');
+const turmas = modulo.turmas as {
+  id: string;
+  nome: string;
+  estudantes: { id: string; nome: string }[];
+}[];
+const turma = turmas[0];
+const alunos8B = turma?.estudantes ?? [];
+const hoje = new Date().toISOString().slice(0, 10);
+const chamadaHoje = (
+  modulo.chamadas as {
+    turmaId: string;
+    data: string;
+    presencas: { estudanteId: string; presente: boolean }[];
+  }[]
+).find((chamada) => chamada.turmaId === turma?.id && chamada.data === hoje);
+const presente = (estudanteId: string) =>
+  chamadaHoje?.presencas.find((item) => item.estudanteId === estudanteId)?.presente ?? true;
+const presentesHoje = alunos8B.filter((estudante) => presente(estudante.id)).length;
+---
+
+<AppLayout
+  perfil="professor"
+  ativo="chamada"
+  titulo="Chamada"
+  subtitulo={`${turma?.nome ?? 'Turma'} · Matemática`}
+  ajuda="Tela de chamada. Todos os alunos começam como presentes. Clique em Falta para marcar quem faltou. Os números em cima mostram quantos estão presentes e quantos faltaram. No final, clique em Salvar chamada."
+>
+  <div class="pilha">
+    <div class="barra-chamada card">
+      <div class="campo campo-turma">
+        <label for="turma">Turma</label>
+        <select id="turma">
+          {turmas.map((item) => (
+            <option value={item.id}>{item.nome}</option>
+          ))}
+        </select>
+      </div>
+      <p class="contador presentes" aria-live="polite">
+        <span class="contador-marca pad-pontos" aria-hidden="true">
+          <Icone nome="check" tamanho={18} />
+        </span>
+        <span>
+          <strong class="numero" id="qtd-presentes">
+            {presentesHoje}
+          </strong>{' '}
+          presentes
+        </span>
+      </p>
+      <p class="contador faltas" aria-live="polite">
+        <span class="contador-marca pad-cruzado" aria-hidden="true">
+          <Icone nome="x" tamanho={18} />
+        </span>
+        <span>
+          <strong class="numero" id="qtd-faltas">
+            {alunos8B.length - presentesHoje}
+          </strong>{' '}
+          faltas
+        </span>
+      </p>
+      <button type="button" class="btn btn-fantasma" id="todos-presentes">
+        <Icone nome="check" /> Marcar todos presentes
+      </button>
+    </div>
+
+    <section class="card" aria-labelledby="titulo-lista">
+      <h2 id="titulo-lista">
+        <Icone nome="usuarios" /> Lista de alunos
+      </h2>
+      <ol class="lista lista-chamada" data-turmas={JSON.stringify(turmas)}>
+        {alunos8B.map((nome, i) => (
+          <li
+            class={presente(nome.id) ? 'aluno' : 'aluno faltou'}
+            data-aluno={nome.nome}
+            data-estudante-id={nome.id}
+          >
+            <span class="aluno-num numero">{String(i + 1).padStart(2, '0')}</span>
+            <span class="aluno-nome">{nome.nome}</span>
+            <div class="alternador" role="group" aria-label={`Situação de ${nome.nome}`}>
+              <button
+                type="button"
+                class="opcao-chamada"
+                data-valor="presente"
+                aria-pressed={presente(nome.id)}
+              >
+                <Icone nome="check" tamanho={20} /> Presente
+              </button>
+              <button
+                type="button"
+                class="opcao-chamada"
+                data-valor="falta"
+                aria-pressed={!presente(nome.id)}
+              >
+                <Icone nome="x" tamanho={20} /> Falta
+              </button>
+            </div>
+          </li>
+        ))}
+      </ol>
+      <div class="acoes-final">
+        <button type="button" class="btn btn-primario" id="salvar-chamada">
+          <Icone nome="check" /> Salvar chamada
+        </button>
+      </div>
+    </section>
+  </div>
+</AppLayout>
+
+<style>
+  .barra-chamada {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--e-5);
+    position: sticky;
+    top: 84px;
+    z-index: 10;
+  }
+  .campo-turma {
+    margin: 0;
+    min-width: 200px;
+  }
+  .contador {
+    display: flex;
+    align-items: center;
+    gap: var(--e-2);
+    margin: 0;
+    min-height: var(--alvo-min);
+    font-size: var(--texto-md);
+  }
+  .contador strong {
+    font-size: var(--texto-xl);
+  }
+  .contador-marca {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    color: var(--sobre-marca);
+    border: 2px solid var(--fg);
+  }
+  .presentes .contador-marca {
+    background-color: var(--sucesso-marca);
+  }
+  .faltas .contador-marca {
+    background-color: var(--perigo-marca);
+  }
+  #todos-presentes {
+    margin-left: auto;
+  }
+  .aluno {
+    align-items: center !important;
+    flex-wrap: wrap;
+  }
+  .aluno-num {
+    color: var(--texto-suave);
+    min-width: 2ch;
+  }
+  .aluno-nome {
+    flex: 1;
+    min-width: 180px;
+    font-weight: 700;
+  }
+  .alternador {
+    display: flex;
+    gap: var(--e-2);
+  }
+  .opcao-chamada {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--e-2);
+    min-height: var(--alvo-min);
+    padding: 0 var(--e-4);
+    border: 2px solid var(--borda-forte);
+    border-radius: var(--raio);
+    background: var(--superficie);
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .opcao-chamada:hover {
+    background: var(--superficie-2);
+  }
+  .opcao-chamada[data-valor='presente'][aria-pressed='true'] {
+    background: var(--sucesso-suave);
+    border-color: var(--sucesso);
+    color: var(--sucesso);
+  }
+  .opcao-chamada[data-valor='falta'][aria-pressed='true'] {
+    background: var(--perigo-suave);
+    border-color: var(--perigo);
+    color: var(--perigo);
+  }
+  .opcao-chamada[aria-pressed='false'] :global(svg) {
+    opacity: 0.35;
+  }
+  .aluno.faltou .aluno-nome {
+    text-decoration: line-through;
+    text-decoration-thickness: 2px;
+  }
+  .acoes-final {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: var(--e-4);
+  }
+  @media (max-width: 960px) {
+    .barra-chamada {
+      position: static;
+    }
+    #todos-presentes {
+      margin-left: 0;
+    }
+  }
+</style>
+
+<script>
+  import { mostrarAviso } from '../../scripts/aviso';
+  import { salvarModulo } from '../../scripts/modulos';
+
+  let itens = [...document.querySelectorAll<HTMLLIElement>('[data-aluno]')];
+  const lista = document.querySelector<HTMLOListElement>('.lista-chamada')!;
+  const turmas = JSON.parse(lista.dataset.turmas ?? '[]') as {
+    id: string;
+    nome: string;
+    estudantes: { id: string; nome: string }[];
+  }[];
+  const turmaSelect = document.getElementById('turma') as HTMLSelectElement;
+  const qtdPresentes = document.getElementById('qtd-presentes')!;
+  const qtdFaltas = document.getElementById('qtd-faltas')!;
+
+  function marcar(item: HTMLLIElement, valor: 'presente' | 'falta') {
+    item.querySelectorAll<HTMLButtonElement>('[data-valor]').forEach((b) => {
+      b.setAttribute('aria-pressed', String(b.dataset.valor === valor));
+    });
+    item.classList.toggle('faltou', valor === 'falta');
+  }
+
+  function atualizarContadores() {
+    const faltas = itens.filter((i) => i.classList.contains('faltou')).length;
+    qtdFaltas.textContent = String(faltas);
+    qtdPresentes.textContent = String(itens.length - faltas);
+  }
+
+  function desenharEstudantes(turmaId: string) {
+    const turma = turmas.find((item) => item.id === turmaId);
+    if (!turma) return;
+    lista.replaceChildren(
+      ...turma.estudantes.map((estudante, indice) => {
+        const item = document.createElement('li');
+        item.className = 'aluno';
+        item.dataset.aluno = estudante.nome;
+        item.dataset.estudanteId = estudante.id;
+        const numero = document.createElement('span');
+        numero.className = 'aluno-num numero';
+        numero.textContent = String(indice + 1).padStart(2, '0');
+        const nome = document.createElement('span');
+        nome.className = 'aluno-nome';
+        nome.textContent = estudante.nome;
+        const alternador = document.createElement('div');
+        alternador.className = 'alternador';
+        alternador.setAttribute('role', 'group');
+        alternador.setAttribute('aria-label', `Situação de ${estudante.nome}`);
+        for (const [valor, rotulo] of [
+          ['presente', 'Presente'],
+          ['falta', 'Falta'],
+        ]) {
+          const botao = document.createElement('button');
+          botao.type = 'button';
+          botao.className = 'opcao-chamada';
+          botao.dataset.valor = valor;
+          botao.setAttribute('aria-pressed', String(valor === 'presente'));
+          botao.textContent = rotulo;
+          botao.addEventListener('click', () => {
+            marcar(item, valor as 'presente' | 'falta');
+            atualizarContadores();
+          });
+          alternador.append(botao);
+        }
+        item.append(numero, nome, alternador);
+        return item;
+      }),
+    );
+    itens = [...lista.querySelectorAll<HTMLLIElement>('[data-aluno]')];
+    document.getElementById('qtd-presentes')!.textContent = String(itens.length);
+    document.getElementById('qtd-faltas')!.textContent = '0';
+  }
+
+  itens.forEach((item) => {
+    item.querySelectorAll<HTMLButtonElement>('[data-valor]').forEach((botao) => {
+      botao.addEventListener('click', () => {
+        marcar(item, botao.dataset.valor as 'presente' | 'falta');
+        atualizarContadores();
+      });
+    });
+  });
+
+  document.getElementById('todos-presentes')?.addEventListener('click', () => {
+    itens.forEach((i) => marcar(i, 'presente'));
+    atualizarContadores();
+  });
+
+  turmaSelect.addEventListener('change', () => desenharEstudantes(turmaSelect.value));
+
+  const botaoSalvar = document.getElementById('salvar-chamada') as HTMLButtonElement;
+  botaoSalvar.addEventListener('click', async () => {
+    botaoSalvar.disabled = true;
+    try {
+      const response = await salvarModulo<{ presentes: number; faltas: number }>('professor', {
+        operacao: 'chamada:salvar',
+        turmaId: (document.getElementById('turma') as HTMLSelectElement).value,
+        data: new Date().toISOString().slice(0, 10),
+        presencas: itens.map((item) => ({
+          estudanteId: item.dataset.estudanteId,
+          presente: !item.classList.contains('faltou'),
+        })),
+      });
+      mostrarAviso(`Chamada salva: ${response.presentes} presentes e ${response.faltas} faltas.`);
+    } catch (error) {
+      mostrarAviso(
+        error instanceof Error ? error.message : 'Não foi possível salvar a chamada.',
+        'alerta',
+      );
+    } finally {
+      botaoSalvar.disabled = false;
+    }
+  });
+</script>

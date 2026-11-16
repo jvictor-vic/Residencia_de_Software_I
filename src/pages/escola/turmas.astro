@@ -1,0 +1,354 @@
+﻿---
+/** Controle de turmas e tabela de professores (Direção/Coordenação). */
+import AppLayout from '../../layouts/AppLayout.astro';
+import Status from '../../components/Status.astro';
+import Icone from '../../components/Icone.astro';
+import {
+  turmasEscola as turmasFixture,
+  professoresEscola as professoresFixture,
+} from '../../data/dados';
+import { readModuleData } from '../../services/modulos';
+
+export const prerender = false;
+const modulo = await readModuleData(Astro.request, 'escola');
+type TurmaView = (typeof turmasFixture)[number] & {
+  id: string;
+  sala?: string;
+  professores?: Record<string, string>;
+};
+const turmasEscola = modulo.turmas as TurmaView[];
+const professoresEscola = modulo.professores as typeof professoresFixture;
+const professoresDaTurma = (turma: TurmaView) =>
+  Object.entries(turma.professores ?? {})
+    .map(([materia, professor]) => `${materia}: ${professor}`)
+    .join(' · ') || 'Usando regente da turma';
+const materias = [
+  'Língua Portuguesa',
+  'Matemática',
+  'Ciências',
+  'História',
+  'Geografia',
+  'Língua Inglesa',
+  'Educação Física',
+  'Arte',
+  'Ensino Religioso',
+];
+const professoresDemo = professoresEscola.map((p) => ({
+  nome: p.nome,
+  disciplina: p.disciplina,
+  turmas: p.turmas,
+  diario: p.diario,
+}));
+---
+
+<AppLayout
+  perfil="escola"
+  ativo="turmas"
+  titulo="Turmas e professores"
+  subtitulo="8 turmas do Ensino Fundamental II · 2 turnos"
+  ajuda="Nesta tela a direção vê todas as turmas, com turno, número de alunos, professor regente e frequência. Embaixo fica a tabela de professores e a situação do diário de cada um."
+>
+  <div class="pilha">
+    <section class="card" aria-labelledby="titulo-turmas">
+      <h2 id="titulo-turmas">
+        <Icone nome="escola" /> Turmas
+      </h2>
+      <ul class="cartoes-turma">
+        {turmasEscola.map((t) => (
+          <li class="turma" data-turma={t.nome}>
+            <div class="turma-topo">
+              <h3 class="sem-margem">{t.nome}</h3>
+              <span class="suave">{t.turno}</span>
+            </div>
+            <p class="sem-margem turma-alunos">
+              <Icone nome="usuarios" tamanho={20} /> {t.alunos} alunos
+            </p>
+            <p class="sem-margem turma-regente">
+              <Icone nome="usuario" tamanho={20} /> Regente: {t.regente}
+            </p>
+            <div class="turma-freq">
+              <span>Frequência</span>
+              <strong class="numero">{t.frequencia}%</strong>
+            </div>
+            <div
+              class="progresso"
+              role="progressbar"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow={t.frequencia}
+              aria-label={`Frequência do ${t.nome}`}
+            >
+              <span class="pad-pontos" style={`width:${t.frequencia}%`}></span>
+            </div>
+            <button class="btn btn-secundario btn-detalhes" type="button" aria-expanded="false">
+              Exibir detalhes
+            </button>
+            <div class="detalhes-turma" hidden>
+              <dl>
+                <div>
+                  <dt>Etapa</dt>
+                  <dd>Ensino Fundamental II</dd>
+                </div>
+                <div>
+                  <dt>Capacidade</dt>
+                  <dd>40 estudantes</dd>
+                </div>
+                <div>
+                  <dt>Componentes curriculares</dt>
+                  <dd>Português, Matemática, Ciências e Humanidades</dd>
+                </div>
+                <div>
+                  <dt>Sala</dt>
+                  <dd data-field="sala">{t.sala || 'Não definida'}</dd>
+                </div>
+                <div>
+                  <dt>Professores por matéria</dt>
+                  <dd data-field="professores">{professoresDaTurma(t)}</dd>
+                </div>
+                <div>
+                  <dt>Vagas disponíveis</dt>
+                  <dd>{40 - t.alunos}</dd>
+                </div>
+              </dl>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <section class="card" aria-labelledby="titulo-profs">
+      <div class="card-cabecalho">
+        <h2 id="titulo-profs">
+          <Icone nome="maleta" /> Professores
+        </h2>
+        <button class="btn btn-primario" id="abrir-professor" type="button">
+          Adicionar professor
+        </button>
+      </div>
+      <div class="tabela-wrap">
+        <table class="tabela">
+          <caption class="sr-only">Tabela de professores</caption>
+          <thead>
+            <tr>
+              <th scope="col">Professor</th>
+              <th scope="col">Disciplina</th>
+              <th scope="col" class="centro">
+                Turmas
+              </th>
+              <th scope="col">Diário</th>
+            </tr>
+          </thead>
+          <tbody>
+            {professoresEscola.map((p) => (
+              <tr>
+                <th scope="row">{p.nome}</th>
+                <td data-label="Disciplina">{p.disciplina}</td>
+                <td data-label="Turmas" class="centro numero">
+                  {p.turmas}
+                </td>
+                <td data-label="Diário">
+                  {p.diario === 'em-dia' ? (
+                    <Status tom="sucesso" texto="Em dia" />
+                  ) : (
+                    <Status tom="perigo" texto="Atrasado" />
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <dialog id="dialogo-professor" class="dialogo" aria-labelledby="titulo-novo-professor">
+      <form method="dialog" id="form-professor">
+        <h2 id="titulo-novo-professor">Adicionar professor</h2>
+        <label>
+          Nome completo
+          <input name="nome" required />
+        </label>
+        <label>
+          Disciplina
+          <select name="disciplina" required>
+            <option value="">Selecione a disciplina</option>
+            {materias.map((materia) => (
+              <option value={materia}>{materia}</option>
+            ))}
+          </select>
+        </label>
+        <div class="dialogo-acoes">
+          <button type="button" class="btn btn-fantasma" id="cancelar-professor">
+            Cancelar
+          </button>
+          <button class="btn btn-primario" type="submit">
+            Adicionar
+          </button>
+        </div>
+      </form>
+    </dialog>
+  </div>
+  <p id="aviso-turmas" class="sr-only" aria-live="polite"></p>
+  <script define:vars={{ professoresDemo }}>
+    document.querySelectorAll('.btn-detalhes').forEach((button) => {
+      button.addEventListener('click', () => {
+        const details = button.nextElementSibling;
+        const expanded = button.getAttribute('aria-expanded') === 'true';
+        document.querySelectorAll(".btn-detalhes[aria-expanded='true']").forEach((openButton) => {
+          if (openButton === button) return;
+          openButton.setAttribute('aria-expanded', 'false');
+          openButton.textContent = 'Exibir detalhes';
+          openButton.nextElementSibling.hidden = true;
+        });
+        button.setAttribute('aria-expanded', String(!expanded));
+        button.textContent = expanded ? 'Exibir detalhes' : 'Ocultar detalhes';
+        details.hidden = expanded;
+      });
+    });
+    const tbody = document.querySelector('.tabela tbody');
+    professoresDemo.forEach((professor) => {
+      let row = [...tbody.rows].find(
+        (item) =>
+          item.cells[0]?.textContent === professor.nome &&
+          item.cells[1]?.textContent === professor.disciplina,
+      );
+      if (!row) {
+        row = tbody.insertRow();
+        const nome = document.createElement('th');
+        nome.scope = 'row';
+        nome.textContent = professor.nome;
+        row.append(nome);
+        row.insertCell().textContent = professor.disciplina;
+        row.insertCell().textContent = String(professor.turmas);
+        const diario = row.insertCell();
+        const status = document.createElement('span');
+        status.className = 'status status-info';
+        status.textContent = 'Em dia';
+        diario.append(status);
+      } else {
+        row.cells[2].textContent = String(professor.turmas);
+      }
+    });
+    const dialog = document.querySelector('#dialogo-professor');
+    const form = document.querySelector('#form-professor');
+    const live = document.getElementById('aviso-turmas');
+    document.querySelector('#abrir-professor')?.addEventListener('click', () => dialog.showModal());
+    document.querySelector('#cancelar-professor')?.addEventListener('click', () => dialog.close());
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const data = new FormData(form);
+      const botao = form.querySelector('button[type=submit]');
+      botao.disabled = true;
+      try {
+        const response = await fetch('/api/modulos?perfil=escola', {
+          method: 'POST',
+          credentials: 'same-origin',
+          cache: 'no-store',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            escolaId: 'escola-e-e-jardim-das-mangabeiras',
+            operacao: 'professor:adicionar',
+            nome: String(data.get('nome')).trim(),
+            disciplina: String(data.get('disciplina')),
+          }),
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'Não foi possível salvar o professor.');
+        live.textContent = 'Professor cadastrado no servidor demonstrativo.';
+        window.location.reload();
+      } catch (error) {
+        live.textContent =
+          error instanceof Error ? error.message : 'Não foi possível salvar o professor.';
+      } finally {
+        botao.disabled = false;
+      }
+    });
+  </script>
+</AppLayout>
+
+<style>
+  .cartoes-turma {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    align-items: start;
+    gap: var(--e-4);
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr));
+  }
+  .turma {
+    align-self: start;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--e-2);
+    padding: var(--e-4);
+    border: 2px solid var(--borda);
+    border-radius: var(--raio);
+    background: var(--superficie);
+  }
+  .turma p {
+    display: flex;
+    align-items: center;
+    gap: var(--e-2);
+  }
+  .turma > p {
+    min-width: 0;
+  }
+  .turma-topo h3 {
+    overflow-wrap: anywhere;
+  }
+  .btn-detalhes {
+    width: 100%;
+    margin-top: var(--e-2);
+  }
+  .detalhes-turma {
+    border-top: 1px solid var(--borda);
+    padding-top: var(--e-3);
+  }
+  .detalhes-turma dl {
+    display: grid;
+    gap: var(--e-3);
+    margin: 0;
+  }
+  .detalhes-turma dl > div {
+    display: grid;
+    gap: var(--e-1);
+  }
+  .detalhes-turma dt {
+    font-weight: 800;
+  }
+  .detalhes-turma dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+  .turma-topo,
+  .turma-freq {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--e-2);
+  }
+  .turma-topo h3 {
+    font-size: var(--texto-lg);
+  }
+  .dialogo {
+    width: min(480px, calc(100vw - 2rem));
+    padding: var(--e-5);
+    border: 1px solid var(--borda);
+    border-radius: var(--raio-lg);
+    background: var(--superficie);
+    color: var(--texto);
+  }
+  .dialogo form {
+    display: grid;
+    gap: var(--e-3);
+  }
+  .dialogo label {
+    display: grid;
+    gap: var(--e-2);
+  }
+  .dialogo-acoes {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--e-2);
+  }
+</style>

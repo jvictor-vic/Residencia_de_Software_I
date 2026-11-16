@@ -1,0 +1,64 @@
+---
+/** Grade de atalhos grandes ("menu de acesso rápido") usada nos painéis. */
+import Icone from './Icone.astro';
+import type { IconeNome } from '../data/icones';
+
+interface Props {
+  itens: { rotulo: string; href: string; icone: IconeNome; descricao: string }[];
+}
+const { itens } = Astro.props;
+---
+
+<nav aria-label="Acesso rápido">
+  <ul class="atalhos">
+    {itens.map((item) => (
+      <li>
+        <a href={item.href} class="atalho" aria-description={item.descricao}>
+          <span class="azulejo">
+            <Icone nome={item.icone} tamanho={26} />
+          </span>
+          <span class="atalho-rotulo">{item.rotulo}</span>
+          <span class="suave atalho-desc">{item.descricao}</span>
+        </a>
+      </li>
+    ))}
+  </ul>
+</nav>
+
+<style>
+  .atalhos {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--e-4);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  }
+  .atalho {
+    display: flex;
+    flex-direction: column;
+    gap: var(--e-2);
+    height: 100%;
+    padding: var(--e-4);
+    background: var(--superficie);
+    border: 2px solid var(--borda);
+    border-radius: var(--raio-lg);
+    color: var(--texto);
+    text-decoration: none;
+    box-shadow: var(--sombra);
+    transition:
+      border-color 0.15s,
+      transform 0.15s;
+  }
+  .atalho:hover {
+    border-color: var(--primaria);
+    transform: translateY(-2px);
+  }
+  .atalho-rotulo {
+    font-weight: 700;
+    font-size: var(--texto-md);
+  }
+  .atalho-desc {
+    line-height: 1.4;
+  }
+</style>

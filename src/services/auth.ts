@@ -1,7 +1,13 @@
 import { getStore } from '@netlify/blobs';
 import { createHash, randomBytes, scrypt as nodeScrypt, timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
-import { Aluno, ContaUsuario, Responsavel, criarContaDeAluno } from '@data/users/classes';
+import {
+  Aluno,
+  ContaUsuario,
+  PAPEIS_USUARIO,
+  Responsavel,
+  criarContaDeAluno,
+} from '@data/users/classes';
 import { calcularIdade } from '@utils/calcularIdade';
 import { cpfValidator } from '@utils/cpfValidator';
 import { senhaSchema } from '@components/CadastroSenha/senhaSchema';
@@ -21,7 +27,7 @@ const ZONAS = ['Urbana', 'Rural'] as const;
 const dataNascimentoSchema = z
   .union([
     z.date(),
-    z.string().datetime(),
+    z.iso.datetime(),
     z
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/)
@@ -76,11 +82,42 @@ const loginSchema = z.object({
   senha: z.string().min(1).max(256),
 });
 
-const accountSchema = z.object({
-  cpf: z.string().regex(/^\d{11}$/),
-  senhaHash: z.string(),
-  papeis: z.array(z.enum(['aluno', 'responsavel'])).min(1),
-});
+const accountSchema = z
+  .object({
+    cpf: z.string().regex(/^\d{11}$/),
+    senhaHash: z.string(),
+    papeis: z.array(z.enum(PAPEIS_USUARIO)).min(1),
+    perfis: z
+      .object({
+        professor: z
+          .object({
+            escolaId: z.string().min(1),
+            atribuicoes: z
+              .array(z.object({ turmaId: z.string().min(1), disciplina: z.string().min(1) }))
+              .min(1),
+          })
+          .optional(),
+        escola: z
+          .object({
+            escolaIds: z.array(z.string().min(1)).min(1),
+            funcao: z.enum(['direcao', 'coordenacao']),
+          })
+          .optional(),
+        secretaria: z.object({ redeId: z.string().min(1) }).optional(),
+      })
+      .optional(),
+  })
+  .superRefine((account, ctx) => {
+    for (const papel of ['professor', 'escola', 'secretaria'] as const) {
+      if (account.papeis.includes(papel) !== Boolean(account.perfis?.[papel])) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['perfis', papel],
+          message: `Perfil incompatível com o papel ${papel}.`,
+        });
+      }
+    }
+  });
 
 const sessionSchema = z.object({
   cpf: z.string().regex(/^\d{11}$/),
@@ -350,6 +387,7 @@ export async function registerAccount(input: unknown): Promise<void> {
 }
 
 export async function login(input: unknown): Promise<{ cookie: string }> {
+  await ensureDemoModuleAccounts();
   const parsed = loginSchema.safeParse(input);
   const cpf = parsed.success ? normalizeCpf(parsed.data.cpf) : '';
   const senha = parsed.success ? parsed.data.senha : '';
@@ -410,6 +448,97 @@ export async function readSession(request: Request): Promise<{ cpf: string } | n
     return null;
   }
   return { cpf: session.cpf };
+}
+
+async function ensureDemoModuleAccounts(): Promise<void> {
+  const fixtures = [
+    {
+      cpf: '52998224725',
+      senha: 'Professor123!',
+      role: 'professor' as const,
+      perfil: {
+        escolaId: 'escola-e-e-jardim-das-mangabeiras',
+        atribuicoes: [{ turmaId: 'turma-8b', disciplina: 'Matemática' }],
+      },
+    },
+    {
+      cpf: '11144477735',
+      senha: 'Escola123!',
+      role: 'escola' as const,
+      perfil: { escolaIds: ['escola-e-e-jardim-das-mangabeiras'], funcao: 'direcao' as const },
+    },
+    {
+      cpf: '12345678909',
+      senha: 'Secretaria123!',
+      role: 'secretaria' as const,
+      perfil: { redeId: 'rede-sergipe-demo' },
+    },
+  ];
+  const blobStore = store();
+  for (const fixture of fixtures) {
+    const accountKey = `accounts/${fixture.cpf}`;
+    if (await blobStore.get(accountKey, { type: 'text' })) continue;
+    const profileKey = `profiles/${fixture.role}/${fixture.cpf}`;
+    const profile = await blobStore.setJSON(profileKey, fixture.perfil, { onlyIfNew: true });
+    if (!profile.modified) {
+      const existingProfile = await blobStore.get(profileKey, { type: 'json' });
+      if (JSON.stringify(existingProfile) !== JSON.stringify(fixture.perfil)) {
+        throw new Error(
+          `O perfil de demonstração ${fixture.role} existente não corresponde à fixture.`,
+        );
+      }
+    }
+    try {
+      const account = new ContaUsuario({
+        cpf: fixture.cpf,
+        senhaHash: await hashPassword(fixture.senha),
+        papeis: [fixture.role],
+        perfis: { [fixture.role]: fixture.perfil },
+      });
+      const created = await blobStore.setJSON(accountKey, account, { onlyIfNew: true });
+      if (!created.modified) await blobStore.delete(profileKey);
+    } catch (error) {
+      await blobStore.delete(profileKey);
+      throw error;
+    }
+  }
+}
+
+export async function getModuleLanding(request: Request): Promise<string> {
+  const session = await readSession(request);
+  if (!session) return '/entrar';
+  const account = await store().get(`accounts/${session.cpf}`, { type: 'json' });
+  const parsed = accountSchema.safeParse(account);
+  if (!parsed.success) return '/entrar';
+  if (parsed.data.papeis.includes('escola')) return '/escola';
+  if (parsed.data.papeis.includes('professor')) return '/professor';
+  if (parsed.data.papeis.includes('secretaria')) return '/secretaria';
+  return '/painel';
+}
+
+/** Confere o papel e o registro de perfil armazenado antes de liberar um módulo. */
+export async function hasModuleRole(request: Request, role: 'professor' | 'escola' | 'secretaria') {
+  return (await readModuleProfile(request, role)) !== null;
+}
+
+export async function readModuleProfile(
+  request: Request,
+  role: 'professor' | 'escola' | 'secretaria',
+): Promise<{
+  cpf: string;
+  profile: NonNullable<z.infer<typeof accountSchema>['perfis']>[typeof role];
+} | null> {
+  const session = await readSession(request);
+  if (!session) return null;
+  const account = await store().get(`accounts/${session.cpf}`, { type: 'json' });
+  if (account === null) return null;
+  const parsed = accountSchema.safeParse(account);
+  if (!parsed.success || !parsed.data.papeis.includes(role) || !parsed.data.perfis?.[role])
+    return null;
+  const profile = await store().get(`profiles/${role}/${session.cpf}`, { type: 'json' });
+  if (profile === null || JSON.stringify(profile) !== JSON.stringify(parsed.data.perfis[role]))
+    return null;
+  return { cpf: session.cpf, profile: parsed.data.perfis[role] };
 }
 
 export async function readJsonBody(request: Request): Promise<JsonRecord> {

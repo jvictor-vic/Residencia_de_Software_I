@@ -1,0 +1,238 @@
+---
+/** Painel do Professor: pendências do dia e lista de turmas com status. */
+import AppLayout from '../../layouts/AppLayout.astro';
+import Indicador from '../../components/Indicador.astro';
+import Status from '../../components/Status.astro';
+import Icone from '../../components/Icone.astro';
+import AcessoRapido from '../../components/AcessoRapido.astro';
+import { readModuleData } from '../../services/modulos';
+import { link } from '../../data/perfis';
+
+export const prerender = false;
+const modulo = await readModuleData(Astro.request, 'professor');
+const registros = modulo.turmas as {
+  id: string;
+  nome: string;
+  horario?: string;
+  sala?: string;
+  estudantes: { id: string; nome: string }[];
+}[];
+const chamadas = modulo.chamadas as { turmaId: string; data: string }[];
+const notas = modulo.notas as {
+  turmaId: string;
+  estudanteId: string;
+  unidades: (number | null)[];
+}[];
+const turmasProfessor = registros.map((turma) => ({
+  id: turma.id,
+  nome: turma.nome,
+  alunos: turma.estudantes.length,
+  horario: turma.horario || 'Horário não definido',
+  sala: turma.sala || 'Sala não definida',
+  chamadaFeita: chamadas.some(
+    (chamada) =>
+      chamada.turmaId === turma.id && chamada.data === new Date().toISOString().slice(0, 10),
+  ),
+  notasPendentes: turma.estudantes.filter(
+    (aluno) => !notas.some((nota) => nota.estudanteId === aluno.id && nota.unidades[3] !== null),
+  ).length,
+}));
+const diarios = modulo.diarios as {
+  data: string;
+  turmaId: string;
+  conteudo: string;
+  observacao: string;
+}[];
+const dataOrdem = (valor: string) => {
+  const iso = /^\d{4}-\d{2}-\d{2}$/.test(valor);
+  const partes = iso ? valor.split('-') : valor.split('/').reverse();
+  return Date.UTC(Number(partes[0]), Number(partes[1]) - 1, Number(partes[2]));
+};
+const diarioProfessor = diarios
+  .map((registro) => ({
+    ...registro,
+    turma: turmasProfessor.find((turma) => turma.id === registro.turmaId)?.nome ?? registro.turmaId,
+  }))
+  .sort((a, b) => dataOrdem(b.data) - dataOrdem(a.data));
+const totalAlunos = turmasProfessor.reduce((t, x) => t + x.alunos, 0);
+const chamadasPendentes = turmasProfessor.filter((t) => !t.chamadaFeita).length;
+const notasPendentes = turmasProfessor.reduce((t, x) => t + x.notasPendentes, 0);
+---
+
+<AppLayout
+  perfil="professor"
+  ativo=""
+  titulo="Painel do professor"
+  subtitulo={`Matemática · ${turmasProfessor.length} turma(s) atribuída(s)`}
+  ajuda="Este é o painel do professor. Aqui ficam as pendências do dia, como chamadas e notas que ainda não foram lançadas, e a lista das suas turmas."
+>
+  <div class="pilha">
+    <section class="grade" aria-label="Resumo">
+      <Indicador
+        rotulo="Minhas turmas"
+        valor={String(turmasProfessor.length)}
+        icone="escola"
+        cor="var(--perfil-professor)"
+      />
+      <Indicador rotulo="Alunos" valor={String(totalAlunos)} icone="usuarios" />
+      <Indicador
+        rotulo="Chamadas pendentes"
+        valor={String(chamadasPendentes)}
+        icone="prancheta"
+        cor="var(--perfil-escola)"
+        detalhe="hoje"
+      />
+      <Indicador
+        rotulo="Notas a lançar"
+        valor={String(notasPendentes)}
+        icone="lapis"
+        cor="var(--perfil-responsavel)"
+        detalhe="4ª unidade"
+      />
+    </section>
+
+    <section aria-label="Acesso rápido">
+      <AcessoRapido
+        itens={[
+          {
+            rotulo: 'Fazer chamada',
+            href: link('professor', 'chamada'),
+            icone: 'prancheta',
+            descricao: 'Registrar presenças de hoje',
+          },
+          {
+            rotulo: 'Lançar notas',
+            href: link('professor', 'notas'),
+            icone: 'lapis',
+            descricao: 'Média calculada na hora',
+          },
+          {
+            rotulo: 'Diário de classe',
+            href: link('professor', 'diario'),
+            icone: 'diario',
+            descricao: 'Conteúdo e observações',
+          },
+          {
+            rotulo: 'Comunicados',
+            href: link('professor', 'comunicados'),
+            icone: 'megafone',
+            descricao: 'Avisos da escola e da rede',
+          },
+        ]}
+      />
+    </section>
+
+    <div class="grade-2">
+      <section class="card" aria-labelledby="titulo-pendencias">
+        <h2 id="titulo-pendencias">
+          <Icone nome="tarefas" /> Pendências do dia
+        </h2>
+        <ul class="lista">
+          {turmasProfessor
+            .filter((turma) => !turma.chamadaFeita)
+            .map((turma) => (
+              <li class="pendencia">
+                <Status tom="alerta" texto="Hoje" />
+                <span class="pendencia-texto">
+                  Chamada do <strong>{turma.nome}</strong> ({turma.horario})
+                </span>
+                <a class="btn btn-primario" href={link('professor', 'chamada')}>
+                  Fazer
+                </a>
+              </li>
+            ))}
+          {turmasProfessor
+            .filter((turma) => turma.notasPendentes > 0)
+            .map((turma) => (
+              <li class="pendencia">
+                <Status tom="info" texto="4ª unidade" />
+                <span class="pendencia-texto">
+                  Notas pendentes da turma <strong>{turma.nome}</strong>: {turma.notasPendentes}
+                </span>
+                <a class="btn btn-secundario" href={link('professor', 'notas')}>
+                  Lançar
+                </a>
+              </li>
+            ))}
+          {chamadasPendentes === 0 && notasPendentes === 0 && (
+            <li class="suave">Nenhuma pendência para as turmas atribuídas.</li>
+          )}
+        </ul>
+      </section>
+
+      <section class="card" aria-labelledby="titulo-diario">
+        <div class="card-cabecalho">
+          <h2 id="titulo-diario">
+            <Icone nome="diario" /> Últimos registros
+          </h2>
+          <a href={link('professor', 'diario')}>Abrir diário</a>
+        </div>
+        <ul class="lista">
+          {diarioProfessor.slice(0, 3).map((d) => (
+            <li>
+              <span class="azulejo">
+                <Icone nome="diario" />
+              </span>
+              <div>
+                <p class="negrito sem-margem">{d.conteudo}</p>
+                <p class="suave sem-margem">
+                  {d.turma} · {d.data}
+                </p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </div>
+
+    <section class="card" aria-labelledby="titulo-turmas">
+      <h2 id="titulo-turmas">
+        <Icone nome="escola" /> Minhas turmas
+      </h2>
+      <div class="tabela-wrap">
+        <table class="tabela">
+          <caption class="sr-only">Turmas atribuídas ao perfil demonstrativo de professor</caption>
+          <thead>
+            <tr>
+              <th scope="col">Turma</th>
+              <th scope="col">Horário</th>
+              <th scope="col">Sala</th>
+              <th scope="col" class="centro">
+                Alunos
+              </th>
+              <th scope="col">Chamada de hoje</th>
+            </tr>
+          </thead>
+          <tbody>
+            {turmasProfessor.map((t) => (
+              <tr>
+                <th scope="row">{t.nome}</th>
+                <td>{t.horario}</td>
+                <td>{t.sala}</td>
+                <td class="centro numero">{t.alunos}</td>
+                <td>
+                  {t.chamadaFeita ? (
+                    <Status tom="sucesso" texto="Feita" />
+                  ) : (
+                    <Status tom="alerta" texto="Pendente" />
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</AppLayout>
+
+<style>
+  .pendencia {
+    align-items: center !important;
+    flex-wrap: wrap;
+  }
+  .pendencia-texto {
+    flex: 1;
+    min-width: 180px;
+  }
+</style>
