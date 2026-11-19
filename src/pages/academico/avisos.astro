@@ -1,0 +1,358 @@
+---
+import Academico from '@layouts/Academico.astro';
+import CardAviso from '@components/CardAviso.astro';
+import SelectMultiple from '@components/SelectMultiple.astro';
+import type { Aviso } from '@data/users/classes';
+import { readAccessibleStudents } from '@services/auth';
+import getIDsemantico, { CANAIS_AVISO, type options } from '@utils/getIDsemantico';
+
+const usuario = Astro.locals.authenticatedUser;
+
+interface AlunoDemonstracao {
+  id: string;
+  nome: string;
+}
+
+interface AvisoDemonstracao extends Aviso {
+  alunoId: string;
+  alunoNome: string;
+}
+
+const alunosRelacionados = usuario ? await readAccessibleStudents(usuario) : [];
+const alunos: AlunoDemonstracao[] = alunosRelacionados.map(({ nome }, indice) => ({
+  id: `aluno-${indice + 1}`,
+  nome,
+}));
+
+function dataISO(data: Date): string {
+  return [
+    data.getFullYear(),
+    String(data.getMonth() + 1).padStart(2, '0'),
+    String(data.getDate()).padStart(2, '0'),
+  ].join('-');
+}
+
+function adicionarDias(data: Date, dias: number): Date {
+  const resultado = new Date(data);
+  resultado.setDate(resultado.getDate() + dias);
+  return resultado;
+}
+
+const hoje = new Date();
+hoje.setHours(12, 0, 0, 0);
+const inicioSemana = adicionarDias(hoje, -((hoje.getDay() + 6) % 7));
+const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1, 12);
+const inicioProximoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1, 12);
+const datasDemonstracao = [
+  dataISO(hoje),
+  dataISO(adicionarDias(hoje, 1)),
+  dataISO(adicionarDias(inicioSemana, 2)),
+  dataISO(adicionarDias(inicioSemana, 8)),
+  dataISO(inicioMes),
+  dataISO(new Date(inicioProximoMes.getFullYear(), inicioProximoMes.getMonth(), 15, 12)),
+];
+
+const exemplos: {
+  canal: options;
+  titulo: string;
+  descricao: string;
+}[] = [
+  {
+    canal: 'seduc',
+    titulo: 'Atualização do calendário escolar',
+    descricao: 'Confira as datas importantes do período letivo e programe sua rotina.',
+  },
+  {
+    canal: 'escola',
+    titulo: 'Reunião de acompanhamento',
+    descricao: 'A coordenação convida as famílias para conversar sobre o desenvolvimento escolar.',
+  },
+  {
+    canal: 'matematica',
+    titulo: 'Atividade de Matemática',
+    descricao: 'A turma terá uma atividade de revisão. Consulte os materiais disponibilizados.',
+  },
+  {
+    canal: 'portugues',
+    titulo: 'Projeto de leitura',
+    descricao: 'Nesta semana, a turma inicia uma nova etapa do projeto de leitura.',
+  },
+  {
+    canal: 'historia',
+    titulo: 'Entrega de trabalho',
+    descricao: 'Lembrete para conferir as orientações e a data de entrega do trabalho.',
+  },
+  {
+    canal: 'ciencias',
+    titulo: 'Material para a aula',
+    descricao: 'Confira com antecedência os materiais necessários para a próxima atividade.',
+  },
+];
+
+const avisos: AvisoDemonstracao[] = alunos.flatMap((alunoExemplo) =>
+  exemplos.map((exemplo, indice) => ({
+    id: `${alunoExemplo.id}-aviso-${indice + 1}`,
+    ...exemplo,
+    data: datasDemonstracao[indice],
+    alunoId: alunoExemplo.id,
+    alunoNome: alunoExemplo.nome,
+  })),
+);
+
+const canaisFiltro = [
+  { id: 'canal-seduc', value: 'seduc', label: 'Secretaria' },
+  { id: 'canal-escola', value: 'escola', label: 'Coordenação' },
+  {
+    id: 'canal-materias',
+    value: 'materias',
+    label: 'Matérias',
+    groupCanal: 'materias',
+  },
+  ...CANAIS_AVISO.filter((canal) => canal !== 'seduc' && canal !== 'escola').map(
+    (canal, indice) => ({
+      id: `canal-${canal}`,
+      value: canal,
+      label: getIDsemantico(canal).canal,
+      canalMateria: true,
+      groupLabel: indice === 0 ? 'Selecionar matérias' : undefined,
+    }),
+  ),
+];
+
+const datasFiltro = [
+  { id: 'data-hoje', value: 'hoje', label: 'Hoje' },
+  { id: 'data-amanha', value: 'amanha', label: 'Amanhã' },
+  { id: 'data-esta-semana', value: 'esta-semana', label: 'Esta semana' },
+  { id: 'data-proxima-semana', value: 'proxima-semana', label: 'Próxima semana' },
+  { id: 'data-este-mes', value: 'este-mes', label: 'Este mês' },
+  { id: 'data-proximo-mes', value: 'proximo-mes', label: 'Próximo mês' },
+];
+
+const alunosFiltro = alunos.map((aluno) => ({
+  id: `aluno-${aluno.id}`,
+  value: aluno.id,
+  label: aluno.nome,
+}));
+---
+
+<Academico title="Avisos | EducaHub">
+  <section class="pagina-avisos" aria-labelledby="titulo-avisos">
+    <header class="introducao">
+      <h1 id="titulo-avisos">Avisos</h1>
+      <p>Acompanhe comunicados da secretaria, da coordenação e das matérias.</p>
+    </header>
+
+    <section class="filtros" aria-label="Filtros de avisos">
+      <SelectMultiple filtro="canal" titulo="Canal" opcoes={canaisFiltro} />
+      <SelectMultiple filtro="data" titulo="Data" opcoes={datasFiltro} />
+
+      {alunos.length > 1 && (
+        <SelectMultiple filtro="aluno" titulo="Aluno" opcoes={alunosFiltro} />
+      )}
+    </section>
+
+    <div class="lista-cabecalho">
+      <h2>Comunicados</h2>
+      <p id="resultado-avisos" aria-live="polite">
+        {avisos.length} {avisos.length === 1 ? 'aviso' : 'avisos'}
+      </p>
+    </div>
+
+    <ul class="lista-avisos" data-lista-avisos>
+      {avisos.map((aviso) => (
+        <li data-aviso data-canal={aviso.canal} data-data={aviso.data} data-aluno={aviso.alunoId}>
+          <CardAviso
+            canal={aviso.canal}
+            titulo={aviso.titulo}
+            descricao={aviso.descricao}
+            data={new Date(`${aviso.data}T12:00:00`)}
+            aluno={alunos.length > 1 ? aviso.alunoNome : undefined}
+          />
+        </li>
+      ))}
+    </ul>
+
+    <p class="estado-vazio" data-estado-vazio hidden={avisos.length > 0}>
+      {alunos.length > 0
+        ? 'Nenhum aviso corresponde aos filtros selecionados.'
+        : 'Não há alunos vinculados a este perfil para exibir avisos.'}
+    </p>
+  </section>
+</Academico>
+
+<script>
+  document.addEventListener('astro:page-load', () => {
+    const gruposFiltro = [...document.querySelectorAll<HTMLElement>('[data-filtro]')];
+    const lista = document.querySelector<HTMLElement>('[data-lista-avisos]');
+    const estadoVazio = document.querySelector<HTMLElement>('[data-estado-vazio]');
+    const resultadoAvisos = document.querySelector<HTMLElement>('#resultado-avisos');
+
+    function paraISO(data: Date): string {
+      return [
+        data.getFullYear(),
+        String(data.getMonth() + 1).padStart(2, '0'),
+        String(data.getDate()).padStart(2, '0'),
+      ].join('-');
+    }
+
+    function somarDias(data: Date, dias: number): Date {
+      const resultado = new Date(data);
+      resultado.setDate(resultado.getDate() + dias);
+      return resultado;
+    }
+
+    function intervaloData(filtro: string): [string, string] | undefined {
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
+      const hojeISO = paraISO(hoje);
+
+      if (filtro === 'hoje') return [hojeISO, hojeISO];
+      if (filtro === 'amanha') {
+        const amanha = paraISO(somarDias(hoje, 1));
+        return [amanha, amanha];
+      }
+
+      const inicioSemana = somarDias(hoje, -((hoje.getDay() + 6) % 7));
+      if (filtro === 'esta-semana') {
+        return [paraISO(inicioSemana), paraISO(somarDias(inicioSemana, 6))];
+      }
+      if (filtro === 'proxima-semana') {
+        const proximaSemana = somarDias(inicioSemana, 7);
+        return [paraISO(proximaSemana), paraISO(somarDias(proximaSemana, 6))];
+      }
+
+      const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+      if (filtro === 'este-mes') {
+        return [paraISO(inicioMes), paraISO(new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0))];
+      }
+      if (filtro === 'proximo-mes') {
+        const proximoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
+        return [paraISO(proximoMes), paraISO(new Date(hoje.getFullYear(), hoje.getMonth() + 2, 0))];
+      }
+
+      return undefined;
+    }
+
+    const valoresSelecionados = (grupo: HTMLElement | undefined): string[] => {
+      if (!grupo) return [];
+
+      const opcoes = [
+        ...grupo.querySelectorAll<HTMLInputElement>(
+          'input[type="checkbox"]:not([data-grupo-canal])',
+        ),
+      ];
+      const selecionados = opcoes.filter((opcao) => opcao.checked).map((opcao) => opcao.value);
+
+      return selecionados.length === opcoes.length ? [] : selecionados;
+    };
+
+    if (lista && estadoVazio && resultadoAvisos) {
+      const estadoVazioAvisos = estadoVazio;
+      const resultadoAvisosVisiveis = resultadoAvisos;
+      const cards = [...lista.querySelectorAll<HTMLElement>('[data-aviso]')];
+      const gruposPorFiltro = new Map(
+        gruposFiltro.map((grupo) => [grupo.dataset.filtro ?? '', grupo]),
+      );
+
+      function aplicarFiltros(): void {
+        const canaisSelecionados = valoresSelecionados(gruposPorFiltro.get('canal'));
+        const datasSelecionadas = valoresSelecionados(gruposPorFiltro.get('data'));
+        const alunosSelecionados = valoresSelecionados(gruposPorFiltro.get('aluno'));
+        const intervalos = datasSelecionadas
+          .map(intervaloData)
+          .filter((intervalo): intervalo is [string, string] => intervalo !== undefined);
+        let quantidadeVisivel = 0;
+
+        cards.forEach((card) => {
+          const data = card.dataset.data ?? '';
+          const correspondeAoCanal =
+            canaisSelecionados.length === 0 ||
+            canaisSelecionados.includes(card.dataset.canal ?? '');
+          const correspondeAoAluno =
+            alunosSelecionados.length === 0 ||
+            alunosSelecionados.includes(card.dataset.aluno ?? '');
+          const correspondeAData =
+            intervalos.length === 0 ||
+            intervalos.some(([inicio, fim]) => data >= inicio && data <= fim);
+          const visivel = correspondeAoCanal && correspondeAoAluno && correspondeAData;
+
+          card.hidden = !visivel;
+          if (visivel) quantidadeVisivel += 1;
+        });
+
+        estadoVazioAvisos.hidden = quantidadeVisivel > 0;
+        resultadoAvisosVisiveis.textContent = `${quantidadeVisivel} ${
+          quantidadeVisivel === 1 ? 'aviso' : 'avisos'
+        }`;
+      }
+
+      gruposFiltro.forEach((grupo) => {
+        grupo.addEventListener('selectmultiple:change', aplicarFiltros);
+      });
+      aplicarFiltros();
+    }
+  });
+</script>
+
+<style>
+  .pagina-avisos {
+    display: grid;
+    gap: 24px;
+    max-width: 1000px;
+    margin-inline: auto;
+  }
+
+  .introducao {
+    display: grid;
+    gap: 8px;
+  }
+
+  .introducao > p {
+    color: var(--fg--40);
+  }
+
+  .filtros {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 20px;
+    border: 1px solid var(--fg--80);
+    border-radius: 12px;
+    background: var(--fg--90);
+  }
+
+  .lista-cabecalho {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .lista-cabecalho h2 {
+    font-size: 24px;
+  }
+
+  .lista-cabecalho p {
+    color: var(--fg--40);
+  }
+
+  .lista-avisos {
+    display: grid;
+    gap: 16px;
+    padding: 0;
+    list-style: none;
+  }
+
+  .lista-avisos li[hidden] {
+    display: none;
+  }
+
+  .estado-vazio {
+    padding: 24px;
+    border: 1px dashed var(--fg--60);
+    border-radius: 12px;
+    color: var(--fg--40);
+    text-align: center;
+  }
+</style>

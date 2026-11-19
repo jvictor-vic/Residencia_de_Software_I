@@ -10,7 +10,15 @@ import { defineConfig } from 'eslint/config';
 
 export default defineConfig([
   {
-    ignores: ['package.json', 'package-lock.json', 'node_modules/', '.vscode/', '.astro/'],
+    ignores: [
+      'package.json',
+      'package-lock.json',
+      'node_modules/',
+      '.vscode/',
+      '.astro/',
+      '.netlify/',
+      'dist/',
+    ],
   },
   {
     files: ['**/*.{js,mjs,cjs,jsx}'],
@@ -49,6 +57,13 @@ export default defineConfig([
     plugins: { css },
     language: 'css/css',
     extends: ['css/recommended'],
+  },
+  {
+    files: ['**/*.{astro,css}'],
+    plugins: { css },
+    rules: {
+      'css/no-invalid-properties': ['error', { allowUnknownVariables: true }],
+    },
   },
   eslintConfigPrettier,
 ]);

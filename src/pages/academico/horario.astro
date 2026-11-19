@@ -1,0 +1,194 @@
+---
+import Academico from '@layouts/Academico.astro';
+import Icone from '@components/Icone.astro';
+import MateriaTag from '@components/MateriaTag.astro';
+import { DIAS, HORARIOS, gradeAna } from '@data/dados';
+
+const HOJE = 3;
+---
+
+<Academico title="Horários | EducaHub">
+  <section class="pagina" aria-labelledby="titulo-pagina">
+    <header class="introducao">
+      <h1 id="titulo-pagina">Horários</h1>
+      <p>8º ano B · turno da manhã · Sala 14</p>
+    </header>
+
+    <section class="card" aria-labelledby="titulo-grade">
+      <div class="card-cabecalho">
+        <h2 id="titulo-grade">
+          <Icone nome="relogio" /> Grade semanal
+        </h2>
+        <span class="intervalo">Intervalo: 09:30 – 09:50</span>
+      </div>
+      <div class="tabela-wrap">
+        <table class="grade-horarios">
+          <caption class="sr-only">Grade de horários do 8º ano B</caption>
+          <thead>
+            <tr>
+              <th scope="col">Horário</th>
+              {DIAS.map((dia, indice) => (
+                <th scope="col" class:list={{ hoje: indice === HOJE }}>
+                  {dia}
+                  {indice === HOJE && <span class="selo-hoje">Hoje</span>}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {gradeAna.map((linha, indiceHorario) => (
+              <tr>
+                <th scope="row" class="hora">
+                  {HORARIOS[indiceHorario]}
+                </th>
+                {linha.map((materia, indiceDia) => (
+                  <td class:list={{ hoje: indiceDia === HOJE }}>
+                    <MateriaTag materia={materia} compacto />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </section>
+</Academico>
+
+<style>
+  .pagina {
+    display: grid;
+    gap: 1.5rem;
+    max-width: 1280px;
+    margin-inline: auto;
+  }
+
+  .introducao {
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .introducao p,
+  .intervalo {
+    color: var(--fg--40);
+  }
+
+  .card {
+    min-width: 0;
+    padding: 1.25rem;
+    border: 1px solid var(--fg--80);
+    border-radius: 12px;
+    background: var(--bg);
+    box-shadow: 0 4px 12px rgb(18 12 7 / 8%);
+  }
+
+  .card-cabecalho {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .card-cabecalho h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 1.35rem;
+  }
+
+  .card-cabecalho h2 :global(svg) {
+    color: var(--primary-darker);
+  }
+
+  .tabela-wrap {
+    overflow-x: auto;
+  }
+
+  .grade-horarios {
+    width: 100%;
+    min-width: 900px;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .grade-horarios th,
+  .grade-horarios td {
+    min-width: 145px;
+    padding: 0.8rem;
+    border-bottom: 1px solid var(--fg--80);
+    text-align: left;
+  }
+
+  .grade-horarios thead th {
+    border-top: 1px solid var(--fg--80);
+    background: var(--fg--90);
+    font-weight: 700;
+  }
+
+  .grade-horarios thead th:first-child {
+    border-top-left-radius: 8px;
+  }
+
+  .grade-horarios thead th:last-child {
+    border-top-right-radius: 8px;
+  }
+
+  .grade-horarios .hora {
+    min-width: 145px;
+    color: var(--fg--40);
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .grade-horarios :global(.materia) {
+    gap: 0.5rem;
+    font-size: 0.9rem;
+  }
+
+  .grade-horarios :global(.materia-selo) {
+    border-color: var(--fg--40);
+  }
+
+  .hoje {
+    background: color-mix(in srgb, var(--primary) 12%, var(--bg));
+  }
+
+  thead .hoje {
+    box-shadow: inset 0 4px 0 var(--primary);
+  }
+
+  .selo-hoje {
+    display: block;
+    width: fit-content;
+    margin-top: 0.25rem;
+    padding: 0.05rem 0.5rem;
+    border-radius: 999px;
+    background: var(--primary-darker);
+    color: var(--bg);
+    font-size: 0.8rem;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    clip-path: inset(50%);
+  }
+
+  @media (max-width: 600px) {
+    .card {
+      padding: 0.8rem;
+    }
+
+    .grade-horarios th,
+    .grade-horarios td {
+      padding: 0.6rem;
+    }
+  }
+</style>

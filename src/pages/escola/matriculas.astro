@@ -1,0 +1,675 @@
+﻿---
+/**
+ * Matrículas (H5.2): lista com busca e filtro por status
+ * (confirmada / em análise / pendente) + cadastro de nova matrícula.
+ */
+import AppLayout from '../../layouts/AppLayout.astro';
+import Status from '../../components/Status.astro';
+import Icone from '../../components/Icone.astro';
+import {
+  matriculas as matriculasFixture,
+  turmasEscola as turmasFixture,
+  paraBusca,
+} from '../../data/dados';
+import { readModuleData } from '../../services/modulos';
+
+export const prerender = false;
+const modulo = await readModuleData(Astro.request, 'escola');
+const matriculas = modulo.matriculas as typeof matriculasFixture;
+const turmasEscola = modulo.turmas as ((typeof turmasFixture)[number] & { id: string })[];
+const contagem = {
+  todas: matriculas.length,
+  confirmada: matriculas.filter((m) => m.status === 'confirmada').length,
+  analise: matriculas.filter((m) => m.status === 'analise').length,
+  pendente: matriculas.filter((m) => m.status === 'pendente').length,
+};
+---
+
+<AppLayout
+  perfil="escola"
+  ativo="matriculas"
+  titulo="Matrículas"
+  subtitulo="Busque, filtre e cadastre matrículas"
+  ajuda="Lista de matrículas da escola. Use o campo de busca para procurar pelo nome do aluno ou do responsável. Use os botões de filtro para ver só as confirmadas, em análise ou pendentes. Para cadastrar, clique em Nova matrícula."
+>
+  <section class="card">
+    <div class="ferramentas">
+      <div class="campo busca">
+        <label for="busca">Buscar</label>
+        <div class="busca-wrap">
+          <Icone nome="lupa" />
+          <input
+            id="busca"
+            type="search"
+            placeholder="Nome do aluno ou responsável"
+            autocomplete="off"
+          />
+        </div>
+      </div>
+      <button type="button" class="btn btn-primario" id="abrir-nova">
+        <Icone nome="mais" /> Nova matrícula
+      </button>
+    </div>
+
+    <div class="filtros" role="group" aria-label="Filtrar por situação">
+      <button type="button" class="filtro" data-filtro="todas" aria-pressed="true">
+        Todas ({contagem.todas})
+      </button>
+      <button type="button" class="filtro" data-filtro="confirmada" aria-pressed="false">
+        Confirmadas ({contagem.confirmada})
+      </button>
+      <button type="button" class="filtro" data-filtro="analise" aria-pressed="false">
+        Em análise ({contagem.analise})
+      </button>
+      <button type="button" class="filtro" data-filtro="pendente" aria-pressed="false">
+        Pendentes ({contagem.pendente})
+      </button>
+    </div>
+
+    <p class="resultado suave" id="resultado" aria-live="polite">
+      Mostrando {matriculas.length} matrículas
+    </p>
+
+    <div class="tabela-wrap">
+      <table class="tabela">
+        <caption class="sr-only">Matrículas</caption>
+        <thead>
+          <tr>
+            <th scope="col">Aluno</th>
+            <th scope="col">Turma</th>
+            <th scope="col">Responsável</th>
+            <th scope="col">Data</th>
+            <th scope="col">Situação</th>
+          </tr>
+        </thead>
+        <tbody id="corpo-matriculas">
+          {matriculas.map((m) => (
+            <tr data-status={m.status} data-busca={paraBusca(`${m.aluno} ${m.responsavel}`)}>
+              <th scope="row">{m.aluno}</th>
+              <td>{m.turma}</td>
+              <td>{m.responsavel}</td>
+              <td class="numero">{m.data}</td>
+              <td>
+                {m.status === 'confirmada' && <Status tom="sucesso" texto="Confirmada" />}
+                {m.status === 'analise' && <Status tom="alerta" texto="Em análise" />}
+                {m.status === 'pendente' && <Status tom="perigo" texto="Pendente" />}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    <p class="vazio" id="vazio" hidden>
+      <Icone nome="lupa" /> Nenhuma matrícula encontrada. Tente outro nome ou filtro.
+    </p>
+  </section>
+
+  <template id="modelo-linha">
+    <tr data-status="analise">
+      <th scope="row"></th>
+      <td></td>
+      <td></td>
+      <td class="numero"></td>
+      <td>
+        <Status tom="alerta" texto="Em análise" />
+      </td>
+    </tr>
+  </template>
+
+  <dialog id="dialogo-nova" class="dialogo" aria-labelledby="titulo-nova">
+    <form id="form-nova" method="dialog" novalidate>
+      <div class="dialogo-topo">
+        <h2 id="titulo-nova">
+          <Icone nome="mais" /> Nova matrícula
+        </h2>
+        <button type="button" class="btn btn-icone btn-fantasma" data-fechar aria-label="Fechar">
+          <Icone nome="x" />
+        </button>
+      </div>
+      <ol class="etapas-matricula" aria-label="Etapas da matrícula">
+        <li data-step-indicator="0" aria-current="step">
+          1. Aluno
+        </li>
+        <li data-step-indicator="1">2. Responsável</li>
+        <li data-step-indicator="2">3. Endereço e turma</li>
+      </ol>
+      <section data-step-panel="0" aria-label="Dados do aluno">
+        <div class="campo">
+          <label for="nova-aluno">Nome do aluno</label>
+          <input id="nova-aluno" name="aluno" required aria-describedby="erro-aluno" />
+          <span class="erro-campo" id="erro-aluno"></span>
+        </div>
+        <fieldset>
+          <legend>Dados pessoais do aluno</legend>
+          <div class="campo">
+            <label for="nova-cpf">CPF *</label>
+            <input id="nova-cpf" name="cpf" inputmode="numeric" required />
+          </div>
+          <div class="campo">
+            <label for="nova-nascimento">Data de nascimento *</label>
+            <input id="nova-nascimento" name="nascimento" type="date" required />
+          </div>
+          <div class="campo">
+            <label for="nova-genero">Gênero *</label>
+            <select id="nova-genero" name="genero" required>
+              <option value="">Selecione</option>
+              <option>Homem Cis</option>
+              <option>Homem Trans</option>
+              <option>Mulher Cis</option>
+              <option>Mulher Trans</option>
+              <option>Não-Binário</option>
+            </select>
+          </div>
+          <div class="campo" id="campo-nome-social" hidden>
+            <label for="nova-social">Nome social</label>
+            <input id="nova-social" name="nomeSocial" />
+          </div>
+          <div class="campo">
+            <label for="nova-raca">Cor / raça *</label>
+            <select id="nova-raca" name="raca" required>
+              <option value="">Selecione</option>
+              <option>Amarela</option>
+              <option>Branca</option>
+              <option>Indígena</option>
+              <option>Parda</option>
+              <option>Preta</option>
+            </select>
+          </div>
+          <div class="campo">
+            <label for="nova-nacionalidade">Nacionalidade *</label>
+            <select id="nova-nacionalidade" name="nacionalidade" required>
+              <option value="Brasil">Brasil</option>
+            </select>
+          </div>
+          <div class="campo nascimento-brasil">
+            <label for="nova-estado-natal">Estado natal *</label>
+            <input id="nova-estado-natal" name="estadoNatal" required />
+          </div>
+          <div class="campo nascimento-brasil">
+            <label for="nova-naturalidade">Cidade natal *</label>
+            <input id="nova-naturalidade" name="naturalidade" required />
+          </div>
+        </fieldset>
+      </section>
+      <section data-step-panel="1" aria-label="Dados do responsável" hidden>
+        <div class="campo" id="campo-nome-responsavel">
+          <label for="nova-resp">Nome do responsável</label>
+          <input id="nova-resp" name="responsavel" aria-describedby="erro-resp" />
+          <span class="erro-campo" id="erro-resp"></span>
+        </div>
+        <fieldset id="dados-responsavel">
+          <legend>Dados do responsável (obrigatórios para menores de 18 anos)</legend>
+          <div class="campo">
+            <label for="nova-parentesco">Parentesco </label>
+            <select id="nova-parentesco" name="parentesco" required>
+              <option value="">Selecione</option>
+              <option>Mãe</option>
+              <option>Pai</option>
+              <option>Tio / Tia</option>
+              <option>Avô / Avó</option>
+              <option>Diretor de Abrigo</option>
+              <option>Tutor</option>
+            </select>
+          </div>
+          <div class="campo">
+            <label for="nova-cpf-resp">CPF do responsável</label>
+            <input id="nova-cpf-resp" name="cpfResponsavel" inputmode="numeric" required />
+          </div>
+          <div class="campo">
+            <label for="nova-genero-resp">Gênero do responsável</label>
+            <select id="nova-genero-resp" name="generoResponsavel" required>
+              <option value="">Selecione</option>
+              <option>Homem Cis</option>
+              <option>Homem Trans</option>
+              <option>Mulher Cis</option>
+              <option>Mulher Trans</option>
+              <option>Não-Binário</option>
+            </select>
+          </div>
+          <div class="campo">
+            <label for="nova-nascimento-resp">Nascimento do responsável</label>
+            <input id="nova-nascimento-resp" name="nascimentoResponsavel" type="date" required />
+          </div>
+          <div class="campo">
+            <label for="nova-email">E-mail</label>
+            <input id="nova-email" name="email" type="email" required />
+          </div>
+          <div class="campo">
+            <label for="nova-telefone">Telefone</label>
+            <input id="nova-telefone" name="telefone" type="tel" required />
+          </div>
+        </fieldset>
+      </section>
+      <section data-step-panel="2" aria-label="Endereço e turma" hidden>
+        <fieldset>
+          <legend>Endereço residencial</legend>
+          <div class="campo">
+            <label for="nova-zona">Zona de moradia</label>
+            <select id="nova-zona" name="zona" required>
+              <option value="">Selecione</option>
+              <option>Urbana</option>
+              <option>Rural</option>
+            </select>
+          </div>
+          <div class="campo">
+            <label for="nova-cep">CEP</label>
+            <input id="nova-cep" name="cep" required />
+          </div>
+          <div class="campo">
+            <label for="nova-estado">Estado</label>
+            <input id="nova-estado" name="estado" required />
+          </div>
+          <div class="campo">
+            <label for="nova-municipio">Município</label>
+            <input id="nova-municipio" name="municipio" required />
+          </div>
+          <div class="campo">
+            <label for="nova-bairro">Bairro</label>
+            <input id="nova-bairro" name="bairro" required />
+          </div>
+          <div class="campo">
+            <label for="nova-logradouro">Logradouro</label>
+            <input id="nova-logradouro" name="logradouro" required />
+          </div>
+          <div class="campo">
+            <label for="nova-numero">Número</label>
+            <input id="nova-numero" name="numero" />
+          </div>
+          <div class="campo">
+            <label for="nova-complemento">Complemento</label>
+            <input id="nova-complemento" name="complemento" />
+          </div>
+        </fieldset>
+        <div class="campo">
+          <label for="nova-turma">Turma</label>
+          <select id="nova-turma" name="turma">
+            {turmasEscola.map((t) => (
+              <option value={t.id}>{t.nome}</option>
+            ))}
+          </select>
+        </div>
+      </section>
+      <div class="dialogo-acoes">
+        <button type="button" class="btn btn-fantasma" data-fechar>
+          Cancelar
+        </button>
+        <button type="button" class="btn btn-fantasma" id="voltar-etapa" hidden>
+          Voltar
+        </button>
+        <button type="button" class="btn btn-primario" id="avancar-etapa">
+          Continuar
+        </button>
+        <button type="submit" class="btn btn-primario" id="concluir-matricula" hidden>
+          <Icone nome="check" /> Cadastrar
+        </button>
+      </div>
+    </form>
+  </dialog>
+</AppLayout>
+
+<style>
+  .ferramentas {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--e-4);
+    margin-bottom: var(--e-4);
+  }
+  .busca {
+    flex: 1;
+    max-width: 480px;
+    margin: 0;
+  }
+  .busca-wrap {
+    position: relative;
+  }
+  .busca-wrap :global(svg) {
+    position: absolute;
+    left: var(--e-3);
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--texto-suave);
+  }
+  .busca-wrap input {
+    padding-left: 2.75rem;
+  }
+  .resultado {
+    margin: var(--e-4) 0 var(--e-3);
+  }
+  .vazio {
+    display: flex;
+    align-items: center;
+    gap: var(--e-2);
+    justify-content: center;
+    padding: var(--e-6);
+    color: var(--texto-suave);
+    font-weight: 700;
+  }
+  .vazio[hidden] {
+    display: none;
+  }
+  .dialogo {
+    width: min(520px, calc(100vw - 2rem));
+    padding: var(--e-5);
+    border: 1px solid var(--borda);
+    border-radius: var(--raio-lg);
+    background: var(--superficie);
+    color: var(--texto);
+    box-shadow: var(--sombra-forte);
+  }
+  .dialogo {
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .dialogo [hidden] {
+    display: none !important;
+  }
+  .dialogo fieldset {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--e-3);
+    border: 1px solid var(--borda);
+    border-radius: var(--raio);
+    margin: 0 0 var(--e-4);
+    padding: var(--e-4);
+  }
+  .dialogo legend {
+    font-weight: 800;
+    padding: 0 var(--e-2);
+  }
+  .dialogo {
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .dialogo fieldset {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--e-3);
+    border: 1px solid var(--borda);
+    border-radius: var(--raio);
+    margin: 0 0 var(--e-4);
+    padding: var(--e-4);
+  }
+  .dialogo legend {
+    font-weight: 800;
+    padding: 0 var(--e-2);
+  }
+  .dialogo::backdrop {
+    background: rgb(10 15 25 / 0.55);
+  }
+  .dialogo-topo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--e-4);
+  }
+  .dialogo-topo h2 {
+    display: flex;
+    align-items: center;
+    gap: var(--e-2);
+    margin: 0;
+  }
+  .dialogo-acoes {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--e-3);
+  }
+</style>
+
+<script>
+  import { mostrarAviso } from '../../scripts/aviso';
+  import { salvarModulo } from '../../scripts/modulos';
+  import { cpfValidator as cpfValido } from '../../utils/cpfValidator';
+
+  const corpo = document.getElementById('corpo-matriculas') as HTMLTableSectionElement;
+  const busca = document.getElementById('busca') as HTMLInputElement;
+  const resultado = document.getElementById('resultado')!;
+  const vazio = document.getElementById('vazio')!;
+  const filtros = [...document.querySelectorAll<HTMLButtonElement>('[data-filtro]')];
+  let filtroAtual = 'todas';
+
+  function aplicar() {
+    const termo = busca.value
+      .trim()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+    let visiveis = 0;
+    corpo.querySelectorAll<HTMLTableRowElement>('tr').forEach((linha) => {
+      const okFiltro = filtroAtual === 'todas' || linha.dataset.status === filtroAtual;
+      const okBusca = !termo || (linha.dataset.busca ?? '').includes(termo);
+      linha.hidden = !(okFiltro && okBusca);
+      if (!linha.hidden) visiveis++;
+    });
+    resultado.textContent = `Mostrando ${visiveis} matrícula${visiveis === 1 ? '' : 's'}`;
+    vazio.hidden = visiveis > 0;
+  }
+
+  filtros.forEach((botao) =>
+    botao.addEventListener('click', () => {
+      filtroAtual = botao.dataset.filtro ?? 'todas';
+      filtros.forEach((b) => b.setAttribute('aria-pressed', String(b === botao)));
+      aplicar();
+    }),
+  );
+  busca.addEventListener('input', aplicar);
+
+  // ----- Nova matrícula -----
+  const dialogo = document.getElementById('dialogo-nova') as HTMLDialogElement;
+  const form = document.getElementById('form-nova') as HTMLFormElement;
+  const modelo = document.getElementById('modelo-linha') as HTMLTemplateElement;
+  const nascimento = document.getElementById('nova-nascimento') as HTMLInputElement;
+  const genero = document.getElementById('nova-genero') as HTMLSelectElement;
+  const nacionalidade = document.getElementById('nova-nacionalidade') as HTMLSelectElement;
+  const responsavelNome = document.getElementById('nova-resp') as HTMLInputElement;
+  const responsavelNomeCampo = document.getElementById('campo-nome-responsavel') as HTMLDivElement;
+  const dadosResponsavel = document.getElementById('dados-responsavel') as HTMLFieldSetElement;
+  const nomeSocialCampo = document.getElementById('campo-nome-social') as HTMLDivElement;
+  const paineisEtapas = [...document.querySelectorAll<HTMLElement>('[data-step-panel]')];
+  const botaoAvancar = document.getElementById('avancar-etapa') as HTMLButtonElement;
+  const botaoVoltar = document.getElementById('voltar-etapa') as HTMLButtonElement;
+  const botaoConcluir = document.getElementById('concluir-matricula') as HTMLButtonElement;
+  let etapaAtual = 0;
+
+  function idade(data: string): number {
+    const hoje = new Date();
+    const nascimentoData = new Date(`${data}T00:00:00`);
+    let anos = hoje.getFullYear() - nascimentoData.getFullYear();
+    if (
+      hoje.getMonth() < nascimentoData.getMonth() ||
+      (hoje.getMonth() === nascimentoData.getMonth() && hoje.getDate() < nascimentoData.getDate())
+    )
+      anos--;
+    return anos;
+  }
+
+  function atualizarCondicionais() {
+    const menor = Boolean(nascimento.value) && idade(nascimento.value) < 18;
+    responsavelNomeCampo.hidden = !menor;
+    responsavelNome.required = menor;
+    dadosResponsavel.hidden = !menor;
+    dadosResponsavel.disabled = !menor;
+    const precisaNomeSocial = ['Homem Trans', 'Mulher Trans', 'Não-Binário'].includes(genero.value);
+    nomeSocialCampo.hidden = !precisaNomeSocial;
+    const nomeSocial = document.getElementById('nova-social') as HTMLInputElement;
+    nomeSocial.required = false;
+    const brasileira = nacionalidade.value === 'Brasil';
+    document.querySelectorAll<HTMLInputElement>('.nascimento-brasil input').forEach((campo) => {
+      campo.required = brasileira;
+      campo.parentElement!.hidden = !brasileira;
+    });
+  }
+
+  nascimento.addEventListener('change', atualizarCondicionais);
+  genero.addEventListener('change', atualizarCondicionais);
+  nacionalidade.addEventListener('change', atualizarCondicionais);
+  atualizarCondicionais();
+
+  fetch('/api/listapaises')
+    .then((res) => res.json())
+    .then((paises: { label: string; value: string; icon?: string }[]) => {
+      nacionalidade.replaceChildren(new Option('Selecione a nacionalidade', ''));
+      paises.forEach((pais) =>
+        nacionalidade.add(
+          new Option(`${pais.icon ? `${pais.icon} ` : ''}${pais.label}`, pais.value),
+        ),
+      );
+      nacionalidade.value = 'Brasil';
+      atualizarCondicionais();
+    })
+    .catch(() => {});
+
+  const cpfs = ['nova-cpf', 'nova-cpf-resp'].map(
+    (id) => document.getElementById(id) as HTMLInputElement,
+  );
+  cpfs.forEach((campo) =>
+    campo.addEventListener('input', () => {
+      const numeros = campo.value.replace(/\D/g, '').slice(0, 11);
+      campo.value = numeros
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+      campo.setCustomValidity('');
+    }),
+  );
+
+  function etapasAtivas() {
+    return responsavelNome.required ? [0, 1, 2] : [0, 2];
+  }
+
+  function mostrarEtapa() {
+    const etapas = etapasAtivas();
+    const indice = etapas.indexOf(etapaAtual);
+    paineisEtapas.forEach((painel) => {
+      painel.hidden = Number(painel.dataset.stepPanel) !== etapaAtual;
+    });
+    document.querySelectorAll<HTMLElement>('[data-step-indicator]').forEach((item) => {
+      const step = Number(item.dataset.stepIndicator);
+      item.hidden = step === 1 && !responsavelNome.required;
+      if (step === etapaAtual) item.setAttribute('aria-current', 'step');
+      else item.removeAttribute('aria-current');
+    });
+    botaoVoltar.hidden = indice <= 0;
+    botaoAvancar.hidden = indice === etapas.length - 1;
+    botaoConcluir.hidden = indice !== etapas.length - 1;
+  }
+
+  function validarEtapaAtual(): boolean {
+    const painel = paineisEtapas.find((item) => Number(item.dataset.stepPanel) === etapaAtual)!;
+    const cpfsDaEtapa = etapaAtual === 0 ? [cpfs[0]] : etapaAtual === 1 ? [cpfs[1]] : [];
+    cpfsDaEtapa.forEach((campo) =>
+      campo.setCustomValidity(
+        campo.value && !cpfValido(campo.value) ? 'Informe um CPF válido.' : '',
+      ),
+    );
+    const campos = [
+      ...painel.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(
+        'input, select, textarea',
+      ),
+    ].filter((campo) => !campo.disabled);
+    for (const campo of campos) {
+      if (!campo.checkValidity()) {
+        campo.reportValidity();
+        campo.focus();
+        return false;
+      }
+    }
+    return true;
+  }
+
+  botaoAvancar.addEventListener('click', () => {
+    atualizarCondicionais();
+    if (!validarEtapaAtual()) return;
+    const etapas = etapasAtivas();
+    etapaAtual = etapas[Math.min(etapas.indexOf(etapaAtual) + 1, etapas.length - 1)];
+    mostrarEtapa();
+  });
+  botaoVoltar.addEventListener('click', () => {
+    const etapas = etapasAtivas();
+    etapaAtual = etapas[Math.max(etapas.indexOf(etapaAtual) - 1, 0)];
+    mostrarEtapa();
+  });
+  mostrarEtapa();
+
+  document.getElementById('abrir-nova')?.addEventListener('click', () => {
+    etapaAtual = 0;
+    mostrarEtapa();
+    dialogo.showModal();
+  });
+  dialogo
+    .querySelectorAll('[data-fechar]')
+    .forEach((b) => b.addEventListener('click', () => dialogo.close()));
+
+  function validar(id: string, idErro: string, msg: string): boolean {
+    const campo = document.getElementById(id) as HTMLInputElement;
+    const ok = campo.value.trim().length > 0;
+    campo.setAttribute('aria-invalid', String(!ok));
+    document.getElementById(idErro)!.textContent = ok ? '' : `⚠ ${msg}`;
+    return ok;
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    atualizarCondicionais();
+    cpfs.forEach((campo) => {
+      if (!campo.disabled)
+        campo.setCustomValidity(
+          campo.value && !cpfValido(campo.value) ? 'Informe um CPF válido.' : '',
+        );
+    });
+    if (!form.reportValidity()) return;
+    const okAluno = validar('nova-aluno', 'erro-aluno', 'Informe o nome do aluno.');
+    const okResp = responsavelNome.required
+      ? validar('nova-resp', 'erro-resp', 'Informe o nome do responsável.')
+      : true;
+    if (!okAluno || !okResp) return;
+
+    const dados = new FormData(form);
+    const [aluno, turmaId, resp, data] = [
+      String(dados.get('aluno')).trim(),
+      String(dados.get('turma')),
+      String(dados.get('responsavel')).trim(),
+      new Date().toLocaleDateString('pt-BR'),
+    ];
+    const botao = botaoConcluir;
+    botao.disabled = true;
+    try {
+      const result = await salvarModulo<{ registro: { id: string } }>('escola', {
+        operacao: 'matricula:create',
+        escolaId: 'escola-e-e-jardim-das-mangabeiras',
+        aluno,
+        responsavel: resp || aluno,
+        turmaId,
+      });
+      const linha = modelo.content.firstElementChild!.cloneNode(true) as HTMLTableRowElement;
+      linha.querySelector('th')!.textContent = aluno;
+      const tds = linha.querySelectorAll('td');
+      tds[0].textContent =
+        (document.getElementById('nova-turma') as HTMLSelectElement).selectedOptions[0]
+          ?.textContent ?? turmaId;
+      tds[1].textContent = resp;
+      tds[2].textContent = data;
+      linha.dataset.busca = `${aluno} ${resp}`
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase();
+      linha.dataset.status = 'analise';
+      linha.dataset.id = result.registro.id;
+      linha.classList.add('surgir');
+      corpo.prepend(linha);
+      form.reset();
+      atualizarCondicionais();
+      dialogo.close();
+      aplicar();
+      mostrarAviso(`Matrícula de ${aluno} cadastrada (em análise).`);
+    } catch (error) {
+      mostrarAviso(
+        error instanceof Error ? error.message : 'Não foi possível cadastrar a matrícula.',
+        'alerta',
+      );
+    } finally {
+      botao.disabled = false;
+    }
+  });
+</script>

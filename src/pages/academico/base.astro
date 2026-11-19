@@ -1,0 +1,25 @@
+---
+import Academico from '@layouts/Academico.astro';
+
+const usuario = Astro.locals.authenticatedUser;
+const aluno = usuario?.perfis.aluno;
+const responsavel = usuario?.perfis.responsavel;
+---
+
+<Academico title="Área acadêmica | EducaHub">
+  <h1>Área acadêmica</h1>
+
+  {aluno && (
+    <section aria-labelledby="perfil-aluno">
+      <h2 id="perfil-aluno">Perfil de aluno</h2>
+      <p>Seu perfil de aluno está disponível.</p>
+    </section>
+  )}
+
+  {responsavel && (
+    <section aria-labelledby="perfil-responsavel">
+      <h2 id="perfil-responsavel">Perfil de responsável</h2>
+      <p>Alunos vinculados: {responsavel.tutelados.length}.</p>
+    </section>
+  )}
+</Academico>

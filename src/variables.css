@@ -1,4 +1,6 @@
 :root {
+  color-scheme: light;
+
   /* Tipografia */
   /* --font-roboto: 'Roboto Variable', arial, sans-serif;
   --font-cabin: 'Cabin Variable', 'Trebuchet MS', arial, sans-serif;
@@ -71,7 +73,9 @@
   --id-15-fg: #981b6e;
   --id-16-fg: #981b44;
 
-  @media (prefers-color-scheme: dark) {
+  &[data-tema='escuro'] {
+    color-scheme: dark;
+
     /* Cores Semânticas de Estado */
     --success--bg: #538026;
     --success--fg: #8dd941;

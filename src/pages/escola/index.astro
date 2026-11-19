@@ -1,0 +1,148 @@
+---
+/** Painel da Escola (H5.1): indicadores, gráfico de matrículas e supervisão do diário. */
+import AppLayout from '../../layouts/AppLayout.astro';
+import Indicador from '../../components/Indicador.astro';
+import GraficoBarras from '../../components/GraficoBarras.astro';
+import Status from '../../components/Status.astro';
+import Icone from '../../components/Icone.astro';
+import {
+  indicadoresEscola as indicadoresFixture,
+  matriculasPorMes as matriculasPorMesFixture,
+  matriculas as matriculasFixture,
+  professoresEscola as professoresFixture,
+} from '../../data/dados';
+import { readModuleData } from '../../services/modulos';
+import { link } from '../../data/perfis';
+
+export const prerender = false;
+const modulo = await readModuleData(Astro.request, 'escola');
+const indicadoresEscola = modulo.indicadores as typeof indicadoresFixture;
+const matriculasPorMes = modulo.matriculasPorMes as typeof matriculasPorMesFixture;
+const matriculas = modulo.matriculas as typeof matriculasFixture;
+const professoresEscola = modulo.professores as typeof professoresFixture;
+const i = indicadoresEscola;
+const aguardando = matriculas.filter((m) => m.status !== 'confirmada').length;
+---
+
+<AppLayout
+  perfil="escola"
+  ativo=""
+  titulo="Painel da escola"
+  subtitulo="E. E. Jardim das Mangabeiras · Ano letivo 2026"
+  ajuda="Painel da direção da escola. Em cima estão os números principais: alunos matriculados, professores, turmas ativas e frequência média. Depois vem o gráfico de matrículas por mês, as matrículas aguardando análise e a situação do diário de cada professor."
+>
+  <div class="pilha">
+    <section class="grade" aria-label="Indicadores da escola">
+      <Indicador
+        rotulo="Alunos matriculados"
+        valor={i.matriculados.toLocaleString('pt-BR')}
+        icone="usuarios"
+      />
+      <Indicador
+        rotulo="Professores"
+        valor={String(i.professores)}
+        icone="maleta"
+        cor="var(--perfil-professor)"
+      />
+      <Indicador
+        rotulo="Turmas ativas"
+        valor={String(i.turmasAtivas)}
+        icone="escola"
+        cor="var(--perfil-escola)"
+      />
+      <Indicador
+        rotulo="Frequência média"
+        valor={`${i.frequenciaMedia}%`}
+        icone="prancheta"
+        cor="var(--perfil-secretaria)"
+      />
+    </section>
+
+    <div class="grade-2">
+      <section class="card" aria-labelledby="titulo-grafico">
+        <h2 id="titulo-grafico">
+          <Icone nome="grafico" /> Matrículas por mês (2026)
+        </h2>
+        <GraficoBarras titulo="Matrículas por mês em 2026" dados={matriculasPorMes} />
+      </section>
+
+      <section class="card" aria-labelledby="titulo-aguardando">
+        <div class="card-cabecalho">
+          <h2 id="titulo-aguardando">
+            <Icone nome="arquivo" /> Aguardando ({aguardando})
+          </h2>
+          <a href={link('escola', 'matriculas')}>Ver matrículas</a>
+        </div>
+        <ul class="lista">
+          {matriculas
+            .filter((m) => m.status !== 'confirmada')
+            .slice(0, 4)
+            .map((m) => (
+              <li class="linha">
+                <div class="linha-texto">
+                  <p class="negrito sem-margem">{m.aluno}</p>
+                  <p class="suave sem-margem">
+                    {m.turma} · {m.data}
+                  </p>
+                </div>
+                {m.status === 'analise' ? (
+                  <Status tom="alerta" texto="Em análise" />
+                ) : (
+                  <Status tom="perigo" texto="Pendente" />
+                )}
+              </li>
+            ))}
+        </ul>
+      </section>
+    </div>
+
+    <section class="card" aria-labelledby="titulo-diarios">
+      <div class="card-cabecalho">
+        <h2 id="titulo-diarios">
+          <Icone nome="diario" /> Supervisão do diário
+        </h2>
+        <a href={link('escola', 'turmas')}>Turmas e professores</a>
+      </div>
+      <div class="tabela-wrap">
+        <table class="tabela">
+          <caption class="sr-only">Situação do diário de classe por professor</caption>
+          <thead>
+            <tr>
+              <th scope="col">Professor</th>
+              <th scope="col">Disciplina</th>
+              <th scope="col" class="centro">
+                Turmas
+              </th>
+              <th scope="col">Diário</th>
+            </tr>
+          </thead>
+          <tbody>
+            {professoresEscola.map((p) => (
+              <tr>
+                <th scope="row">{p.nome}</th>
+                <td>{p.disciplina}</td>
+                <td class="centro numero">{p.turmas}</td>
+                <td>
+                  {p.diario === 'em-dia' ? (
+                    <Status tom="sucesso" texto="Em dia" />
+                  ) : (
+                    <Status tom="perigo" texto="Atrasado" />
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</AppLayout>
+
+<style>
+  .linha {
+    align-items: center !important;
+  }
+  .linha-texto {
+    flex: 1;
+  }
+</style>

@@ -1,0 +1,58 @@
+---
+/** Cartão de indicador (número grande + rótulo), usado nos painéis. */
+import Icone from './Icone.astro';
+import type { IconeNome } from '../data/icones';
+
+interface Props {
+  rotulo: string;
+  valor: string;
+  icone: IconeNome;
+  detalhe?: string;
+  cor?: string;
+}
+
+const { rotulo, valor, icone, detalhe, cor = 'var(--id-09-bg)' } = Astro.props;
+---
+
+<article class="card indicador surgir">
+  <span class="indicador-icone" style={`--cor:${cor}`}>
+    <Icone nome={icone} tamanho={26} />
+  </span>
+  <div>
+    <p class="indicador-rotulo">{rotulo}</p>
+    <p class="indicador-valor numero">{valor}</p>
+    {detalhe && <p class="indicador-detalhe suave">{detalhe}</p>}
+  </div>
+</article>
+
+<style>
+  .indicador {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--e-4);
+  }
+  .indicador p {
+    margin: 0;
+  }
+  .indicador-icone {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    border: 2px solid var(--fg);
+    background: var(--cor);
+    color: var(--fg);
+  }
+  .indicador-rotulo {
+    font-weight: 700;
+    color: var(--texto-suave);
+  }
+  .indicador-valor {
+    font-family: var(--fonte-titulo);
+    font-size: var(--texto-2xl);
+    font-weight: 700;
+    line-height: 1.15;
+  }
+</style>

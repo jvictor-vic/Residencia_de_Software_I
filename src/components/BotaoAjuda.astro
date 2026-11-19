@@ -1,0 +1,296 @@
+---
+/**
+ * Botão de Informação flutuante (pedido no docs/acessibilidade.md):
+ * - Ouvir a explicação da tela (Text-To-Speech) — para quem não lê bem;
+ * - Ler a página inteira em voz alta;
+ * - Modo "clique para ouvir": clica em qualquer texto e o sistema lê.
+ *   Se o elemento tiver `aria-description`, é ela que é lida.
+ */
+import Icone from './Icone.astro';
+
+interface Props {
+  ajuda: string;
+}
+const { ajuda } = Astro.props;
+---
+
+<button
+  type="button"
+  class="ajuda-botao"
+  id="ajuda-abrir"
+  aria-haspopup="dialog"
+  aria-controls="ajuda-dialogo"
+>
+  <Icone nome="ajuda" tamanho={28} />
+  <span>Ajuda</span>
+</button>
+
+<dialog id="ajuda-dialogo" class="ajuda-dialogo" aria-labelledby="ajuda-titulo">
+  <div class="ajuda-cabecalho">
+    <h2 id="ajuda-titulo">
+      <Icone nome="ajuda" /> Ajuda desta tela
+    </h2>
+    <button
+      type="button"
+      class="btn btn-icone btn-fantasma"
+      data-acao="fechar"
+      aria-label="Fechar ajuda"
+    >
+      <Icone nome="x" />
+    </button>
+  </div>
+  <p id="ajuda-texto" class="ajuda-texto">
+    {ajuda}
+  </p>
+  <div class="ajuda-acoes">
+    <button type="button" class="btn btn-primario" data-acao="ouvir-explicacao">
+      <Icone nome="volume" /> Ouvir explicação
+    </button>
+    <button type="button" class="btn btn-secundario" data-acao="ler-pagina">
+      <Icone nome="livro" /> Ler a página toda
+    </button>
+    <button type="button" class="btn btn-secundario" data-acao="modo-clique" aria-pressed="false">
+      <Icone nome="maozinha" /> Clique para ouvir
+    </button>
+    <button type="button" class="btn btn-fantasma" data-acao="parar">
+      <Icone nome="parar" /> Parar leitura
+    </button>
+  </div>
+  <p class="ajuda-status suave" id="ajuda-status" aria-live="polite"></p>
+</dialog>
+
+<div class="faixa-leitura" id="faixa-leitura" hidden>
+  <Icone nome="maozinha" />
+  <span>
+    <strong>Clique para ouvir</strong> está ligado: clique em qualquer texto da tela.
+  </span>
+  <button type="button" class="btn btn-secundario" data-acao="desligar-clique">
+    Desligar
+  </button>
+</div>
+
+<style>
+  .ajuda-botao {
+    position: fixed;
+    right: var(--e-5);
+    bottom: var(--e-5);
+    z-index: 50;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--e-2);
+    min-height: 56px;
+    padding: 0 var(--e-5) 0 var(--e-4);
+    border: 2px solid var(--sobre-destaque);
+    border-radius: 999px;
+    background: var(--destaque);
+    color: var(--sobre-destaque);
+    font-weight: 700;
+    font-size: var(--texto-md);
+    box-shadow: var(--sombra-forte);
+    cursor: pointer;
+  }
+  .ajuda-botao:hover {
+    transform: translateY(-2px);
+  }
+  .ajuda-dialogo {
+    width: min(560px, calc(100vw - 2rem));
+    padding: var(--e-5);
+    border: 1px solid var(--borda);
+    border-radius: var(--raio-lg);
+    background: var(--superficie);
+    color: var(--texto);
+    box-shadow: var(--sombra-forte);
+  }
+  .ajuda-dialogo::backdrop {
+    background: rgb(10 15 25 / 0.55);
+  }
+  .ajuda-cabecalho {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--e-3);
+  }
+  .ajuda-cabecalho h2 {
+    display: flex;
+    align-items: center;
+    gap: var(--e-2);
+    margin: 0;
+  }
+  .ajuda-texto {
+    margin: var(--e-4) 0;
+    padding: var(--e-4);
+    background: var(--superficie-2);
+    border-left: 4px solid var(--destaque);
+    border-radius: var(--raio-sm);
+    font-size: var(--texto-md);
+  }
+  .ajuda-acoes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--e-3);
+  }
+  .ajuda-acoes [aria-pressed='true'] {
+    background: var(--primaria);
+    color: var(--sobre-primaria);
+  }
+  .ajuda-status {
+    margin: var(--e-3) 0 0;
+    min-height: 1.5em;
+  }
+  .faixa-leitura {
+    position: fixed;
+    left: 50%;
+    top: var(--e-4);
+    transform: translateX(-50%);
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    gap: var(--e-3);
+    width: max-content;
+    max-width: calc(100vw - 2rem);
+    padding: var(--e-2) var(--e-2) var(--e-2) var(--e-4);
+    border-radius: 999px;
+    background: var(--menu-fundo);
+    color: var(--menu-texto);
+    box-shadow: var(--sombra-forte);
+  }
+  .faixa-leitura[hidden] {
+    display: none;
+  }
+  :global(.lendo-agora) {
+    outline: 3px dashed var(--foco) !important;
+    outline-offset: 3px;
+    background-color: color-mix(in srgb, var(--destaque) 22%, transparent) !important;
+  }
+  :global(body.modo-clique main *) {
+    cursor: help !important;
+  }
+  @media (max-width: 600px) {
+    .ajuda-acoes {
+      grid-template-columns: 1fr;
+    }
+    .ajuda-botao span {
+      display: none;
+    }
+    .ajuda-botao {
+      padding: 0;
+      width: 56px;
+      justify-content: center;
+    }
+  }
+</style>
+
+<script>
+  import { falar, pararFala, textoDoElemento, vozDisponivel } from '../scripts/voz';
+
+  const dialogo = document.getElementById('ajuda-dialogo') as HTMLDialogElement | null;
+  const abrir = document.getElementById('ajuda-abrir');
+  const status = document.getElementById('ajuda-status');
+  const faixa = document.getElementById('faixa-leitura');
+  const botaoModo = dialogo?.querySelector<HTMLButtonElement>("[data-acao='modo-clique']");
+  let modoClique = false;
+  let destacado: Element | null = null;
+
+  const informar = (msg: string) => {
+    if (status) status.textContent = msg;
+  };
+
+  function limparDestaque() {
+    destacado?.classList.remove('lendo-agora');
+    destacado = null;
+  }
+
+  function lerComAviso(texto: string) {
+    if (!vozDisponivel()) {
+      informar(
+        'Seu navegador não tem leitura em voz alta. Tente o Google Chrome ou o Microsoft Edge.',
+      );
+      return;
+    }
+    falar(texto, limparDestaque);
+    informar('Lendo em voz alta…');
+  }
+
+  function definirModoClique(ligado: boolean) {
+    modoClique = ligado;
+    document.body.classList.toggle('modo-clique', ligado);
+    botaoModo?.setAttribute('aria-pressed', String(ligado));
+    if (faixa) faixa.hidden = !ligado;
+    if (!ligado) {
+      pararFala();
+      limparDestaque();
+    }
+  }
+
+  abrir?.addEventListener('click', () => {
+    informar('');
+    dialogo?.showModal();
+  });
+
+  dialogo?.addEventListener('click', (evento) => {
+    // clicar no fundo escuro (fora da caixa) fecha o diálogo
+    if (evento.target === dialogo) {
+      const r = dialogo.getBoundingClientRect();
+      const fora =
+        evento.clientX < r.left ||
+        evento.clientX > r.right ||
+        evento.clientY < r.top ||
+        evento.clientY > r.bottom;
+      if (fora) dialogo.close();
+      return;
+    }
+    const botao = (evento.target as Element).closest<HTMLButtonElement>('[data-acao]');
+    if (!botao) return;
+    switch (botao.dataset.acao) {
+      case 'fechar':
+        dialogo.close();
+        break;
+      case 'ouvir-explicacao':
+        lerComAviso(document.getElementById('ajuda-texto')?.textContent ?? '');
+        break;
+      case 'ler-pagina': {
+        const principal = document.querySelector('main');
+        if (principal) lerComAviso(textoDoElemento(principal));
+        break;
+      }
+      case 'modo-clique':
+        definirModoClique(!modoClique);
+        if (modoClique) dialogo.close();
+        break;
+      case 'parar':
+        pararFala();
+        limparDestaque();
+        informar('Leitura parada.');
+        break;
+    }
+  });
+
+  faixa
+    ?.querySelector("[data-acao='desligar-clique']")
+    ?.addEventListener('click', () => definirModoClique(false));
+
+  // Modo "clique para ouvir": intercepta o clique e lê o elemento
+  const LEGIVEIS =
+    '[aria-description], h1, h2, h3, h4, p, li, td, th, label, button, a, figcaption, dt, dd, .status, .materia, legend';
+  document.addEventListener(
+    'click',
+    (evento) => {
+      if (!modoClique) return;
+      const alvo = evento.target as Element;
+      if (alvo.closest('#faixa-leitura, #ajuda-dialogo, #ajuda-abrir')) return;
+      const elemento = alvo.closest(LEGIVEIS);
+      if (!elemento) return;
+      evento.preventDefault();
+      evento.stopPropagation();
+      limparDestaque();
+      destacado = elemento;
+      elemento.classList.add('lendo-agora');
+      lerComAviso(textoDoElemento(elemento));
+    },
+    true,
+  );
+
+  document.addEventListener('keydown', (evento) => {
+    if (evento.key === 'Escape' && modoClique) definirModoClique(false);
+  });
+</script>

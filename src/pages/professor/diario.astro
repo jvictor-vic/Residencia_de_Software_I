@@ -1,0 +1,161 @@
+---
+/** Diário de classe (H3.3): registrar o conteúdo dado e observações da aula. */
+import AppLayout from '../../layouts/AppLayout.astro';
+import Icone from '../../components/Icone.astro';
+import { readModuleData } from '../../services/modulos';
+
+export const prerender = false;
+const modulo = await readModuleData(Astro.request, 'professor');
+const turmasProfessor = modulo.turmas as { id: string; nome: string }[];
+const diarioProfessor = modulo.diarios as {
+  data: string;
+  turmaId: string;
+  conteudo: string;
+  observacao: string;
+}[];
+const nomeTurma = (id: string) => turmasProfessor.find((turma) => turma.id === id)?.nome ?? id;
+const dataFormatada = (data: string) =>
+  /^\d{4}-\d{2}-\d{2}$/.test(data)
+    ? `${data.slice(8, 10)}/${data.slice(5, 7)}/${data.slice(0, 4)}`
+    : data;
+---
+
+<AppLayout
+  perfil="professor"
+  ativo="diario"
+  titulo="Diário de classe"
+  subtitulo="Registre o que foi trabalhado em cada aula"
+  ajuda="No diário de classe você registra o conteúdo de cada aula. Escolha a turma e a data, escreva o conteúdo e as observações e clique em Registrar aula. O registro aparece na lista ao lado."
+>
+  <div class="grade-2">
+    <section class="card" aria-labelledby="titulo-registro">
+      <h2 id="titulo-registro">
+        <Icone nome="lapis" /> Novo registro
+      </h2>
+      <form id="form-diario" novalidate>
+        <div class="campo">
+          <label for="turma">Turma</label>
+          <select id="turma" name="turma">
+            {turmasProfessor.map((t) => (
+              <option value={t.id}>{t.nome}</option>
+            ))}
+          </select>
+        </div>
+        <div class="campo">
+          <label for="data">Data da aula</label>
+          <input id="data" name="data" type="date" value={new Date().toISOString().slice(0, 10)} />
+        </div>
+        <div class="campo">
+          <label for="conteudo">Conteúdo trabalhado</label>
+          <textarea
+            id="conteudo"
+            name="conteudo"
+            required
+            aria-describedby="erro-conteudo"
+          ></textarea>
+          <span class="erro-campo" id="erro-conteudo"></span>
+        </div>
+        <div class="campo">
+          <label for="observacao">
+            Observações <span class="suave">(opcional)</span>
+          </label>
+          <textarea id="observacao" name="observacao"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primario btn-bloco">
+          <Icone nome="check" /> Registrar aula
+        </button>
+      </form>
+    </section>
+
+    <section class="card" aria-labelledby="titulo-registros">
+      <h2 id="titulo-registros">
+        <Icone nome="diario" /> Registros recentes
+      </h2>
+      <ol class="linha-tempo" id="registros">
+        {diarioProfessor.map((d) => (
+          <li>
+            <p class="registro-topo">
+              <strong>{nomeTurma(d.turmaId)}</strong>
+              <span class="suave numero">{dataFormatada(d.data)}</span>
+            </p>
+            <p class="sem-margem">{d.conteudo}</p>
+            <p class="suave sem-margem">{d.observacao}</p>
+          </li>
+        ))}
+      </ol>
+    </section>
+  </div>
+</AppLayout>
+
+<style>
+  .linha-tempo {
+    list-style: none;
+    margin: 0;
+    padding: 0 0 0 var(--e-5);
+    border-left: 3px solid var(--borda);
+  }
+  .linha-tempo li {
+    position: relative;
+    padding-bottom: var(--e-5);
+  }
+  .linha-tempo li::before {
+    content: '';
+    position: absolute;
+    left: calc(-1 * var(--e-5) - 9px);
+    top: 4px;
+    width: 15px;
+    height: 15px;
+    border-radius: 999px;
+    background: var(--perfil-professor);
+    border: 3px solid var(--superficie);
+  }
+  .registro-topo {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--e-3);
+    margin: 0 0 var(--e-1);
+  }
+</style>
+
+<script>
+  import { mostrarAviso } from '../../scripts/aviso';
+  import { salvarModulo } from '../../scripts/modulos';
+
+  const form = document.getElementById('form-diario') as HTMLFormElement;
+  const conteudo = document.getElementById('conteudo') as HTMLTextAreaElement;
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const erro = document.getElementById('erro-conteudo')!;
+    if (!conteudo.value.trim()) {
+      conteudo.setAttribute('aria-invalid', 'true');
+      erro.textContent = '⚠ Escreva o conteúdo da aula.';
+      conteudo.focus();
+      return;
+    }
+    conteudo.setAttribute('aria-invalid', 'false');
+    erro.textContent = '';
+
+    const dados = new FormData(form);
+    const botao = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+    botao.disabled = true;
+    try {
+      await salvarModulo('professor', {
+        operacao: 'diario:salvar',
+        turmaId: String(dados.get('turma')),
+        data: String(dados.get('data')),
+        conteudo: conteudo.value.trim(),
+        observacao: String(dados.get('observacao') ?? '').trim(),
+      });
+      mostrarAviso('Aula registrada no diário.');
+      window.location.reload();
+    } catch (error) {
+      mostrarAviso(
+        error instanceof Error ? error.message : 'Não foi possível salvar o diário.',
+        'alerta',
+      );
+    } finally {
+      botao.disabled = false;
+    }
+  });
+</script>

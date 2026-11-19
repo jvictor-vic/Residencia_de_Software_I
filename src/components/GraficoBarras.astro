@@ -1,0 +1,143 @@
+---
+/**
+ * Gráfico de barras feito só com HTML + CSS (sem biblioteca).
+ * O valor fica escrito em cada barra e existe uma tabela escondida
+ * para leitores de tela — a informação não depende do desenho.
+ */
+interface Props {
+  titulo: string;
+  dados: { rotulo: string; valor: number }[];
+  unidade?: string;
+  max?: number;
+  orientacao?: 'vertical' | 'horizontal';
+}
+
+const { titulo, dados, unidade = '', max, orientacao = 'vertical' } = Astro.props;
+const maior = max ?? Math.max(...dados.map((d) => d.valor));
+const pct = (v: number) => Math.max(2, Math.round((v / maior) * 100));
+const fmt = (v: number) => `${v.toLocaleString('pt-BR')}${unidade}`;
+---
+
+<figure class:list={['grafico', `grafico-${orientacao}`]}>
+  <figcaption class="sr-only">{titulo}</figcaption>
+  <div class="grafico-area" aria-hidden="true">
+    {dados.map((d) => (
+      <div class="grafico-item">
+        <div class="grafico-trilho">
+          <div
+            class="grafico-barra pad-diagonal"
+            style={`--tam:${pct(d.valor)}%;--fracao:${pct(d.valor) / 100}`}
+          >
+            <span class="grafico-valor numero">{fmt(d.valor)}</span>
+          </div>
+        </div>
+        <span class="grafico-rotulo">{d.rotulo}</span>
+      </div>
+    ))}
+  </div>
+  <table class="sr-only">
+    <caption>{titulo}</caption>
+    <tbody>
+      {dados.map((d) => (
+        <tr>
+          <th scope="row">{d.rotulo}</th>
+          <td>{fmt(d.valor)}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</figure>
+
+<style>
+  .grafico {
+    margin: 0;
+  }
+  .grafico-area {
+    position: relative;
+  }
+  .grafico-barra {
+    position: relative;
+    background-color: var(--primaria);
+    border-radius: 6px;
+  }
+  .grafico-valor {
+    position: absolute;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .grafico-rotulo {
+    font-weight: 700;
+    color: var(--texto-suave);
+  }
+
+  /* ----- Vertical ----- */
+  .grafico-vertical .grafico-area {
+    display: flex;
+    align-items: stretch;
+    gap: var(--e-2);
+    height: 270px;
+  }
+  .grafico-vertical .grafico-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 0;
+  }
+  .grafico-vertical .grafico-trilho {
+    position: relative;
+    flex: 1;
+    width: 100%;
+    padding-top: var(--e-6);
+    border-bottom: 2px solid var(--borda-forte);
+  }
+  .grafico-vertical .grafico-barra {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    width: min(80%, 44px);
+    /* altura relativa à área útil (sem o espaço reservado para o número) */
+    height: calc((100% - var(--e-6)) * var(--fracao));
+    border-radius: 6px 6px 0 0;
+  }
+  .grafico-vertical .grafico-valor {
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding-bottom: 2px;
+  }
+  .grafico-vertical .grafico-rotulo {
+    margin-top: var(--e-2);
+  }
+
+  /* ----- Horizontal ----- */
+  .grafico-horizontal .grafico-area {
+    display: flex;
+    flex-direction: column;
+    gap: var(--e-3);
+  }
+  .grafico-horizontal .grafico-item {
+    display: grid;
+    grid-template-columns: minmax(110px, 30%) 1fr;
+    align-items: center;
+    gap: var(--e-3);
+  }
+  .grafico-horizontal .grafico-rotulo {
+    order: -1;
+  }
+  .grafico-horizontal .grafico-trilho {
+    background: var(--superficie-2);
+    border-radius: 6px;
+    padding-right: 4.5rem;
+  }
+  .grafico-horizontal .grafico-barra {
+    width: var(--tam);
+    height: 30px;
+  }
+  .grafico-horizontal .grafico-valor {
+    left: calc(100% + 8px);
+    top: 50%;
+    transform: translateY(-50%);
+  }
+</style>

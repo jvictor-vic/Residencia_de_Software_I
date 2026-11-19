@@ -1,0 +1,96 @@
+---
+/**
+ * Layout base de TODAS as páginas: <head> (BaseHead da identidade visual: fontes,
+ * metadados e Open Graph), tema claro/escuro, botão de ajuda e região de avisos.
+ */
+import BaseHead from '../components/BaseHead.astro';
+import BotaoAjuda from '../components/BotaoAjuda.astro';
+
+interface Props {
+  titulo: string;
+  descricao?: string;
+  ajuda: string;
+  /** classe extra no <body> (ex.: "fundo-caderno") */
+  classeBody?: string;
+}
+
+const {
+  titulo,
+  descricao = 'EducaHub — conectando a rede de ensino de Sergipe.',
+  ajuda,
+  classeBody,
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="pt-BR" data-tema="claro">
+  <head>
+    <BaseHead title={`${titulo} · EducaHub`} description={descricao}>
+      <meta name="theme-color" content="#2369bf" />
+      <!-- Aplica tema/tamanho de fonte ANTES de desenhar a página (evita "piscar").
+           Sem escolha salva, segue o tema do sistema operacional. -->
+      <script is:inline>
+        (function () {
+          var h = document.documentElement;
+          var p = {};
+          try {
+            p = JSON.parse(localStorage.getItem('educahub:preferencias') || '{}');
+          } catch (e) {
+            p = {};
+          }
+          var sistemaEscuro =
+            window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+          h.dataset.tema = p.tema || (sistemaEscuro ? 'escuro' : 'claro');
+          h.dataset.espacamento = p.espacamento || 'normal';
+          if (p.escala) h.style.setProperty('--escala-fonte', String(p.escala));
+        })();
+      </script>
+    </BaseHead>
+  </head>
+  <body class={classeBody}>
+    <slot />
+    <BotaoAjuda ajuda={ajuda} />
+    <div id="avisos" class="avisos" aria-live="polite"></div>
+  </body>
+</html>
+
+<style is:global>
+  .avisos {
+    position: fixed;
+    left: 50%;
+    bottom: var(--e-5);
+    transform: translateX(-50%);
+    z-index: 70;
+    display: flex;
+    flex-direction: column;
+    gap: var(--e-2);
+    width: min(480px, calc(100vw - 2rem));
+    pointer-events: none;
+  }
+  .aviso {
+    display: flex;
+    align-items: center;
+    gap: var(--e-3);
+    padding: var(--e-3) var(--e-4);
+    border-radius: var(--raio);
+    background: var(--menu-fundo);
+    color: var(--menu-texto);
+    font-weight: 700;
+    box-shadow: var(--sombra-forte);
+    animation: surgir 0.25s ease-out both;
+    transition: opacity 0.3s;
+  }
+  .aviso.saindo {
+    opacity: 0;
+  }
+  .aviso-simbolo {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    background: var(--destaque);
+    color: var(--sobre-destaque);
+  }
+</style>

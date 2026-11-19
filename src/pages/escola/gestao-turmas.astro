@@ -1,0 +1,486 @@
+---
+import AppLayout from '../../layouts/AppLayout.astro';
+import Icone from '../../components/Icone.astro';
+import { readModuleData } from '../../services/modulos';
+
+export const prerender = false;
+const modulo = await readModuleData(Astro.request, 'escola');
+const turmasPersistidas = modulo.turmas as {
+  id: string;
+  nome: string;
+  turno: string;
+  alunos: number;
+  regente: string;
+  frequencia: number;
+  sala: string;
+  professores: Record<string, string>;
+  alunosLista: { id: string; nome: string }[];
+}[];
+
+const materias = [
+  'Língua Portuguesa',
+  'Matemática',
+  'Ciências',
+  'História',
+  'Geografia',
+  'Língua Inglesa',
+  'Educação Física',
+  'Arte',
+  'Ensino Religioso',
+];
+const listaProfessores = (modulo.professores as { nome: string; disciplina: string }[]).map(
+  (p) => ({ nome: p.nome, disciplina: p.disciplina }),
+);
+const listaTurmas = turmasPersistidas.map((turma) => ({
+  ...turma,
+  alunosIniciais: turma.alunosLista,
+}));
+const salas = Array.from(
+  { length: 30 },
+  (_, indice) => `Sala ${String(indice + 1).padStart(2, '0')}`,
+);
+---
+
+<AppLayout
+  perfil="escola"
+  ativo="gestao-turmas"
+  titulo="Gestão de turmas"
+  subtitulo="Organize salas, professores e estudantes de cada turma"
+  ajuda="Selecione uma turma para definir a sala, atribuir professores por matéria e incluir ou remover alunos. As alterações confirmadas são registradas no servidor demonstrativo."
+>
+  <div class="gestao">
+    <section class="card seletor">
+      <div class="campo">
+        <label for="seletor-turma">Selecione a turma</label>
+        <select id="seletor-turma" required>
+          <option value="">Escolha uma turma para começar</option>
+          {listaTurmas.map((turma) => (
+            <option value={turma.id}>{turma.nome}</option>
+          ))}
+        </select>
+      </div>
+    </section>
+    <div id="painel-turma" hidden>
+      <section class="card" aria-labelledby="titulo-config">
+        <h2 id="titulo-config">Configuração da turma</h2>
+        <div class="resumo" id="resumo-turma" aria-live="polite"></div>
+        <div class="campo">
+          <label for="sala-turma">Sala da turma</label>
+          <select id="sala-turma">
+            <option value="">Selecione a sala</option>
+            {salas.map((nome) => (
+              <option value={nome}>{nome}</option>
+            ))}
+          </select>
+        </div>
+        <h3>Professores por matéria</h3>
+        <div class="materias">
+          <label class="campo" for="seletor-materia">
+            Matéria
+            <select id="seletor-materia">
+              <option value="">Selecione a matéria</option>
+              {materias.map((materia) => (
+                <option value={materia}>{materia}</option>
+              ))}
+            </select>
+          </label>
+          <label class="campo" id="campo-professor" for="seletor-professor" hidden>
+            Professor
+            <select id="seletor-professor">
+              <option value="">Selecione a matéria primeiro</option>
+            </select>
+          </label>
+          <button class="btn btn-secundario" id="atribuir-professor" type="button" disabled>
+            Atribuir professor
+          </button>
+        </div>
+        <ul id="lista-atribuicoes" class="alunos"></ul>
+        <button class="btn btn-primario" id="salvar-config" type="button">
+          <Icone nome="check" /> Salvar configuração
+        </button>
+      </section>
+      <section class="card" aria-labelledby="titulo-alunos">
+        <div class="cabecalho-alunos">
+          <h2 id="titulo-alunos">Alunos da turma</h2>
+          <span class="suave" id="contagem-alunos" aria-live="polite"></span>
+        </div>
+        <div class="realocar-alunos" id="acoes-selecao" hidden>
+          <label class="campo" id="campo-destino" for="turma-destino" hidden>
+            Turma de destino
+            <select id="turma-destino">
+              <option value="">Selecione a turma de destino</option>
+              {listaTurmas.map((turma) => (
+                <option value={turma.id}>{turma.nome}</option>
+              ))}
+            </select>
+          </label>
+          <button class="btn btn-secundario" id="realocar-selecionados" type="button" disabled>
+            Realocar
+          </button>
+          <button class="btn btn-fantasma" id="cancelar-realocacao" type="button" hidden>
+            Cancelar
+          </button>
+          <button class="btn btn-perigo" id="remover-selecionados" type="button">
+            Remover selecionados
+          </button>
+        </div>
+        <form id="form-aluno" class="adicionar-aluno">
+          <div class="campo">
+            <label for="nome-aluno">Nome do aluno</label>
+            <input id="nome-aluno" required />
+          </div>
+          <button class="btn btn-secundario" type="submit">
+            Adicionar aluno
+          </button>
+        </form>
+        <div class="tabela-wrap">
+          <table class="tabela">
+            <caption class="sr-only">Alunos da turma selecionada</caption>
+            <thead>
+              <tr>
+                <th scope="col">Selecionar</th>
+                <th scope="col">Aluno</th>
+              </tr>
+            </thead>
+            <tbody id="lista-alunos"></tbody>
+          </table>
+        </div>
+        <p id="sem-alunos" class="suave" hidden>
+          Não há alunos cadastrados nesta turma.
+        </p>
+      </section>
+    </div>
+    <p id="aviso-salvo" class="sr-only" aria-live="polite"></p>
+  </div>
+</AppLayout>
+
+<script define:vars={{ listaTurmas, listaProfessores, materias }}>
+  import { salvarModulo } from '../../scripts/modulos';
+  const turmas = listaTurmas.map((turma) => ({ ...turma, alunosLista: turma.alunosIniciais }));
+  const seletor = document.querySelector('#seletor-turma');
+  const sala = document.querySelector('#sala-turma');
+  const painel = document.querySelector('#painel-turma');
+  const materiaSelect = document.querySelector('#seletor-materia');
+  const professorSelect = document.querySelector('#seletor-professor');
+  const campoProfessor = document.querySelector('#campo-professor');
+  const atribuicoesEl = document.querySelector('#lista-atribuicoes');
+  const botaoAtribuir = document.querySelector('#atribuir-professor');
+  const alunosEl = document.querySelector('#lista-alunos');
+  const contagem = document.querySelector('#contagem-alunos');
+  const aviso = document.querySelector('#sem-alunos');
+  const live = document.querySelector('#aviso-salvo');
+  const destinoSelect = document.querySelector('#turma-destino');
+  const botaoRealocar = document.querySelector('#realocar-selecionados');
+  const campoDestino = document.querySelector('#campo-destino');
+  const botaoCancelarRealocacao = document.querySelector('#cancelar-realocacao');
+  const botaoRemoverSelecionados = document.querySelector('#remover-selecionados');
+  const acoesSelecao = document.querySelector('#acoes-selecao');
+  let escolhendoDestino = false;
+
+  function professoresCadastrados() {
+    try {
+      return listaProfessores;
+    } catch {
+      return listaProfessores;
+    }
+  }
+
+  async function salvar(mensagem, dados) {
+    const botao =
+      document.activeElement instanceof HTMLButtonElement
+        ? document.activeElement
+        : document.querySelector < HTMLButtonElement > '#salvar-config';
+    if (botao) botao.disabled = true;
+    try {
+      await salvarModulo('escola', { escolaId: 'escola-e-e-jardim-das-mangabeiras', ...dados });
+      live.textContent = mensagem;
+      window.location.reload();
+      return true;
+    } catch (error) {
+      live.textContent =
+        error instanceof Error ? error.message : 'Não foi possível salvar a alteração.';
+      return false;
+    } finally {
+      if (botao) botao.disabled = false;
+    }
+  }
+
+  function turmaAtual() {
+    return turmas.find((turma) => turma.id === seletor.value);
+  }
+
+  function desenhar() {
+    painel.hidden = !seletor.value;
+    if (!seletor.value) return;
+    const turma = turmaAtual();
+    sala.value = turma.sala;
+    [...destinoSelect.options].forEach((option) => {
+      option.disabled = option.value === turma.nome;
+    });
+    document.querySelector('#resumo-turma').textContent =
+      `${turma.turno} · ${turma.alunos} alunos matriculados · Regente: ${turma.regente}`;
+    desenharAtribuicoes(turma);
+    contagem.textContent = `${turma.alunosLista.length} aluno(s) nesta turma.`;
+    aviso.hidden = turma.alunosLista.length > 0;
+    alunosEl.replaceChildren(
+      ...turma.alunosLista.map((aluno) => {
+        const linha = document.createElement('tr');
+        const celulaSelecao = linha.insertCell();
+        const selecionar = document.createElement('input');
+        selecionar.type = 'checkbox';
+        selecionar.value = aluno.id;
+        selecionar.className = 'selecionar-aluno';
+        selecionar.setAttribute('aria-label', `Selecionar ${aluno.nome}`);
+        selecionar.addEventListener('change', atualizarBotaoRealocar);
+        celulaSelecao.append(selecionar);
+        const celulaNome = document.createElement('th');
+        celulaNome.scope = 'row';
+        celulaNome.textContent = aluno.nome;
+        linha.append(celulaNome);
+        return linha;
+      }),
+    );
+    atualizarBotaoRealocar();
+  }
+
+  function atualizarBotaoRealocar() {
+    const selecionados = alunosEl.querySelectorAll('.selecionar-aluno:checked');
+    acoesSelecao.hidden = selecionados.length === 0;
+    if (selecionados.length === 0) {
+      escolhendoDestino = false;
+      campoDestino.hidden = true;
+      botaoCancelarRealocacao.hidden = true;
+      destinoSelect.value = '';
+    }
+    campoDestino.hidden = !escolhendoDestino;
+    botaoCancelarRealocacao.hidden = !escolhendoDestino;
+    botaoRealocar.disabled = escolhendoDestino
+      ? selecionados.length === 0 || !destinoSelect.value || destinoSelect.value === seletor.value
+      : selecionados.length === 0;
+    botaoRealocar.textContent = escolhendoDestino
+      ? `Confirmar realocação (${selecionados.length})`
+      : `Realocar (${selecionados.length})`;
+    botaoRemoverSelecionados.textContent = `Remover selecionados (${selecionados.length})`;
+  }
+
+  function desenharAtribuicoes(turma) {
+    atribuicoesEl.replaceChildren(
+      ...Object.entries(turma.professores).map(([materia, professor]) => {
+        const item = document.createElement('li');
+        const texto = document.createElement('span');
+        texto.textContent = `${materia}: ${professor}`;
+        const remover = document.createElement('button');
+        remover.type = 'button';
+        remover.className = 'btn btn-fantasma';
+        remover.textContent = 'Remover';
+        remover.addEventListener('click', async () => {
+          await salvar(`Professor removido de ${materia}.`, {
+            operacao: 'professor:remover',
+            turmaId: turma.id,
+            disciplina: materia,
+          });
+        });
+        item.append(texto, remover);
+        return item;
+      }),
+    );
+  }
+
+  seletor.addEventListener('change', desenhar);
+  destinoSelect.addEventListener('change', atualizarBotaoRealocar);
+  botaoRealocar.addEventListener('click', async () => {
+    if (!escolhendoDestino) {
+      escolhendoDestino = true;
+      atualizarBotaoRealocar();
+      destinoSelect.focus();
+      return;
+    }
+    const origem = turmaAtual();
+    const destino = turmas.find((turma) => turma.id === destinoSelect.value);
+    if (!origem || !destino || destino === origem) return;
+    const selecionados = [...alunosEl.querySelectorAll('.selecionar-aluno:checked')].map(
+      (input) => input.value,
+    );
+    if (!selecionados.length) return;
+    if (
+      !(await salvar(
+        `${selecionados.length} aluno(s) realocado(s) de ${origem.nome} para ${destino.nome}.`,
+        {
+          operacao: 'alunos:realocar',
+          origemId: origem.id,
+          destinoId: destino.id,
+          estudanteIds: selecionados,
+        },
+      ))
+    )
+      return;
+    destinoSelect.value = '';
+    escolhendoDestino = false;
+    desenhar();
+  });
+  botaoCancelarRealocacao.addEventListener('click', () => {
+    escolhendoDestino = false;
+    destinoSelect.value = '';
+    atualizarBotaoRealocar();
+  });
+  botaoRemoverSelecionados.addEventListener('click', async () => {
+    const turma = turmaAtual();
+    if (!turma) return;
+    const selecionados = [...alunosEl.querySelectorAll('.selecionar-aluno:checked')].map(
+      (input) => input.value,
+    );
+    if (!selecionados.length) return;
+    await salvar(`${selecionados.length} aluno(s) removido(s) da turma ${turma.nome}.`, {
+      operacao: 'alunos:remover',
+      turmaId: turma.id,
+      estudanteIds: selecionados,
+    });
+  });
+  document.querySelector('#salvar-config')?.addEventListener('click', async () => {
+    const turma = turmaAtual();
+    if (!turma) return;
+    turma.sala = sala.value;
+    await salvar(`Configurações da turma ${turma.nome} salvas.`, {
+      operacao: 'turma:sala',
+      turmaId: turma.id,
+      sala: sala.value,
+    });
+  });
+  materiaSelect.addEventListener('change', () => {
+    campoProfessor.hidden = !materiaSelect.value;
+    professorSelect.replaceChildren(new Option('Selecione o professor', ''));
+    if (materiaSelect.value) {
+      professoresCadastrados()
+        .filter((professor) => professor.disciplina === materiaSelect.value)
+        .forEach((professor) => professorSelect.add(new Option(professor.nome, professor.nome)));
+      if (professorSelect.options.length === 1)
+        professorSelect.add(new Option('Nenhum professor cadastrado para esta matéria', ''));
+    }
+    botaoAtribuir.disabled = true;
+  });
+  professorSelect.addEventListener('change', () => {
+    botaoAtribuir.disabled = !professorSelect.value;
+  });
+  botaoAtribuir.addEventListener('click', async () => {
+    const turma = turmaAtual();
+    if (!materiaSelect.value || !professorSelect.value) return;
+    if (
+      !(await salvar(
+        `${professorSelect.value} atribuído(a) a ${materiaSelect.value} na turma ${turma.nome}.`,
+        {
+          operacao: 'professor:atribuir',
+          turmaId: turma.id,
+          disciplina: materiaSelect.value,
+          professor: professorSelect.value,
+        },
+      ))
+    )
+      return;
+    materiaSelect.value = '';
+    campoProfessor.hidden = true;
+    professorSelect.replaceChildren(new Option('Selecione a matéria primeiro', ''));
+    botaoAtribuir.disabled = true;
+    desenhar();
+  });
+  document.querySelector('#form-aluno')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const input = document.querySelector('#nome-aluno');
+    const nome = input.value.trim();
+    if (!nome) return;
+    const turma = turmaAtual();
+    if (
+      !(await salvar(`${nome} adicionado(a) à turma ${turma.nome}.`, {
+        operacao: 'aluno:adicionar',
+        turmaId: turma.id,
+        nome,
+      }))
+    )
+      return;
+    input.value = '';
+    desenhar();
+  });
+  desenhar();
+</script>
+
+<style>
+  .gestao [hidden] {
+    display: none !important;
+  }
+  .gestao {
+    display: grid;
+    gap: var(--e-5);
+  }
+  .seletor {
+    padding: var(--e-4);
+  }
+  .seletor .campo {
+    margin: 0;
+    max-width: 520px;
+  }
+  .resumo {
+    margin-bottom: var(--e-4);
+    font-weight: 700;
+  }
+  .materias {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+    gap: var(--e-3);
+    margin-bottom: var(--e-4);
+  }
+  .materias .campo {
+    margin: 0;
+  }
+  #atribuir-professor {
+    width: fit-content;
+    min-width: 0;
+    justify-self: start;
+    align-self: end;
+  }
+  .cabecalho-alunos,
+  .adicionar-aluno {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: var(--e-3);
+  }
+  .cabecalho-alunos h2 {
+    margin: 0;
+  }
+  .adicionar-aluno {
+    margin: var(--e-4) 0;
+  }
+  .adicionar-aluno .campo {
+    flex: 1;
+    min-width: 220px;
+    margin: 0;
+  }
+  .alunos {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: var(--e-2);
+  }
+  .selecionar-aluno {
+    width: 24px;
+    height: 24px;
+  }
+  .realocar-alunos {
+    display: flex;
+    align-items: end;
+    gap: var(--e-3);
+    margin-top: var(--e-4);
+  }
+  .realocar-alunos .campo {
+    flex: 1;
+    max-width: 440px;
+    margin: 0;
+  }
+  @media (max-width: 600px) {
+    .realocar-alunos {
+      align-items: stretch;
+      flex-direction: column;
+    }
+  }
+</style>

@@ -1,0 +1,22 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+
+Astro.response.status = 403;
+---
+
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <BaseHead
+      title="Acesso não autorizado | EducaHub"
+      description="Seu tipo de usuário não tem permissão para acessar esta página."
+    />
+  </head>
+  <body>
+    <main>
+      <h1>Acesso não autorizado</h1>
+      <p>Seu tipo de usuário não tem permissão para acessar esta área.</p>
+      <a href="/">Voltar ao início</a>
+    </main>
+  </body>
+</html>

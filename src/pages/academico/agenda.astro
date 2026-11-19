@@ -1,0 +1,567 @@
+---
+import Academico from '@layouts/Academico.astro';
+import Icone from '@components/Icone.astro';
+import { eventos, infoEvento } from '@data/dados';
+
+const ANO_INICIAL = 2026;
+const MES_INICIAL = 11;
+const semana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+const simbolos: Record<keyof typeof infoEvento, string> = {
+  avaliacao: 'A',
+  feriado: 'F',
+  prazo: 'P',
+  reuniao: 'R',
+  evento: 'E',
+};
+
+function nomeMes(ano: number, mes: number): string {
+  const nome = new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(
+    new Date(ano, mes - 1, 1),
+  );
+  return `${nome.charAt(0).toLocaleUpperCase('pt-BR')}${nome.slice(1)} ${ano}`;
+}
+
+const eventosDoMes = eventos.filter((evento) => evento.mes === MES_INICIAL);
+const primeiroDia = new Date(ANO_INICIAL, MES_INICIAL - 1, 1).getDay();
+const totalDias = new Date(ANO_INICIAL, MES_INICIAL, 0).getDate();
+const celulas: (number | null)[] = [
+  ...Array.from({ length: primeiroDia }, () => null),
+  ...Array.from({ length: totalDias }, (_, indice) => indice + 1),
+];
+while (celulas.length % 7 !== 0) celulas.push(null);
+const semanas = Array.from({ length: celulas.length / 7 }, (_, indice) =>
+  celulas.slice(indice * 7, indice * 7 + 7),
+);
+---
+
+<Academico title="Calendário escolar | EducaHub">
+  <section class="pagina" aria-labelledby="titulo-pagina">
+    <header class="introducao">
+      <h1 id="titulo-pagina">Calendário escolar</h1>
+      <p>Acompanhe as datas importantes do ano letivo.</p>
+    </header>
+
+    <div class="layout-calendario">
+      <section class="card" aria-labelledby="titulo-mes">
+        <div class="card-cabecalho">
+          <button id="mes-anterior" class="botao-mes" type="button" aria-label="Mês anterior">
+            <Icone nome="seta-esquerda" />
+          </button>
+          <h2 id="titulo-mes">
+            <Icone nome="calendario" />
+            <span id="nome-mes">{nomeMes(ANO_INICIAL, MES_INICIAL)}</span>
+          </h2>
+          <button id="proximo-mes" class="botao-mes" type="button" aria-label="Próximo mês">
+            <Icone nome="seta-direita" />
+          </button>
+        </div>
+
+        <table class="calendario">
+          <caption class="sr-only">Calendário de{nomeMes(ANO_INICIAL, MES_INICIAL)}</caption>
+          <thead>
+            <tr>
+              {semana.map((dia) => (
+                <th scope="col">{dia}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody id="grade-calendario">
+            {semanas.map((linha) => (
+              <tr>
+                {linha.map((dia) => {
+                  if (dia === null) return <td class="vazio" aria-hidden="true"></td>;
+                  const eventosDoDia = eventosDoMes.filter((evento) => evento.dia === dia);
+                  return (
+                    <td class:list={{ 'tem-evento': eventosDoDia.length > 0 }}>
+                      <span class="numero-dia">{dia}</span>
+                      {eventosDoDia.map((evento) => (
+                        <span
+                          class:list={['marca-evento', `marca-${evento.tipo}`]}
+                          title={evento.titulo}
+                          role="img"
+                          aria-label={evento.titulo}
+                        >
+                          {simbolos[evento.tipo]}
+                        </span>
+                      ))}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <p class="legenda-calendario" aria-label="Legenda dos eventos">
+          <span>
+            <b class="marca-evento marca-avaliacao">A</b> Avaliação
+          </span>
+          <span>
+            <b class="marca-evento marca-feriado">F</b> Feriado
+          </span>
+          <span>
+            <b class="marca-evento marca-prazo">P</b> Prazo
+          </span>
+          <span>
+            <b class="marca-evento marca-reuniao">R</b> Reunião
+          </span>
+          <span>
+            <b class="marca-evento marca-evento">E</b> Evento
+          </span>
+        </p>
+      </section>
+
+      <section class="card" aria-labelledby="titulo-datas">
+        <h2 id="titulo-datas">
+          <Icone nome="tarefas" /> Datas do mês
+        </h2>
+        <ul class="lista-eventos" id="lista-eventos">
+          {eventosDoMes.map((evento) => (
+            <li>
+              <span class="data-bloco" aria-hidden="true">
+                <strong>{String(evento.dia).padStart(2, '0')}</strong>
+                <span>NOV</span>
+              </span>
+              <div>
+                <p class="evento-titulo">{evento.titulo}</p>
+                <span class:list={['tipo-evento', `tipo-${infoEvento[evento.tipo].tom}`]}>
+                  {infoEvento[evento.tipo].texto}
+                </span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </div>
+  </section>
+</Academico>
+
+<script>
+  import { eventos, infoEvento } from '@data/dados';
+  import type { TipoEvento } from '@data/dados';
+
+  const simbolosEvento: Record<TipoEvento, string> = {
+    avaliacao: 'A',
+    feriado: 'F',
+    prazo: 'P',
+    reuniao: 'R',
+    evento: 'E',
+  };
+
+  document.addEventListener('astro:page-load', () => {
+    const tituloMes = document.querySelector<HTMLElement>('#nome-mes');
+    const legenda = document.querySelector<HTMLTableCaptionElement>('.calendario caption');
+    const subtitulo = document.querySelector<HTMLElement>('.introducao p');
+    const grade = document.querySelector<HTMLTableSectionElement>('#grade-calendario');
+    const lista = document.querySelector<HTMLUListElement>('#lista-eventos');
+    const anterior = document.querySelector<HTMLButtonElement>('#mes-anterior');
+    const proximo = document.querySelector<HTMLButtonElement>('#proximo-mes');
+
+    if (!tituloMes || !legenda || !subtitulo || !grade || !lista || !anterior || !proximo) {
+      throw new Error('Não foi possível inicializar a navegação do calendário.');
+    }
+
+    const tituloMesVisivel = tituloMes;
+    const legendaCalendario = legenda;
+    const subtituloPagina = subtitulo;
+    const gradeCalendario = grade;
+    const listaEventos = lista;
+
+    let anoVisivel = 2026;
+    let mesVisivel = 11;
+
+    function renderizarCalendario(): void {
+      const dataMes = new Date(anoVisivel, mesVisivel - 1, 1);
+      const nome = new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(dataMes);
+      const nomeFormatado = `${nome.charAt(0).toLocaleUpperCase('pt-BR')}${nome.slice(1)} ${anoVisivel}`;
+      const eventosMes =
+        anoVisivel === 2026 ? eventos.filter((evento) => evento.mes === mesVisivel) : [];
+      const primeiroDia = dataMes.getDay();
+      const diasNoMes = new Date(anoVisivel, mesVisivel, 0).getDate();
+      const celulas: (number | null)[] = [
+        ...Array.from({ length: primeiroDia }, () => null),
+        ...Array.from({ length: diasNoMes }, (_, indice) => indice + 1),
+      ];
+
+      while (celulas.length % 7 !== 0) celulas.push(null);
+      tituloMesVisivel.textContent = nomeFormatado;
+      legendaCalendario.textContent = `Calendário de ${nomeFormatado}`;
+      subtituloPagina.textContent = nomeFormatado;
+      gradeCalendario.replaceChildren();
+
+      for (let indice = 0; indice < celulas.length; indice += 7) {
+        const linha = document.createElement('tr');
+        celulas.slice(indice, indice + 7).forEach((dia) => {
+          const celula = document.createElement('td');
+          if (dia === null) {
+            celula.className = 'vazio';
+            celula.setAttribute('aria-hidden', 'true');
+          } else {
+            const eventosDoDia = eventosMes.filter((evento) => evento.dia === dia);
+            if (eventosDoDia.length) celula.classList.add('tem-evento');
+            const numero = document.createElement('span');
+            numero.className = 'numero-dia';
+            numero.textContent = String(dia);
+            celula.append(numero);
+            eventosDoDia.forEach((evento) => {
+              const marca = document.createElement('span');
+              marca.className = `marca-evento marca-${evento.tipo}`;
+              marca.title = evento.titulo;
+              marca.setAttribute('role', 'img');
+              marca.setAttribute('aria-label', evento.titulo);
+              marca.textContent = simbolosEvento[evento.tipo];
+              celula.append(marca);
+            });
+          }
+          linha.append(celula);
+        });
+        gradeCalendario.append(linha);
+      }
+
+      listaEventos.replaceChildren();
+      eventosMes.forEach((evento) => {
+        const item = document.createElement('li');
+        const data = document.createElement('span');
+        data.className = 'data-bloco';
+        data.setAttribute('aria-hidden', 'true');
+        const dia = document.createElement('strong');
+        dia.textContent = String(evento.dia).padStart(2, '0');
+        const mes = document.createElement('span');
+        mes.textContent = nome.slice(0, 3).toLocaleUpperCase('pt-BR');
+        data.append(dia, mes);
+
+        const conteudo = document.createElement('div');
+        const titulo = document.createElement('p');
+        titulo.className = 'evento-titulo';
+        titulo.textContent = evento.titulo;
+        const tipo = document.createElement('span');
+        tipo.className = `tipo-evento tipo-${infoEvento[evento.tipo].tom}`;
+        tipo.textContent = infoEvento[evento.tipo].texto;
+        conteudo.append(titulo, tipo);
+        item.append(data, conteudo);
+        listaEventos.append(item);
+      });
+
+      if (!eventosMes.length) {
+        const vazio = document.createElement('li');
+        vazio.className = 'estado-vazio';
+        vazio.textContent = 'Nenhum evento cadastrado para este mês.';
+        listaEventos.append(vazio);
+      }
+    }
+
+    anterior.addEventListener('click', () => {
+      mesVisivel -= 1;
+      if (mesVisivel < 1) {
+        mesVisivel = 12;
+        anoVisivel -= 1;
+      }
+      renderizarCalendario();
+    });
+
+    proximo.addEventListener('click', () => {
+      mesVisivel += 1;
+      if (mesVisivel > 12) {
+        mesVisivel = 1;
+        anoVisivel += 1;
+      }
+      renderizarCalendario();
+    });
+  });
+</script>
+
+<style>
+  .pagina {
+    display: grid;
+    gap: 1.5rem;
+    max-width: 1280px;
+    margin-inline: auto;
+  }
+
+  .introducao {
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .introducao p {
+    color: var(--fg--40);
+  }
+
+  .layout-calendario {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
+    gap: 1.25rem;
+    align-items: start;
+  }
+
+  .card {
+    min-width: 0;
+    padding: 1.25rem;
+    border: 1px solid var(--fg--80);
+    border-radius: 12px;
+    background: var(--bg);
+    box-shadow: 0 4px 12px rgb(18 12 7 / 8%);
+  }
+
+  .card h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+    font-size: 1.35rem;
+  }
+
+  .card h2 :global(svg) {
+    flex: 0 0 auto;
+    color: var(--primary-darker);
+  }
+
+  .card-cabecalho {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .card-cabecalho h2 {
+    justify-content: center;
+    margin: 0;
+    text-align: center;
+  }
+
+  .botao-mes {
+    display: grid;
+    width: 44px;
+    height: 44px;
+    place-items: center;
+    border: 1px solid var(--fg--70);
+    border-radius: 50%;
+    background: var(--bg);
+    color: var(--fg);
+    cursor: pointer;
+  }
+
+  .botao-mes:hover {
+    background: var(--fg--90);
+  }
+
+  .botao-mes:focus-visible {
+    outline: 3px solid var(--primary-darker);
+    outline-offset: 2px;
+  }
+
+  .calendario {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 4px;
+    table-layout: fixed;
+  }
+
+  .calendario th {
+    padding: 0.5rem 0;
+    color: var(--fg--40);
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .calendario td {
+    height: 78px;
+    padding: 0.35rem;
+    vertical-align: top;
+    border: 1px solid var(--fg--80);
+    border-radius: 6px;
+    background: var(--bg);
+  }
+
+  .calendario td.vazio {
+    border: 0;
+    background: transparent;
+  }
+
+  .calendario td.tem-evento {
+    border: 2px solid var(--primary-darker);
+  }
+
+  .numero-dia {
+    display: block;
+    margin-bottom: 0.2rem;
+    font-weight: 700;
+  }
+
+  .marca-evento {
+    display: inline-grid;
+    width: 26px;
+    height: 26px;
+    margin: 2px 2px 0 0;
+    place-items: center;
+    border: 1px solid var(--fg);
+    border-radius: 6px;
+    color: var(--fg);
+    font-weight: 800;
+  }
+
+  .marca-avaliacao {
+    background: var(--warning--bg);
+  }
+
+  .marca-feriado {
+    background: #9bd7ff;
+  }
+
+  .marca-prazo {
+    background: var(--error--bg);
+    color: var(--bg);
+  }
+
+  .marca-reuniao {
+    background: var(--fg--80);
+  }
+
+  .marca-evento {
+    background: var(--success--bg);
+  }
+
+  .legenda-calendario {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem 1rem;
+    margin-top: 1rem;
+    color: var(--fg--40);
+  }
+
+  .legenda-calendario span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .legenda-calendario .marca-evento {
+    width: 22px;
+    height: 22px;
+    margin: 0;
+    font-size: 0.8rem;
+  }
+
+  .lista-eventos {
+    display: grid;
+    gap: 0.85rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  .lista-eventos li:not(.estado-vazio) {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .data-bloco {
+    display: grid;
+    min-width: 50px;
+    min-height: 56px;
+    place-content: center;
+    border: 1px solid var(--fg--80);
+    border-radius: 8px;
+    background: var(--fg--90);
+    text-align: center;
+  }
+
+  .data-bloco strong {
+    font-size: 1.2rem;
+  }
+
+  .data-bloco span {
+    color: var(--fg--40);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .evento-titulo {
+    margin-bottom: 0.3rem;
+    font-weight: 700;
+  }
+
+  .tipo-evento {
+    display: inline-block;
+    padding: 0.1rem 0.55rem;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  .tipo-alerta {
+    color: var(--fg);
+    background: var(--warning--bg);
+  }
+
+  .tipo-info {
+    color: var(--fg);
+    background: #9bd7ff;
+  }
+
+  .tipo-perigo {
+    color: var(--fg);
+    background: var(--error--bg);
+  }
+
+  .tipo-neutro {
+    color: var(--fg--20);
+    background: var(--fg--90);
+  }
+
+  .tipo-sucesso {
+    color: var(--fg);
+    background: var(--success--bg);
+  }
+
+  .estado-vazio {
+    padding: 1rem;
+    border: 1px dashed var(--fg--70);
+    border-radius: 8px;
+    color: var(--fg--40);
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    clip-path: inset(50%);
+  }
+
+  @media (max-width: 1000px) {
+    .layout-calendario {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .card {
+      padding: 0.8rem;
+    }
+
+    .calendario {
+      border-spacing: 2px;
+    }
+
+    .calendario td {
+      height: 58px;
+      padding: 2px;
+    }
+
+    .marca-evento {
+      width: 21px;
+      height: 21px;
+      font-size: 0.75rem;
+    }
+
+    .card-cabecalho h2 {
+      font-size: 1.05rem;
+    }
+  }
+</style>

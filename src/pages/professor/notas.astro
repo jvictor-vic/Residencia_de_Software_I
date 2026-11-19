@@ -1,0 +1,253 @@
+---
+/**
+ * Lançamento de notas (H3.2). O professor digita a nota da 4ª unidade e
+ * a média e a situação de cada aluno são recalculadas na hora.
+ */
+import AppLayout from '../../layouts/AppLayout.astro';
+import Status from '../../components/Status.astro';
+import Icone from '../../components/Icone.astro';
+import { media, formatarNota, MEDIA_MINIMA } from '../../data/dados';
+import { readModuleData } from '../../services/modulos';
+
+export const prerender = false;
+const modulo = await readModuleData(Astro.request, 'professor');
+const alunos8B = modulo.estudantes as { id: string; nome: string }[];
+const turma = (modulo.turmas as { id: string; nome: string }[])[0];
+const atribuicao = (modulo.atribuicoes as { turmaId: string; disciplina: string }[])[0];
+const notasPersistidas = modulo.notas as { estudanteId: string; unidades: (number | null)[] }[];
+const notasMat8B = Object.fromEntries(
+  notasPersistidas.map((registro) => [
+    alunos8B.find((aluno) => aluno.id === registro.estudanteId)?.nome ?? registro.estudanteId,
+    registro.unidades.slice(0, 3),
+  ]),
+) as Record<string, (number | null)[]>;
+---
+
+<AppLayout
+  perfil="professor"
+  ativo="notas"
+  titulo="Lançar notas"
+  subtitulo="8º ano B · Matemática · 4ª unidade"
+  ajuda="Nesta tela você lança as notas da quarta unidade. Digite uma nota de zero a dez para cada aluno. A média e a situação de cada um mudam na hora. Quando terminar, clique em Salvar notas."
+>
+  <section class="card" aria-labelledby="titulo-notas">
+    <div class="card-cabecalho">
+      <h2 id="titulo-notas">
+        <Icone nome="lapis" /> Notas da turma
+      </h2>
+      <p class="sem-margem suave" aria-live="polite">
+        <strong id="qtd-lancadas" class="numero">
+          0
+        </strong>{' '}
+        de {alunos8B.length} notas lançadas · média da turma:
+        <strong id="media-turma" class="numero">
+          —
+        </strong>
+      </p>
+    </div>
+
+    <form
+      id="form-notas"
+      data-turma-id={turma?.id}
+      data-disciplina={atribuicao?.disciplina}
+      novalidate
+    >
+      <div class="tabela-wrap">
+        <table class="tabela">
+          <caption class="sr-only">Notas de Matemática do 8º ano B</caption>
+          <thead>
+            <tr>
+              <th scope="col">Aluno</th>
+              <th scope="col" class="centro">
+                1ª un.
+              </th>
+              <th scope="col" class="centro">
+                2ª un.
+              </th>
+              <th scope="col" class="centro">
+                3ª un.
+              </th>
+              <th scope="col" class="centro">
+                4ª un.
+              </th>
+              <th scope="col" class="centro">
+                Média
+              </th>
+              <th scope="col">Situação</th>
+            </tr>
+          </thead>
+          <tbody>
+            {alunos8B.map((aluno, i) => {
+              const nome = aluno.nome;
+              const notas = notasMat8B[nome] ?? [null, null, null];
+              const m = media(notas);
+              return (
+                <tr data-linha data-estudante-id={aluno.id} data-notas={JSON.stringify(notas)}>
+                  <th scope="row">{nome}</th>
+                  {notas.map((n) => (
+                    <td class="centro numero">{formatarNota(n)}</td>
+                  ))}
+                  <td class="centro">
+                    <label class="sr-only" for={`nota-${i}`}>
+                      Nota da 4ª unidade de {nome}
+                    </label>
+                    <input
+                      class="entrada entrada-nota numero"
+                      id={`nota-${i}`}
+                      type="number"
+                      min="0"
+                      max="10"
+                      step="0.1"
+                      inputmode="decimal"
+                      placeholder="0 a 10"
+                    />
+                  </td>
+                  <td class="centro numero negrito" data-media>
+                    {formatarNota(m)}
+                  </td>
+                  <td>
+                    <span data-sit="aprovado" hidden={m === null || m < MEDIA_MINIMA}>
+                      <Status tom="sucesso" texto="Na média" />
+                    </span>
+                    <span data-sit="recuperacao" hidden={m === null || m >= MEDIA_MINIMA}>
+                      <Status tom="perigo" texto="Recuperação" />
+                    </span>
+                    <span data-sit="invalida" hidden>
+                      <Status tom="alerta" texto="Nota inválida" />
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <div class="acoes">
+        <p class="suave sem-margem">Média mínima para aprovação: {formatarNota(MEDIA_MINIMA)}</p>
+        <button type="submit" class="btn btn-primario">
+          <Icone nome="check" /> Salvar notas
+        </button>
+      </div>
+    </form>
+  </section>
+</AppLayout>
+
+<style>
+  .entrada-nota {
+    width: 7.5rem;
+    min-height: var(--alvo-min);
+    text-align: center;
+  }
+  .entrada-nota[aria-invalid='true'] {
+    border-color: var(--perigo);
+    background: var(--perigo-suave);
+  }
+  .acoes {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--e-3);
+    margin-top: var(--e-4);
+  }
+</style>
+
+<script>
+  import { mostrarAviso } from '../../scripts/aviso';
+  import { salvarModulo } from '../../scripts/modulos';
+
+  const MEDIA_MINIMA = 6;
+  const linhas = [...document.querySelectorAll<HTMLTableRowElement>('[data-linha]')];
+  const qtdLancadas = document.getElementById('qtd-lancadas')!;
+  const mediaTurma = document.getElementById('media-turma')!;
+  const fmt = (n: number) => n.toFixed(1).replace('.', ',');
+
+  function lerNota(input: HTMLInputElement): number | null | 'invalida' {
+    if (input.value.trim() === '') return null;
+    const n = Number(input.value.replace(',', '.'));
+    return Number.isFinite(n) && n >= 0 && n <= 10 ? n : 'invalida';
+  }
+
+  function mostrarSituacao(
+    linha: HTMLTableRowElement,
+    sit: 'aprovado' | 'recuperacao' | 'invalida',
+  ) {
+    linha
+      .querySelectorAll<HTMLElement>('[data-sit]')
+      .forEach((el) => (el.hidden = el.dataset.sit !== sit));
+  }
+
+  function recalcular() {
+    let lancadas = 0;
+    const medias: number[] = [];
+    linhas.forEach((linha) => {
+      const anteriores = (JSON.parse(linha.dataset.notas ?? '[]') as (number | null)[]).filter(
+        (n): n is number => n !== null,
+      );
+      const input = linha.querySelector<HTMLInputElement>('input')!;
+      const nota = lerNota(input);
+      const celulaMedia = linha.querySelector<HTMLElement>('[data-media]')!;
+
+      input.setAttribute('aria-invalid', String(nota === 'invalida'));
+      if (nota === 'invalida') {
+        mostrarSituacao(linha, 'invalida');
+        return;
+      }
+      if (nota !== null) lancadas++;
+      const todas = nota === null ? anteriores : [...anteriores, nota];
+      const m = Math.round((todas.reduce((a, b) => a + b, 0) / todas.length) * 10) / 10;
+      medias.push(m);
+      celulaMedia.textContent = fmt(m);
+      mostrarSituacao(linha, m >= MEDIA_MINIMA ? 'aprovado' : 'recuperacao');
+    });
+    qtdLancadas.textContent = String(lancadas);
+    mediaTurma.textContent = medias.length
+      ? fmt(medias.reduce((a, b) => a + b, 0) / medias.length)
+      : '—';
+  }
+
+  linhas.forEach((l) => l.querySelector('input')?.addEventListener('input', recalcular));
+  recalcular();
+
+  document.getElementById('form-notas')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const invalida = linhas
+      .map((l) => l.querySelector<HTMLInputElement>('input')!)
+      .find((i) => lerNota(i) === 'invalida');
+    if (invalida) {
+      mostrarAviso('Existe nota inválida. Use valores de 0 a 10.', 'alerta');
+      invalida.focus();
+      return;
+    }
+    const notas = linhas.flatMap((linha) => {
+      const input = linha.querySelector<HTMLInputElement>('input')!;
+      const valor = lerNota(input);
+      return valor === null || valor === 'invalida'
+        ? []
+        : [{ estudanteId: linha.dataset.estudanteId, valor }];
+    });
+    const botao = (e.currentTarget as HTMLFormElement).querySelector<HTMLButtonElement>(
+      'button[type="submit"]',
+    )!;
+    botao.disabled = true;
+    try {
+      const form = e.currentTarget as HTMLFormElement;
+      await salvarModulo('professor', {
+        operacao: 'notas:salvar',
+        turmaId: form.dataset.turmaId,
+        disciplina: form.dataset.disciplina,
+        unidade: 4,
+        notas,
+      });
+      mostrarAviso(`Notas salvas no servidor: ${notas.length} nota(s) lançadas.`);
+      window.location.reload();
+    } catch (error) {
+      mostrarAviso(
+        error instanceof Error ? error.message : 'Não foi possível salvar as notas.',
+        'alerta',
+      );
+    } finally {
+      botao.disabled = false;
+    }
+  });
+</script>

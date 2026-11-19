@@ -1,0 +1,243 @@
+---
+import Checkbox from '@components/Checkbox.astro';
+
+export interface SelectMultipleOption {
+  id: string;
+  value: string;
+  label: string;
+  groupCanal?: string;
+  canalMateria?: boolean;
+  groupLabel?: string;
+}
+
+interface Props {
+  filtro: string;
+  titulo: string;
+  opcoes: SelectMultipleOption[];
+}
+
+const { filtro, titulo, opcoes } = Astro.props;
+---
+
+<fieldset class="campo-filtro" data-filtro={filtro} data-select-multiple>
+  <legend>{titulo}</legend>
+  <details class="seletor-multiplo">
+    <summary data-resumo-filtro>Todos</summary>
+    <div class="opcoes-filtro" role="group" aria-label={titulo}>
+      <button type="button" class="acao-todos" data-selecionar-todos>
+        Todos
+      </button>
+      {opcoes.map((opcao) => (
+        <>
+          {opcao.groupLabel && <span class="titulo-grupo-opcoes">{opcao.groupLabel}</span>}
+          <label class="opcao-filtro">
+            <Checkbox
+              id={opcao.id}
+              value={opcao.value}
+              data-grupo-canal={opcao.groupCanal}
+              data-canal-materia={opcao.canalMateria ? '' : undefined}
+            />
+            {opcao.label}
+          </label>
+        </>
+      ))}
+    </div>
+  </details>
+</fieldset>
+
+<script>
+  function inicializarSeletores(): void {
+    const seletores = document.querySelectorAll<HTMLElement>('[data-select-multiple]');
+
+    seletores.forEach((seletor) => {
+      if (seletor.dataset.selectMultipleInitialized === 'true') return;
+      seletor.dataset.selectMultipleInitialized = 'true';
+
+      const opcoes = [...seletor.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')];
+      const todasMaterias = opcoes.find((opcao) => opcao.dataset.grupoCanal === 'materias');
+      const materias = opcoes.filter((opcao) => opcao.hasAttribute('data-canal-materia'));
+      const botaoTodos = seletor.querySelector<HTMLButtonElement>('[data-selecionar-todos]');
+      const resumo = seletor.querySelector<HTMLElement>('[data-resumo-filtro]');
+
+      function atualizarResumo(): void {
+        if (!resumo) return;
+
+        const opcoesFiltraveis = opcoes.filter((opcao) => !opcao.dataset.grupoCanal);
+        const selecionadas = opcoesFiltraveis.filter((opcao) => opcao.checked);
+        resumo.textContent =
+          selecionadas.length === 0 || selecionadas.length === opcoesFiltraveis.length
+            ? 'Todos'
+            : `${selecionadas.length} selecionado${selecionadas.length === 1 ? '' : 's'}`;
+      }
+
+      function atualizarGrupoMaterias(): void {
+        if (todasMaterias && materias.length > 0) {
+          todasMaterias.checked = materias.every((opcao) => opcao.checked);
+        }
+      }
+
+      function notificarMudanca(): void {
+        seletor.dispatchEvent(new CustomEvent('selectmultiple:change', { bubbles: true }));
+      }
+
+      seletor.addEventListener('change', (event) => {
+        const alterada = event.target;
+        if (!(alterada instanceof HTMLInputElement)) return;
+
+        if (alterada === todasMaterias) {
+          materias.forEach((opcao) => {
+            opcao.checked = alterada.checked;
+          });
+        }
+
+        atualizarGrupoMaterias();
+        atualizarResumo();
+        notificarMudanca();
+      });
+
+      botaoTodos?.addEventListener('click', () => {
+        opcoes
+          .filter((opcao) => !opcao.dataset.grupoCanal)
+          .forEach((opcao) => {
+            opcao.checked = true;
+          });
+
+        atualizarGrupoMaterias();
+        atualizarResumo();
+        notificarMudanca();
+      });
+
+      atualizarResumo();
+    });
+  }
+
+  document.addEventListener('astro:page-load', inicializarSeletores);
+</script>
+
+<style>
+  .campo-filtro {
+    display: grid;
+    flex: 1 1 180px;
+    gap: 6px;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .campo-filtro legend {
+    font-weight: 700;
+  }
+
+  .seletor-multiplo {
+    position: relative;
+  }
+
+  .seletor-multiplo summary {
+    appearance: none;
+    position: relative;
+    height: 48px;
+    padding: 12px 60px 12px 18px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+
+    border-radius: 24px;
+    border: 2px solid var(--fg--20);
+    background-color: var(--fg--90);
+    color: var(--fg--20);
+    font-family: var(--font-cabin);
+    font-size: 1rem;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .seletor-multiplo summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .seletor-multiplo summary:focus,
+  .seletor-multiplo summary:hover {
+    outline: 2px dashed var(--secondary);
+  }
+
+  .seletor-multiplo summary::after {
+    content: '';
+
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    bottom: -2px;
+    aspect-ratio: 1 / 1;
+
+    background-color: var(--fg--20);
+
+    -webkit-mask-image: url('../assets/icons/arrow-down-circle.svg');
+    mask-image: url('../assets/icons/arrow-down-circle.svg');
+
+    mask-size: cover;
+    mask-repeat: no-repeat;
+    mask-position: center;
+
+    transition: all 0.5s ease-in-out;
+  }
+
+  .seletor-multiplo[open] summary::after {
+    rotate: 180deg;
+  }
+
+  .opcoes-filtro {
+    position: absolute;
+    z-index: 1;
+    display: grid;
+    gap: 8px;
+    width: max-content;
+    min-width: 100%;
+    max-width: min(320px, calc(100vw - 48px));
+    max-height: 320px;
+    overflow-y: auto;
+    margin-top: 4px;
+    padding: 12px 18px;
+    border: 2px solid var(--fg--20);
+    border-radius: 24px;
+    background-color: var(--fg--90);
+    box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
+  }
+
+  .acao-todos {
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--fg);
+    font-family: var(--font-cabin);
+    font-size: 1rem;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .acao-todos:focus-visible {
+    outline: 3px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  .opcao-filtro {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-cabin);
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  .titulo-grupo-opcoes {
+    padding-top: 6px;
+    border-top: 1px solid var(--fg--80);
+    color: var(--fg--40);
+    font-family: var(--font-cabin);
+    font-size: 14px;
+    font-weight: 700;
+  }
+</style>

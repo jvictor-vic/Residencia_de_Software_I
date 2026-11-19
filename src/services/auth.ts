@@ -1,9 +1,16 @@
 import { getStore } from '@netlify/blobs';
 import { createHash, randomBytes, scrypt as nodeScrypt, timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
-import { Aluno, ContaUsuario, Responsavel, criarContaDeAluno } from '@data/users/classes';
+import {
+  Aluno,
+  ContaUsuario,
+  PAPEIS_USUARIO,
+  Responsavel,
+} from '@data/users/classes';
 import { calcularIdade } from '@utils/calcularIdade';
 import { cpfValidator } from '@utils/cpfValidator';
+import { gerarIniciais } from '@utils/gerarIniciais';
+import { CANAIS_AVISO } from '@utils/getIDsemantico';
 import { senhaSchema } from '@components/CadastroSenha/senhaSchema';
 
 // Autenticação demonstrativa: não usar com dados reais nem como provedor de identidade de produção.
@@ -18,10 +25,20 @@ const EMPTY_HASH = Buffer.alloc(PASSWORD_HASH_BYTES);
 const GENEROS = ['Homem Cis', 'Homem Trans', 'Mulher Cis', 'Mulher Trans', 'Não-Binário'] as const;
 const RACAS = ['Amarela', 'Branca', 'Indígena', 'Parda', 'Preta'] as const;
 const ZONAS = ['Urbana', 'Rural'] as const;
+const avisoSchema = z.object({
+  id: z.string().min(1),
+  canal: z.enum(CANAIS_AVISO),
+  titulo: z.string().trim().min(1),
+  descricao: z.string().trim().min(1),
+  data: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .refine(isDataISOValida),
+});
 const dataNascimentoSchema = z
   .union([
     z.date(),
-    z.string().datetime(),
+    z.iso.datetime(),
     z
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/)
@@ -38,6 +55,17 @@ const dataNascimentoSchema = z
   .refine((data) => data.getFullYear() >= 1900);
 
 const store = () => getStore(STORE_NAME, { consistency: 'strong' });
+
+async function loadAccount(cpf: string): Promise<z.infer<typeof accountSchema> | null> {
+  const stored = await store().get(`accounts/${cpf}`, { type: 'json' });
+  if (stored === null) return null;
+
+  const account = accountSchema.parse(stored);
+  if (account.cpf !== cpf) {
+    throw new Error('O CPF armazenado não corresponde à chave da conta.');
+  }
+  return account;
+}
 
 const registrationSchema = z.object({
   aluno: z.object({
@@ -76,11 +104,122 @@ const loginSchema = z.object({
   senha: z.string().min(1).max(256),
 });
 
-const accountSchema = z.object({
-  cpf: z.string().regex(/^\d{11}$/),
-  senhaHash: z.string(),
-  papeis: z.array(z.enum(['aluno', 'responsavel'])).min(1),
-});
+const accountSchema = z
+  .object({
+    cpf: z.string().regex(/^\d{11}$/),
+    senhaHash: z.string(),
+    iniciais: z.string().optional(),
+    papeis: z.array(z.enum(PAPEIS_USUARIO)).min(1),
+    dadosPessoais: z.object({
+      nomeCompleto: z.string(),
+      genero: z.enum(GENEROS),
+      dataNascimento: z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}$/)
+        .refine(isDataISOValida),
+      nomeSocial: z.string().optional(),
+    }),
+    perfis: z.object({
+      aluno: z
+        .object({
+          corRaca: z.enum(RACAS),
+          nacionalidade: z.string(),
+          residencia: z.object({
+            zonaMoradia: z.enum(ZONAS),
+            cep: z.string(),
+            estadoResidencial: z.string(),
+            municipioResidencial: z.string(),
+            bairroResidencial: z.string(),
+            logradouro: z.string(),
+            numero: z.string().optional(),
+            complemento: z.string().optional(),
+          }),
+          estadoNatal: z.string().optional(),
+          naturalidade: z.string().optional(),
+          responsavel: z
+            .object({
+              cpfContaRelacionada: z.string().regex(/^\d{11}$/),
+              parentesco: z.string(),
+            })
+            .optional(),
+          academico: z.array(z.unknown()),
+          avisos: z.array(avisoSchema),
+        })
+        .optional(),
+      responsavel: z
+        .object({
+          telefone: z.string().optional(),
+          email: z.string().optional(),
+          tutelados: z.array(
+            z.object({
+              cpfContaRelacionada: z.string().regex(/^\d{11}$/),
+              parentesco: z.string(),
+            }),
+          ),
+          avisos: z.array(z.unknown()),
+        })
+        .optional(),
+      professor: z
+        .object({
+          escolaId: z.string().trim().min(1),
+          atribuicoes: z
+            .array(
+              z.object({
+                turmaId: z.string().trim().min(1),
+                disciplina: z.string().trim().min(1),
+              }),
+            )
+            .min(1),
+        })
+        .optional(),
+      escola: z
+        .object({
+          escolaIds: z.array(z.string().trim().min(1)).min(1),
+          funcao: z.enum(['direcao', 'coordenacao']),
+        })
+        .optional(),
+      secretaria: z.object({ redeId: z.string().trim().min(1) }).optional(),
+    }),
+  })
+  .superRefine((account, context) => {
+    const papeis = new Set(account.papeis);
+    if (papeis.size !== account.papeis.length) {
+      context.addIssue({ code: 'custom', message: 'A conta contém papéis duplicados.' });
+    }
+    if (papeis.has('aluno') !== Boolean(account.perfis.aluno)) {
+      context.addIssue({ code: 'custom', message: 'O papel de aluno não corresponde ao perfil.' });
+    }
+    if (papeis.has('responsavel') !== Boolean(account.perfis.responsavel)) {
+      context.addIssue({
+        code: 'custom',
+        message: 'O papel de responsável não corresponde ao perfil.',
+      });
+    }
+    for (const role of ['professor', 'escola', 'secretaria'] as const) {
+      if (papeis.has(role) !== Boolean(account.perfis[role])) {
+        context.addIssue({
+          code: 'custom',
+          message: `O papel ${role} não corresponde ao perfil.`,
+        });
+      }
+    }
+    if (
+      account.perfis.aluno &&
+      calcularIdade(account.dadosPessoais.dataNascimento) < 18 &&
+      !account.perfis.aluno.responsavel
+    ) {
+      context.addIssue({
+        code: 'custom',
+        message: 'Alunos menores de 18 anos precisam de um vínculo com responsável.',
+      });
+    }
+  })
+  .transform((account) => ({
+    ...account,
+    iniciais:
+      account.iniciais ??
+      gerarIniciais(account.dadosPessoais.nomeSocial?.trim() || account.dadosPessoais.nomeCompleto),
+  }));
 
 const sessionSchema = z.object({
   cpf: z.string().regex(/^\d{11}$/),
@@ -88,6 +227,11 @@ const sessionSchema = z.object({
 });
 
 type JsonRecord = Record<string, unknown>;
+
+export type PerfilAutenticado = Pick<
+  z.infer<typeof accountSchema>,
+  'cpf' | 'iniciais' | 'papeis' | 'dadosPessoais' | 'perfis'
+>;
 
 export class AuthRequestError extends Error {
   constructor(
@@ -217,39 +361,52 @@ export async function registerAccount(input: unknown): Promise<void> {
   }
 
   const senhaAlunoHash = await hashPassword(senha);
-  const contaAluno = criarContaDeAluno(cpfAluno, senhaAlunoHash, dataNascimento);
-  const perfis: Array<{ key: string; value: Aluno | Responsavel }> = [
-    {
-      key: `profiles/aluno/${cpfAluno}`,
-      value: new Aluno({
-        nomeCompleto: form.nomeCompleto,
-        genero: form.genero,
-        nomeSocial: form.nomeSocial,
-        corRaca: form.corRaca,
-        nacionalidade: form.nacionalidade,
-        estadoNatal: form.estadoNatal,
-        naturalidade: form.naturalidade,
-        dataNascimento,
-        residencia: {
-          zonaMoradia: form.zonaMoradia,
-          cep: form.cep,
-          estadoResidencial: form.estadoResidencial,
-          municipioResidencial: form.municipioResidencial,
-          bairroResidencial: form.bairroResidencial,
-          logradouro: form.logradouro,
-          numero: form.numero,
-          complemento: form.complemento,
-        },
-        responsavel:
-          dadosResponsavel && cpfResponsavel
-            ? {
-                cpfContaRelacionada: cpfResponsavel,
-                parentesco: dadosResponsavel.parentesco,
-              }
-            : undefined,
-      }),
+  const aluno = new Aluno({
+    corRaca: form.corRaca,
+    nacionalidade: form.nacionalidade,
+    estadoNatal: form.estadoNatal,
+    naturalidade: form.naturalidade,
+    residencia: {
+      zonaMoradia: form.zonaMoradia,
+      cep: form.cep,
+      estadoResidencial: form.estadoResidencial,
+      municipioResidencial: form.municipioResidencial,
+      bairroResidencial: form.bairroResidencial,
+      logradouro: form.logradouro,
+      numero: form.numero,
+      complemento: form.complemento,
     },
-  ];
+    responsavel:
+      dadosResponsavel && cpfResponsavel
+        ? {
+            cpfContaRelacionada: cpfResponsavel,
+            parentesco: dadosResponsavel.parentesco,
+          }
+        : undefined,
+  });
+  const perfisAluno = {
+    aluno,
+    ...(idade >= 18
+      ? {
+          responsavel: new Responsavel({
+            telefone: form.responsavelTelefone?.trim(),
+            email: form.responsavelEmail?.trim(),
+          }),
+        }
+      : {}),
+  };
+  const contaAluno = new ContaUsuario({
+    cpf: cpfAluno,
+    senhaHash: senhaAlunoHash,
+    papeis: idade >= 18 ? ['aluno', 'responsavel'] : ['aluno'],
+    dadosPessoais: {
+      nomeCompleto: form.nomeCompleto,
+      genero: form.genero,
+      nomeSocial: form.nomeSocial,
+      dataNascimento,
+    },
+    perfis: perfisAluno,
+  });
 
   const accounts: Array<{ key: string; value: ContaUsuario }> = [
     { key: `accounts/${cpfAluno}`, value: contaAluno },
@@ -262,35 +419,24 @@ export async function registerAccount(input: unknown): Promise<void> {
         cpf: cpfResponsavel,
         senhaHash: senhaResponsavelHash,
         papeis: ['responsavel'],
-      }),
-    });
-    perfis.push({
-      key: `profiles/responsavel/${cpfResponsavel}`,
-      value: new Responsavel({
-        nomeCompleto: dadosResponsavel.nome,
-        genero: dadosResponsavel.genero,
-        nomeSocial: dadosResponsavel.nomeSocial,
-        dataNascimento: dadosResponsavel.dataNascimento,
-        telefone: dadosResponsavel.telefone,
-        email: dadosResponsavel.email,
-        tutelados: [
-          {
-            cpfContaRelacionada: cpfAluno,
-            parentesco: dadosResponsavel.parentesco,
-          },
-        ],
-      }),
-    });
-  } else {
-    perfis.push({
-      key: `profiles/responsavel/${cpfAluno}`,
-      value: new Responsavel({
-        nomeCompleto: form.nomeCompleto,
-        genero: form.genero,
-        nomeSocial: form.nomeSocial,
-        dataNascimento,
-        telefone: form.responsavelTelefone?.trim(),
-        email: form.responsavelEmail?.trim(),
+        dadosPessoais: {
+          nomeCompleto: dadosResponsavel.nome,
+          genero: dadosResponsavel.genero,
+          nomeSocial: dadosResponsavel.nomeSocial,
+          dataNascimento: dadosResponsavel.dataNascimento,
+        },
+        perfis: {
+          responsavel: new Responsavel({
+            telefone: dadosResponsavel.telefone,
+            email: dadosResponsavel.email,
+            tutelados: [
+              {
+                cpfContaRelacionada: cpfAluno,
+                parentesco: dadosResponsavel.parentesco,
+              },
+            ],
+          }),
+        },
       }),
     });
   }
@@ -305,19 +451,6 @@ export async function registerAccount(input: unknown): Promise<void> {
 
   const createdKeys: string[] = [];
   try {
-    // Blobs is key-value storage without relational constraints or multi-key transactions.
-    // Conditional writes protect individual keys; rollback is best-effort and may need cleanup.
-    for (const profile of perfis) {
-      const result = await blobStore.setJSON(profile.key, profile.value, { onlyIfNew: true });
-      if (!result.modified) {
-        throw new AuthRequestError(
-          'Já existe um perfil cadastrado para um dos CPFs informados.',
-          409,
-        );
-      }
-      createdKeys.push(profile.key);
-    }
-
     for (const account of accounts) {
       const result = await blobStore.setJSON(account.key, account.value, { onlyIfNew: true });
       if (!result.modified) {
@@ -349,17 +482,16 @@ export async function registerAccount(input: unknown): Promise<void> {
   }
 }
 
-export async function login(input: unknown): Promise<{ cookie: string }> {
+export async function login(
+  input: unknown,
+): Promise<{ cookie: string; papeis: z.infer<typeof accountSchema>['papeis'] }> {
   const parsed = loginSchema.safeParse(input);
   const cpf = parsed.success ? normalizeCpf(parsed.data.cpf) : '';
   const senha = parsed.success ? parsed.data.senha : '';
   let account: z.infer<typeof accountSchema> | null = null;
 
   if (cpf && cpfValidator(cpf)) {
-    const stored = await store().get(`accounts/${cpf}`, { type: 'json' });
-    if (stored !== null) {
-      account = accountSchema.parse(stored);
-    }
+    account = await loadAccount(cpf);
   }
 
   const senhaValida = account
@@ -380,7 +512,10 @@ export async function login(input: unknown): Promise<{ cookie: string }> {
     throw new Error('Não foi possível criar uma sessão. Tente novamente.');
   }
 
-  return { cookie: sessionCookie(token, SESSION_TTL_SECONDS) };
+  return {
+    cookie: sessionCookie(token, SESSION_TTL_SECONDS),
+    papeis: account.papeis,
+  };
 }
 
 export async function logout(request: Request): Promise<string> {
@@ -410,6 +545,157 @@ export async function readSession(request: Request): Promise<{ cpf: string } | n
     return null;
   }
   return { cpf: session.cpf };
+}
+
+export async function readAuthenticatedProfile(request: Request): Promise<PerfilAutenticado | null> {
+  const session = await readSession(request);
+  if (!session) return null;
+
+  const account = await loadAccount(session.cpf);
+  if (!account) return null;
+  return {
+    cpf: account.cpf,
+    iniciais: account.iniciais,
+    papeis: account.papeis,
+    dadosPessoais: account.dadosPessoais,
+    perfis: account.perfis,
+  };
+}
+
+async function ensureDemoModuleAccounts(): Promise<void> {
+  const fixtures = [
+    {
+      cpf: '52998224725',
+      senha: 'Professor123!',
+      role: 'professor' as const,
+      dadosPessoais: {
+        nomeCompleto: 'Carlos Menezes',
+        genero: 'Homem Cis' as const,
+        dataNascimento: '1980-01-01',
+      },
+      perfil: {
+        escolaId: 'escola-e-e-jardim-das-mangabeiras',
+        atribuicoes: [{ turmaId: 'turma-8b', disciplina: 'Matemática' }],
+      },
+    },
+    {
+      cpf: '11144477735',
+      senha: 'Escola123!',
+      role: 'escola' as const,
+      dadosPessoais: {
+        nomeCompleto: 'Juliana Prado',
+        genero: 'Mulher Cis' as const,
+        dataNascimento: '1980-01-01',
+      },
+      perfil: { escolaIds: ['escola-e-e-jardim-das-mangabeiras'], funcao: 'direcao' as const },
+    },
+    {
+      cpf: '12345678909',
+      senha: 'Secretaria123!',
+      role: 'secretaria' as const,
+      dadosPessoais: {
+        nomeCompleto: 'Roberto Lima',
+        genero: 'Homem Cis' as const,
+        dataNascimento: '1980-01-01',
+      },
+      perfil: { redeId: 'rede-sergipe-demo' },
+    },
+  ];
+  const blobStore = store();
+  for (const fixture of fixtures) {
+    const accountKey = `accounts/${fixture.cpf}`;
+    if (await blobStore.get(accountKey, { type: 'text' })) continue;
+    const profileKey = `profiles/${fixture.role}/${fixture.cpf}`;
+    const profile = await blobStore.setJSON(profileKey, fixture.perfil, { onlyIfNew: true });
+    if (!profile.modified) {
+      const existingProfile = await blobStore.get(profileKey, { type: 'json' });
+      if (JSON.stringify(existingProfile) !== JSON.stringify(fixture.perfil)) {
+        throw new Error(
+          `O perfil de demonstração ${fixture.role} existente não corresponde à fixture.`,
+        );
+      }
+    }
+    try {
+      const account = new ContaUsuario({
+        cpf: fixture.cpf,
+        senhaHash: await hashPassword(fixture.senha),
+        papeis: [fixture.role],
+        dadosPessoais: fixture.dadosPessoais,
+        perfis: { [fixture.role]: fixture.perfil },
+      });
+      const created = await blobStore.setJSON(accountKey, account, { onlyIfNew: true });
+      if (!created.modified) await blobStore.delete(profileKey);
+    } catch (error) {
+      await blobStore.delete(profileKey);
+      throw error;
+    }
+  }
+}
+
+export async function getModuleLanding(request: Request): Promise<string> {
+  const session = await readSession(request);
+  if (!session) return '/entrar';
+  const account = await store().get(`accounts/${session.cpf}`, { type: 'json' });
+  const parsed = accountSchema.safeParse(account);
+  if (!parsed.success) return '/entrar';
+  if (parsed.data.papeis.includes('escola')) return '/escola';
+  if (parsed.data.papeis.includes('professor')) return '/professor';
+  if (parsed.data.papeis.includes('secretaria')) return '/secretaria';
+  return '/painel';
+}
+
+/** Confere o papel e o registro de perfil armazenado antes de liberar um módulo. */
+export async function hasModuleRole(request: Request, role: 'professor' | 'escola' | 'secretaria') {
+  return (await readModuleProfile(request, role)) !== null;
+}
+
+export async function readModuleProfile(
+  request: Request,
+  role: 'professor' | 'escola' | 'secretaria',
+): Promise<{
+  cpf: string;
+  profile: NonNullable<NonNullable<z.infer<typeof accountSchema>['perfis']>[typeof role]>;
+} | null> {
+  const session = await readSession(request);
+  if (!session) return null;
+
+  const account = await loadAccount(session.cpf);
+  if (!account || !account.papeis.includes(role)) return null;
+
+  const profile = account.perfis[role];
+  if (!profile) return null;
+  return { cpf: account.cpf, profile };
+}
+
+export async function readAccessibleStudents(
+  user: PerfilAutenticado,
+): Promise<Array<{ cpf: string; nome: string }>> {
+  const students = new Map<string, string>();
+
+  if (user.perfis.aluno) {
+    students.set(
+      user.cpf,
+      user.dadosPessoais.nomeSocial?.trim() || user.dadosPessoais.nomeCompleto,
+    );
+  }
+
+  const tutelados = user.perfis.responsavel?.tutelados ?? [];
+  const accounts = await Promise.all(
+    tutelados.map(({ cpfContaRelacionada }) => loadAccount(cpfContaRelacionada)),
+  );
+
+  accounts.forEach((account) => {
+    if (!account?.perfis.aluno) {
+      throw new Error('Uma conta vinculada como tutelado não possui perfil de aluno.');
+    }
+
+    students.set(
+      account.cpf,
+      account.dadosPessoais.nomeSocial?.trim() || account.dadosPessoais.nomeCompleto,
+    );
+  });
+
+  return [...students].map(([cpf, nome]) => ({ cpf, nome }));
 }
 
 export async function readJsonBody(request: Request): Promise<JsonRecord> {

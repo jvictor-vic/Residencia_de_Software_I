@@ -1,0 +1,93 @@
+---
+/**
+ * Selo de status: COR + ÍCONE + TEXTO + PADRÃO geométrico.
+ * Assim a informação nunca depende só da cor (requisito de acessibilidade).
+ */
+import Icone from './Icone.astro';
+import type { IconeNome } from '../data/icones';
+import type { Tom } from '../data/dados';
+
+interface Props {
+  tom: Tom;
+  texto: string;
+}
+
+const { tom, texto } = Astro.props;
+
+const config: Record<Tom, { icone: IconeNome; padrao: string }> = {
+  sucesso: { icone: 'check', padrao: 'pad-pontos' },
+  alerta: { icone: 'relogio', padrao: 'pad-diagonal' },
+  perigo: { icone: 'alerta', padrao: 'pad-cruzado' },
+  info: { icone: 'info', padrao: 'pad-horizontal' },
+  neutro: { icone: 'x', padrao: 'pad-vertical' },
+};
+const { icone, padrao } = config[tom];
+---
+
+<span class:list={['status', `status-${tom}`]} data-status={tom}>
+  <span class:list={['status-marca', padrao]} aria-hidden="true">
+    <Icone nome={icone} tamanho={14} />
+  </span>
+  {texto}
+</span>
+
+<style>
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--e-2);
+    padding: 2px var(--e-3) 2px 3px;
+    border-radius: 999px;
+    border: 1.5px solid currentColor;
+    font-weight: 700;
+    white-space: nowrap;
+    line-height: 1.6;
+  }
+  .status-marca {
+    display: inline-grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    color: var(--sobre-marca);
+    border: 1.5px solid currentColor;
+  }
+  .status-sucesso {
+    color: var(--sucesso);
+    background: var(--sucesso-suave);
+  }
+  .status-sucesso .status-marca {
+    background-color: var(--sucesso-marca);
+  }
+  .status-alerta {
+    color: var(--alerta);
+    background: var(--alerta-suave);
+  }
+  .status-alerta .status-marca {
+    background-color: var(--alerta-marca);
+  }
+  .status-perigo {
+    color: var(--perigo);
+    background: var(--perigo-suave);
+  }
+  .status-perigo .status-marca {
+    background-color: var(--perigo-marca);
+  }
+  .status-info {
+    color: var(--info);
+    background: var(--info-suave);
+  }
+  .status-info .status-marca {
+    background-color: var(--info-marca);
+  }
+  .status-neutro {
+    color: var(--neutro);
+    background: var(--neutro-suave);
+  }
+  .status-neutro .status-marca {
+    background-color: var(--neutro-marca);
+  }
+  .status-marca :global(svg) {
+    color: var(--sobre-marca);
+  }
+</style>
