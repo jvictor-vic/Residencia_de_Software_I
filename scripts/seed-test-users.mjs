@@ -87,6 +87,42 @@ const testAccounts = [
       },
     },
   },
+  {
+      cpf: '52998224725',
+      senha: 'Professor123!',
+      role: 'professor' as const,
+      dadosPessoais: {
+        nomeCompleto: 'Carlos Menezes',
+        genero: 'Homem Cis' as const,
+        dataNascimento: '1980-01-01',
+      },
+      perfil: {
+        escolaId: 'escola-e-e-jardim-das-mangabeiras',
+        atribuicoes: [{ turmaId: 'turma-8b', disciplina: 'Matemática' }],
+      },
+    },
+    {
+      cpf: '11144477735',
+      senha: 'Escola123!',
+      role: 'escola' as const,
+      dadosPessoais: {
+        nomeCompleto: 'Juliana Prado',
+        genero: 'Mulher Cis' as const,
+        dataNascimento: '1980-01-01',
+      },
+      perfil: { escolaIds: ['escola-e-e-jardim-das-mangabeiras'], funcao: 'direcao' as const },
+    },
+    {
+      cpf: '12345678909',
+      senha: 'Secretaria123!',
+      role: 'secretaria' as const,
+      dadosPessoais: {
+        nomeCompleto: 'Roberto Lima',
+        genero: 'Homem Cis' as const,
+        dataNascimento: '1980-01-01',
+      },
+      perfil: { redeId: 'rede-sergipe-demo' },
+    },
 ];
 
 const isLocalDev = process.env.NETLIFY_DEV === 'true';
