@@ -89,9 +89,9 @@ const testAccounts = [
   },
 ];
 
-const isLocalDev = process.env.NETLIFY_DEV === 'true';
-const shouldSeedDeploy = process.env.SEED_DEMO_USERS === 'true';
-
+// const isLocalDev = process.env.NETLIFY_DEV === 'true';
+// const shouldSeedDeploy = process.env.SEED_DEMO_USERS === 'true';
+//
 // if (!isLocalDev && !shouldSeedDeploy) {
 //  console.info('Skipping test-user seed (SEED_DEMO_USERS is not enabled).');
 //  process.exit(0);
@@ -103,10 +103,10 @@ if (isLocalDev) {
   blobStore = getStore(STORE_NAME, { consistency: 'strong' });
 } else {
   const siteID = process.env.NETLIFY_SITE_ID;
-  const token = process.env.NETLIFY_BLOBS_TOKEN;
+  const token = process.env.NETLIFY_AUTH_TOKEN;
 
   if (!siteID || !token) {
-    throw new Error('SITE_ID and NETLIFY_BLOBS_TOKEN are required to seed Blobs during deploy.');
+    throw new Error('NETLIFY_SITE_ID and NETLIFY_AUTH_TOKEN are required to seed Blobs during deploy.');
   }
 
   blobStore = getStore({
