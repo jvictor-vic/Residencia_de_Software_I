@@ -317,7 +317,9 @@ function formatarData(data: string): string {
       botaoNotificacoes.setAttribute('aria-expanded', String(abrir));
     }
 
-    botaoNotificacoes.addEventListener('click', () => abrirFechar(Boolean(painelNotificacoes.hidden)));
+    botaoNotificacoes.addEventListener('click', () =>
+      abrirFechar(Boolean(painelNotificacoes.hidden)),
+    );
     raiz.querySelector('[data-notificacoes-marcar]')?.addEventListener('click', () => {
       itens.forEach((item) => {
         const id = item.dataset.notificacaoId;
