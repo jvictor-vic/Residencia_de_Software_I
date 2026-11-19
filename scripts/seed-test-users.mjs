@@ -89,28 +89,34 @@ const testAccounts = [
   },
 ];
 
-if (process.env.NETLIFY_DEV !== 'true') {
-  console.info(
-    'Skipping test-user seed; start the Netlify development environment with `npx netlify dev`.',
-  );
+const isLocalDev = process.env.NETLIFY_DEV === 'true';
+const shouldSeedDeploy = process.env.SEED_DEMO_USERS === 'true';
+
+if (!isLocalDev && !shouldSeedDeploy) {
+  console.info('Skipping test-user seed (SEED_DEMO_USERS is not enabled).');
   process.exit(0);
 }
 
-const encodedContext = process.env.NETLIFY_BLOBS_CONTEXT;
-if (!encodedContext) {
-  throw new Error('NETLIFY_BLOBS_CONTEXT is required to seed local test users.');
+let blobStore;
+
+if (isLocalDev) {
+  blobStore = getStore(STORE_NAME, { consistency: 'strong' });
+} else {
+  const siteID = process.env.SITE_ID;
+  const token = process.env.NETLIFY_BLOBS_TOKEN;
+
+  if (!siteID || !token) {
+    throw new Error('SITE_ID and NETLIFY_BLOBS_TOKEN are required to seed Blobs during deploy.');
+  }
+
+  blobStore = getStore({
+    name: STORE_NAME,
+    siteID,
+    token,
+    consistency: 'strong',
+  });
 }
 
-const blobsContext = JSON.parse(Buffer.from(encodedContext, 'base64').toString('utf8'));
-const blobsEndpoint = new URL(blobsContext.edgeURL ?? blobsContext.apiURL);
-if (
-  blobsEndpoint.protocol !== 'http:' ||
-  !['localhost', '127.0.0.1', '[::1]'].includes(blobsEndpoint.hostname)
-) {
-  throw new Error('Refusing to seed test users outside the local Netlify Blobs emulator.');
-}
-
-const blobStore = getStore(STORE_NAME, { consistency: 'strong' });
 const storedAccounts = await Promise.all(
   testAccounts.map(({ key }) => blobStore.get(key, { type: 'json' })),
 );

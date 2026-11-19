@@ -1,3 +1,6 @@
 [dev]
   command = "npm run dev"
   targetPort = 4321
+
+[build]
+  command = "npm run build && node scripts/seed-test-users.mjs"

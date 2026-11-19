@@ -147,9 +147,7 @@ hash da senha; não envie ou armazene a senha em texto puro.
 
 # Usuários de Teste
 
-> **Somente para desenvolvimento e testes.** Estes dados são fictícios. Ao
-> iniciar `npx netlify dev`, o projeto cria as contas automaticamente no Blobs
-> local, com as senhas armazenadas como hashes. As chaves existentes nunca são
+> **Somente para desenvolvimento e testes.** Estes dados são fictícios. As chaves existentes nunca são
 > sobrescritas; se houver dados diferentes usando esses CPFs, o seed falha para
 > permitir revisão manual. Não reutilize as senhas em outros ambientes.
 
