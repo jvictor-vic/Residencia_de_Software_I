@@ -3,4 +3,4 @@
   targetPort = 4321
 
 [build]
-  command = "node scripts/seed-test-users.mjs && npm run build"
+  command = "npm run build && node scripts/seed-test-users.mjs"
