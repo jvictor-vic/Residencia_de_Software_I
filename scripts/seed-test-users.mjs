@@ -102,7 +102,7 @@ let blobStore;
 if (isLocalDev) {
   blobStore = getStore(STORE_NAME, { consistency: 'strong' });
 } else {
-  const siteID = process.envNETLIFY_SITE_ID;
+  const siteID = process.env.NETLIFY_SITE_ID;
   const token = process.env.NETLIFY_BLOBS_TOKEN;
 
   if (!siteID || !token) {
