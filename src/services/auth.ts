@@ -10,6 +10,8 @@ import {
 } from '@data/users/classes';
 import { calcularIdade } from '@utils/calcularIdade';
 import { cpfValidator } from '@utils/cpfValidator';
+import { gerarIniciais } from '@utils/gerarIniciais';
+import { CANAIS_AVISO } from '@utils/getIDsemantico';
 import { senhaSchema } from '@components/CadastroSenha/senhaSchema';
 
 // Autenticação demonstrativa: não usar com dados reais nem como provedor de identidade de produção.
@@ -24,6 +26,16 @@ const EMPTY_HASH = Buffer.alloc(PASSWORD_HASH_BYTES);
 const GENEROS = ['Homem Cis', 'Homem Trans', 'Mulher Cis', 'Mulher Trans', 'Não-Binário'] as const;
 const RACAS = ['Amarela', 'Branca', 'Indígena', 'Parda', 'Preta'] as const;
 const ZONAS = ['Urbana', 'Rural'] as const;
+const avisoSchema = z.object({
+  id: z.string().min(1),
+  canal: z.enum(CANAIS_AVISO),
+  titulo: z.string().trim().min(1),
+  descricao: z.string().trim().min(1),
+  data: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .refine(isDataISOValida),
+});
 const dataNascimentoSchema = z
   .union([
     z.date(),
@@ -97,38 +109,90 @@ const accountSchema = z
   .object({
     cpf: z.string().regex(/^\d{11}$/),
     senhaHash: z.string(),
+    iniciais: z.string().optional(),
     papeis: z.array(z.enum(PAPEIS_USUARIO)).min(1),
-    perfis: z
-      .object({
-        professor: z
-          .object({
-            escolaId: z.string().min(1),
-            atribuicoes: z
-              .array(z.object({ turmaId: z.string().min(1), disciplina: z.string().min(1) }))
-              .min(1),
-          })
-          .optional(),
-        escola: z
-          .object({
-            escolaIds: z.array(z.string().min(1)).min(1),
-            funcao: z.enum(['direcao', 'coordenacao']),
-          })
-          .optional(),
-        secretaria: z.object({ redeId: z.string().min(1) }).optional(),
-      })
-      .optional(),
+    dadosPessoais: z.object({
+      nomeCompleto: z.string(),
+      genero: z.enum(GENEROS),
+      dataNascimento: z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}$/)
+        .refine(isDataISOValida),
+      nomeSocial: z.string().optional(),
+    }),
+    perfis: z.object({
+      aluno: z
+        .object({
+          corRaca: z.enum(RACAS),
+          nacionalidade: z.string(),
+          residencia: z.object({
+            zonaMoradia: z.enum(ZONAS),
+            cep: z.string(),
+            estadoResidencial: z.string(),
+            municipioResidencial: z.string(),
+            bairroResidencial: z.string(),
+            logradouro: z.string(),
+            numero: z.string().optional(),
+            complemento: z.string().optional(),
+          }),
+          estadoNatal: z.string().optional(),
+          naturalidade: z.string().optional(),
+          responsavel: z
+            .object({
+              cpfContaRelacionada: z.string().regex(/^\d{11}$/),
+              parentesco: z.string(),
+            })
+            .optional(),
+          academico: z.array(z.unknown()),
+          avisos: z.array(avisoSchema),
+        })
+        .optional(),
+      responsavel: z
+        .object({
+          telefone: z.string().optional(),
+          email: z.string().optional(),
+          tutelados: z.array(
+            z.object({
+              cpfContaRelacionada: z.string().regex(/^\d{11}$/),
+              parentesco: z.string(),
+            }),
+          ),
+          avisos: z.array(z.unknown()),
+        })
+        .optional(),
+    }),
   })
-  .superRefine((account, ctx) => {
-    for (const papel of ['professor', 'escola', 'secretaria'] as const) {
-      if (account.papeis.includes(papel) !== Boolean(account.perfis?.[papel])) {
-        ctx.addIssue({
-          code: 'custom',
-          path: ['perfis', papel],
-          message: `Perfil incompatível com o papel ${papel}.`,
-        });
-      }
+  .superRefine((account, context) => {
+    const papeis = new Set(account.papeis);
+    if (papeis.size !== account.papeis.length) {
+      context.addIssue({ code: 'custom', message: 'A conta contém papéis duplicados.' });
     }
-  });
+    if (papeis.has('aluno') !== Boolean(account.perfis.aluno)) {
+      context.addIssue({ code: 'custom', message: 'O papel de aluno não corresponde ao perfil.' });
+    }
+    if (papeis.has('responsavel') !== Boolean(account.perfis.responsavel)) {
+      context.addIssue({
+        code: 'custom',
+        message: 'O papel de responsável não corresponde ao perfil.',
+      });
+    }
+    if (
+      account.perfis.aluno &&
+      calcularIdade(account.dadosPessoais.dataNascimento) < 18 &&
+      !account.perfis.aluno.responsavel
+    ) {
+      context.addIssue({
+        code: 'custom',
+        message: 'Alunos menores de 18 anos precisam de um vínculo com responsável.',
+      });
+    }
+  })
+  .transform((account) => ({
+    ...account,
+    iniciais:
+      account.iniciais ??
+      gerarIniciais(account.dadosPessoais.nomeSocial?.trim() || account.dadosPessoais.nomeCompleto),
+  }));
 
 const sessionSchema = z.object({
   cpf: z.string().regex(/^\d{11}$/),
@@ -139,7 +203,7 @@ type JsonRecord = Record<string, unknown>;
 
 export type PerfilAutenticado = Pick<
   z.infer<typeof accountSchema>,
-  'cpf' | 'papeis' | 'dadosPessoais' | 'perfis'
+  'cpf' | 'iniciais' | 'papeis' | 'dadosPessoais' | 'perfis'
 >;
 
 export class AuthRequestError extends Error {
@@ -391,8 +455,9 @@ export async function registerAccount(input: unknown): Promise<void> {
   }
 }
 
-export async function login(input: unknown): Promise<{ cookie: string }> {
-  await ensureDemoModuleAccounts();
+export async function login(
+  input: unknown,
+): Promise<{ cookie: string; papeis: z.infer<typeof accountSchema>['papeis'] }> {
   const parsed = loginSchema.safeParse(input);
   const cpf = parsed.success ? normalizeCpf(parsed.data.cpf) : '';
   const senha = parsed.success ? parsed.data.senha : '';
@@ -420,7 +485,10 @@ export async function login(input: unknown): Promise<{ cookie: string }> {
     throw new Error('Não foi possível criar uma sessão. Tente novamente.');
   }
 
-  return { cookie: sessionCookie(token, SESSION_TTL_SECONDS) };
+  return {
+    cookie: sessionCookie(token, SESSION_TTL_SECONDS),
+    papeis: account.papeis,
+  };
 }
 
 export async function logout(request: Request): Promise<string> {
@@ -532,15 +600,47 @@ export async function readModuleProfile(
 } | null> {
   const session = await readSession(request);
   if (!session) return null;
-  const account = await store().get(`accounts/${session.cpf}`, { type: 'json' });
-  if (account === null) return null;
-  const parsed = accountSchema.safeParse(account);
-  if (!parsed.success || !parsed.data.papeis.includes(role) || !parsed.data.perfis?.[role])
-    return null;
-  const profile = await store().get(`profiles/${role}/${session.cpf}`, { type: 'json' });
-  if (profile === null || JSON.stringify(profile) !== JSON.stringify(parsed.data.perfis[role]))
-    return null;
-  return { cpf: session.cpf, profile: parsed.data.perfis[role] };
+
+  const account = await loadAccount(session.cpf);
+  if (!account) return null;
+  return {
+    cpf: account.cpf,
+    iniciais: account.iniciais,
+    papeis: account.papeis,
+    dadosPessoais: account.dadosPessoais,
+    perfis: account.perfis,
+  };
+}
+
+export async function readAccessibleStudents(
+  user: PerfilAutenticado,
+): Promise<Array<{ cpf: string; nome: string }>> {
+  const students = new Map<string, string>();
+
+  if (user.perfis.aluno) {
+    students.set(
+      user.cpf,
+      user.dadosPessoais.nomeSocial?.trim() || user.dadosPessoais.nomeCompleto,
+    );
+  }
+
+  const tutelados = user.perfis.responsavel?.tutelados ?? [];
+  const accounts = await Promise.all(
+    tutelados.map(({ cpfContaRelacionada }) => loadAccount(cpfContaRelacionada)),
+  );
+
+  accounts.forEach((account) => {
+    if (!account?.perfis.aluno) {
+      throw new Error('Uma conta vinculada como tutelado não possui perfil de aluno.');
+    }
+
+    students.set(
+      account.cpf,
+      account.dadosPessoais.nomeSocial?.trim() || account.dadosPessoais.nomeCompleto,
+    );
+  });
+
+  return [...students].map(([cpf, nome]) => ({ cpf, nome }));
 }
 
 export async function readJsonBody(request: Request): Promise<JsonRecord> {

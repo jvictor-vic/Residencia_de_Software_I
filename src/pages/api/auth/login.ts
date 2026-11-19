@@ -6,7 +6,7 @@ import {
   jsonResponse,
   login,
   readJsonBody,
-} from '../../../services/auth';
+} from '@services/auth';
 
 export const prerender = false;
 
@@ -16,8 +16,8 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   try {
-    const { cookie } = await login(await readJsonBody(request));
-    return jsonResponse({ ok: true }, 200, { 'Set-Cookie': cookie });
+    const { cookie, papeis } = await login(await readJsonBody(request));
+    return jsonResponse({ ok: true, papeis }, 200, { 'Set-Cookie': cookie });
   } catch (error) {
     return errorResponse(error);
   }

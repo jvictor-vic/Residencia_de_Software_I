@@ -1,210 +1,345 @@
 ---
-/**
- * Sino de notificações com contador de não lidas (H7.1 do backlog).
- * O que já foi lido fica salvo no navegador (localStorage).
- */
-import Icone from './Icone.astro';
-import { notificacoes } from '../data/dados';
-import type { PerfilId } from '../data/perfis';
+import type { Aviso } from '@data/users/classes';
 
 interface Props {
-  perfil: PerfilId;
+  avisos: Aviso[];
+  perfil: string;
 }
-const { perfil } = Astro.props;
-const lista = notificacoes[perfil];
+
+const { avisos, perfil } = Astro.props;
+const painelId = `notificacoes-painel-${perfil}`;
+
+function formatarData(data: string): string {
+  const [ano, mes, dia] = data.split('-');
+  return `${dia}/${mes}/${ano}`;
+}
 ---
 
-<div class="notif" data-notificacoes data-perfil={perfil}>
+<div class="notificacoes" data-notificacoes data-perfil={perfil}>
   <button
     type="button"
-    class="btn btn-icone btn-fantasma notif-botao"
+    class="notificacoes-botao"
+    aria-label="Notificações"
     aria-expanded="false"
-    aria-controls="notif-painel"
-    data-notif-botao
+    aria-controls={painelId}
+    data-notificacoes-botao
   >
-    <Icone nome="sino" />
-    <span class="notif-contador numero" data-notif-contador>
-      {lista.length}
-    </span>
-    <span class="sr-only" data-notif-rotulo>
-      Notificações
-    </span>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+      <path d="M10 21h4" />
+    </svg>
+    <span class="notificacoes-contador" data-notificacoes-contador hidden></span>
   </button>
 
-  <div class="notif-painel card" id="notif-painel" hidden>
-    <div class="notif-topo">
+  <section class="notificacoes-painel" id={painelId} aria-label="Notificações" hidden>
+    <div class="notificacoes-topo">
       <h2>Notificações</h2>
-      <button type="button" class="btn btn-fantasma" data-notif-todas>
-        Marcar todas como lidas
-      </button>
+      {avisos.length > 0 && (
+        <button type="button" class="notificacoes-marcar" data-notificacoes-marcar>
+          Marcar todas como lidas
+        </button>
+      )}
     </div>
-    <ul class="lista">
-      {lista.map((n) => (
-        <li class="notif-item" data-notif-id={n.id}>
-          <span class="azulejo">
-            <Icone nome={n.icone} />
-          </span>
-          <div class="notif-corpo">
-            <p class="notif-titulo">{n.titulo}</p>
-            <p class="suave">{n.quando}</p>
-          </div>
-          <button
-            type="button"
-            class="btn btn-icone btn-fantasma notif-ler"
-            aria-label={`Marcar como lida: ${n.titulo}`}
-          >
-            <Icone nome="check" />
-          </button>
-          <span class="notif-lida suave">Lida</span>
-        </li>
-      ))}
-    </ul>
-  </div>
+    {avisos.length > 0 ? (
+      <ul class="notificacoes-lista">
+        {avisos.map((aviso) => (
+          <li class="notificacoes-item" data-notificacao-id={aviso.id}>
+            <span class="notificacoes-canal">{aviso.canal}</span>
+            <div class="notificacoes-corpo">
+              <p class="notificacoes-titulo">{aviso.titulo}</p>
+              <p>{aviso.descricao}</p>
+              <time datetime={aviso.data}>{formatarData(aviso.data)}</time>
+            </div>
+            <button
+              type="button"
+              class="notificacoes-ler"
+              aria-label={`Marcar como lida: ${aviso.titulo}`}
+              data-notificacao-ler
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path d="m5 12 4 4L19 6" />
+              </svg>
+            </button>
+            <span class="notificacoes-lida" aria-label="Lida">
+              Lida
+            </span>
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <p class="notificacoes-vazio">Você não tem notificações no momento.</p>
+    )}
+  </section>
 </div>
 
 <style>
-  .notif {
+  .notificacoes {
     position: relative;
   }
-  .notif-botao {
-    position: relative;
+
+  .notificacoes-botao,
+  .notificacoes-marcar,
+  .notificacoes-ler {
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
   }
-  .notif-contador {
-    position: absolute;
-    top: -6px;
-    right: -6px;
-    min-width: 24px;
-    height: 24px;
-    padding: 0 6px;
+
+  .notificacoes-botao,
+  .notificacoes-ler {
     display: grid;
     place-items: center;
+    padding: 0;
+    border: 0;
     border-radius: 999px;
-    border: 2px solid var(--superficie);
+    background: transparent;
+  }
+
+  .notificacoes-botao {
+    position: relative;
+    width: 44px;
+    height: 44px;
+  }
+
+  .notificacoes-botao svg {
+    width: 24px;
+    height: 24px;
+    flex: none;
+  }
+
+  .notificacoes-botao:hover,
+  .notificacoes-ler:hover {
+    background: var(--fg--90);
+  }
+
+  .notificacoes-contador {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: grid;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    place-items: center;
+    border: 2px solid var(--bg);
+    border-radius: 999px;
     background: var(--error--bg);
-    color: var(--dark);
-    font-size: 0.875rem;
+    color: var(--bg);
+    font-size: 12px;
     font-weight: 700;
     line-height: 1;
   }
-  :global([data-tema='escuro']) .notif-contador {
-    color: var(--light);
-  }
-  .notif-contador[hidden] {
+
+  .notificacoes-contador[hidden],
+  .notificacoes-painel[hidden] {
     display: none;
   }
-  .notif-painel {
+
+  .notificacoes-painel {
     position: absolute;
+    top: calc(100% + 8px);
     right: 0;
-    top: calc(100% + var(--e-2));
     z-index: 40;
-    width: min(420px, calc(100vw - 2rem));
-    padding: var(--e-4);
-    box-shadow: var(--sombra-forte);
+    width: min(420px, calc(100vw - 32px));
+    max-height: min(70vh, 560px);
+    overflow-y: auto;
+    padding: 16px;
+    border: 1px solid var(--fg--80);
+    border-radius: 12px;
+    background: var(--bg);
+    box-shadow: 0 8px 24px rgb(18 12 7 / 0.18);
   }
-  .notif-topo {
+
+  .notificacoes-topo {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: var(--e-2);
-    margin-bottom: var(--e-2);
+    gap: 8px;
+    margin-bottom: 12px;
   }
-  .notif-topo h2 {
-    margin: 0;
-    font-size: var(--texto-md);
+
+  .notificacoes-topo h2 {
+    font-size: 20px;
   }
-  .notif-item {
-    align-items: center !important;
+
+  .notificacoes-marcar {
+    border: 0;
+    background: transparent;
+    color: var(--primary-darker);
+    text-decoration: underline;
   }
-  .notif-corpo {
-    flex: 1;
+
+  .notificacoes-lista {
+    display: grid;
+    gap: 8px;
+    padding: 0;
+    list-style: none;
   }
-  .notif-corpo p {
-    margin: 0;
+
+  .notificacoes-item {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 0;
+    border-top: 1px solid var(--fg--80);
   }
-  .notif-titulo {
+
+  .notificacoes-canal {
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: var(--fg--90);
+    font-size: 12px;
+  }
+
+  .notificacoes-corpo {
+    min-width: 0;
+  }
+
+  .notificacoes-corpo p {
+    overflow-wrap: anywhere;
+  }
+
+  .notificacoes-titulo {
     font-weight: 700;
   }
-  .notif-lida {
-    display: none;
+
+  .notificacoes-corpo time {
+    color: var(--fg--50);
+    font-size: 14px;
   }
-  .notif-item.lida .notif-titulo {
+
+  .notificacoes-ler {
+    width: 36px;
+    height: 36px;
+  }
+
+  .notificacoes-ler svg {
+    width: 20px;
+    height: 20px;
+    flex: none;
+  }
+
+  .notificacoes-lida {
+    display: none;
+    color: var(--fg--50);
+    font-size: 14px;
+  }
+
+  .notificacoes-item.lida .notificacoes-titulo {
     font-weight: 400;
   }
-  .notif-item.lida .notif-ler {
+
+  .notificacoes-item.lida .notificacoes-ler {
     display: none;
   }
-  .notif-item.lida .notif-lida {
-    display: inline;
+
+  .notificacoes-item.lida .notificacoes-lida {
+    display: block;
   }
+
+  .notificacoes-vazio {
+    padding: 12px 0;
+    border-top: 1px solid var(--fg--80);
+  }
+
+  .notificacoes-botao:focus-visible,
+  .notificacoes-marcar:focus-visible,
+  .notificacoes-ler:focus-visible {
+    outline: 2px solid var(--primary-darker);
+    outline-offset: 2px;
+  }
+
   @media (max-width: 600px) {
-    .notif-painel {
+    .notificacoes-painel {
       position: fixed;
-      left: 1rem;
-      right: 1rem;
       top: 76px;
-      width: auto;
+      right: 16px;
     }
   }
 </style>
 
 <script>
-  import { gravar, ler } from '../scripts/armazenamento';
-
   document.querySelectorAll<HTMLElement>('[data-notificacoes]').forEach((raiz) => {
-    const chave = `lidas:${raiz.dataset.perfil}`;
-    const botao = raiz.querySelector<HTMLButtonElement>('[data-notif-botao]')!;
-    const painel = raiz.querySelector<HTMLElement>('.notif-painel')!;
-    const contador = raiz.querySelector<HTMLElement>('[data-notif-contador]')!;
-    const rotulo = raiz.querySelector<HTMLElement>('[data-notif-rotulo]')!;
-    const itens = [...raiz.querySelectorAll<HTMLElement>('[data-notif-id]')];
-    let lidas = new Set(ler<string[]>(chave, []));
+    const botao = raiz.querySelector<HTMLButtonElement>('[data-notificacoes-botao]');
+    const painel = raiz.querySelector<HTMLElement>('.notificacoes-painel');
+    const contador = raiz.querySelector<HTMLElement>('[data-notificacoes-contador]');
+    if (!botao || !painel || !contador) return;
 
-    function atualizar() {
+    const itens = [...raiz.querySelectorAll<HTMLElement>('[data-notificacao-id]')];
+    const lidas = new Set<string>();
+
+    function atualizar(): void {
       let naoLidas = 0;
       itens.forEach((item) => {
-        const lida = lidas.has(item.dataset.notifId!);
+        const lida = lidas.has(item.dataset.notificacaoId ?? '');
         item.classList.toggle('lida', lida);
         if (!lida) naoLidas++;
       });
       contador.textContent = String(naoLidas);
       contador.hidden = naoLidas === 0;
-      rotulo.textContent = naoLidas
-        ? `Notificações: ${naoLidas} não lidas`
-        : 'Notificações: nenhuma nova';
-      gravar(chave, [...lidas]);
+      botao.setAttribute(
+        'aria-label',
+        naoLidas > 0 ? `Notificações: ${naoLidas} não lidas` : 'Notificações: nenhuma nova',
+      );
     }
 
-    function abrirFechar(abrir: boolean) {
+    function abrirFechar(abrir: boolean): void {
       painel.hidden = !abrir;
       botao.setAttribute('aria-expanded', String(abrir));
     }
 
-    botao.addEventListener('click', () => abrirFechar(painel.hidden !== false));
-    raiz.querySelector('[data-notif-todas]')?.addEventListener('click', () => {
-      itens.forEach((i) => lidas.add(i.dataset.notifId!));
+    botao.addEventListener('click', () => abrirFechar(painel.hidden));
+    raiz.querySelector('[data-notificacoes-marcar]')?.addEventListener('click', () => {
+      itens.forEach((item) => {
+        const id = item.dataset.notificacaoId;
+        if (id) lidas.add(id);
+      });
       atualizar();
     });
     itens.forEach((item) => {
-      item.querySelector('.notif-ler')?.addEventListener('click', () => {
-        lidas.add(item.dataset.notifId!);
+      item.querySelector('[data-notificacao-ler]')?.addEventListener('click', () => {
+        const id = item.dataset.notificacaoId;
+        if (id) lidas.add(id);
         atualizar();
         botao.focus();
       });
     });
-
-    // Fecha ao clicar fora ou apertar Esc
-    document.addEventListener('click', (e) => {
-      if (!raiz.contains(e.target as Node)) abrirFechar(false);
+    document.addEventListener('click', (event) => {
+      if (event.target instanceof Node && !raiz.contains(event.target)) abrirFechar(false);
     });
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && !painel.hidden) {
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !painel.hidden) {
         abrirFechar(false);
         botao.focus();
       }
     });
 
-    lidas = new Set([...lidas].filter((id) => itens.some((i) => i.dataset.notifId === id)));
     atualizar();
   });
 </script>

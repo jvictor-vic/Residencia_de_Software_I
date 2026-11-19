@@ -6,7 +6,7 @@ import {
   isSameOriginRequest,
   jsonResponse,
   logout,
-} from '../../../services/auth';
+} from '@services/auth';
 
 export const prerender = false;
 

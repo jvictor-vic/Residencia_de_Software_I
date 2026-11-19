@@ -1,82 +1,58 @@
 ---
-/**
- * Marca do EducaHub: símbolo (livro aberto sobre a "etiqueta" laranja) + nome
- * no estilo do login da identidade visual — EDUCA em tinta e HUB em azul.
- * `sobreAzul`: versão para fundos azuis (menu lateral / faixa lateral).
- */
+import { Image } from 'astro:assets';
+import icon from '@assets/icon.svg';
+
 interface Props {
   tamanho?: number;
-  mostrarNome?: boolean;
   sobreAzul?: boolean;
 }
-const { tamanho = 40, mostrarNome = true, sobreAzul = false } = Astro.props;
+const { tamanho = 40, sobreAzul = false } = Astro.props;
 ---
 
-<span class:list={['logo', { 'sobre-azul': sobreAzul }]}>
-  <svg width={tamanho} height={tamanho} viewBox="0 0 40 40" aria-hidden="true" focusable="false">
-    <rect
-      x="1"
-      y="1"
-      width="38"
-      height="38"
-      rx="11"
-      fill="#ea7a3e"
-      stroke="#120c07"
-      stroke-width="2"
-    ></rect>
-    <path
-      d="M8 13.5c4-1.6 8-1.2 12 1.5v15c-4-2.7-8-3.1-12-1.5z"
-      fill="#f9f3ec"
-      stroke="#120c07"
-      stroke-width="1.6"
-    ></path>
-    <path
-      d="M32 13.5c-4-1.6-8-1.2-12 1.5v15c4-2.7 8-3.1 12-1.5z"
-      fill="#2e8cff"
-      stroke="#120c07"
-      stroke-width="1.6"
-    ></path>
-    <circle cx="20" cy="8.5" r="3" fill="#120c07"></circle>
-  </svg>
-  {mostrarNome && (
-    <span class="logo-nome">
-      EDUCA<span class="logo-hub">HUB</span>
-    </span>
-  )}
-</span>
+<div id="logo">
+  <Image id="icon" src={icon} alt="Logo EducaHub" height={tamanho} width={tamanho} />
+  <span class:list={['sublinha', { 'sobre-azul': sobreAzul }]}>
+    <svg width="68" height="16" viewBox="0 0 68 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M4.00073 4.00073C4.00073 4.00073 8.41425 12.0007 12.5722 12.0007C16.7301 12.0007 16.9857 4.00073 21.1436 4.00073C25.3015 4.00073 25.5571 12.0007 29.715 12.0007C33.8729 12.0007 34.1285 4.00073 38.2864 4.00073C42.4444 4.00073 42.7 12.0007 46.8579 12.0007C51.0158 12.0007 51.2714 4.00073 55.4293 4.00073C59.5872 4.00073 64.0007 12.0007 64.0007 12.0007"
+        stroke-width="8"
+        stroke-linecap="round"
+        stroke="currentColor"
+      />
+    </svg>
+  </span>
+  <h1>Educa</h1>
+  <h1>Hub</h1>
+</div>
 
 <style>
-  .logo {
-    display: inline-flex;
+  #logo {
+    position: relative;
+    display: flex;
+    flex-direction: row;
     align-items: center;
-    gap: var(--e-3);
+    justify-content: flex-start;
+
+    padding: 0 0 4px 0;
   }
-  .logo svg {
-    flex-shrink: 0;
+
+  #icon {
+    aspect-ratio: 1/1;
   }
-  .logo-nome {
-    font-family: var(--fonte-titulo);
-    font-size: var(--texto-lg);
-    font-weight: 900;
-    letter-spacing: 0.04em;
-    line-height: 1;
-    color: var(--fg);
-  }
-  /* Texto grande (peso 900): o azul atende 3:1 para texto grande */
-  .logo-hub {
-    color: var(--primary-darker);
-  }
-  :global([data-tema='escuro']) .logo-hub {
+
+  .sublinha {
+    position: absolute;
+    right: 0;
+    bottom: 0;
     color: var(--primary);
   }
-  .sobre-azul .logo-nome {
-    color: var(--light);
+
+  .sobre-azul {
+    color: var(--secondary);
   }
-  .sobre-azul .logo-hub {
-    color: var(--light);
-    text-decoration: underline;
-    text-decoration-color: var(--secondary);
-    text-decoration-thickness: 4px;
-    text-underline-offset: 4px;
+
+  h1 {
+    font-size: 28px;
+    color: var(--bg);
   }
 </style>

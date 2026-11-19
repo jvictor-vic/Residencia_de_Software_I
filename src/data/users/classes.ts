@@ -1,4 +1,6 @@
 import { calcularIdade } from '@utils/calcularIdade';
+import { gerarIniciais } from '@utils/gerarIniciais';
+import type { options as CanalAviso } from '@utils/getIDsemantico';
 
 export const PAPEIS_USUARIO = [
   'aluno',
@@ -7,6 +9,7 @@ export const PAPEIS_USUARIO = [
   'escola',
   'secretaria',
 ] as const;
+
 export type PapelUsuario = (typeof PAPEIS_USUARIO)[number];
 export type DataNascimentoISO = string;
 export type Genero = 'Homem Cis' | 'Homem Trans' | 'Mulher Cis' | 'Mulher Trans' | 'Não-Binário';
@@ -23,6 +26,7 @@ export interface DadosPessoaisUsuario {
 export interface DadosContaUsuario {
   cpf: string;
   senhaHash: string;
+  iniciais: string;
   papeis: readonly PapelUsuario[];
   perfis?: PerfisContaUsuario;
 }
@@ -39,6 +43,8 @@ export interface DadosPerfilSecretaria {
   redeId: string;
 }
 export interface PerfisContaUsuario {
+  aluno?: DadosAluno;
+  responsavel?: DadosResponsavel;  
   professor?: DadosProfessor;
   escola?: DadosPerfilEscola;
   secretaria?: DadosPerfilSecretaria;
@@ -103,12 +109,16 @@ export class Escola implements DadosEscola {
   }
 }
 
+type DadosContaUsuarioEntrada = Omit<DadosContaUsuario, 'iniciais'>;
+
 export class ContaUsuario {
+  readonly iniciais: string;
   readonly cpf: string;
   readonly senhaHash: string;
   readonly papeis: readonly PapelUsuario[];
   readonly perfis?: PerfisContaUsuario;
 
+  constructor({ cpf, senhaHash, papeis, dadosPessoais, perfis }: DadosContaUsuarioEntrada) {
   constructor({ cpf, senhaHash, papeis, perfis }: DadosContaUsuario) {
     if (!senhaHash.trim()) {
       throw new Error('O hash da senha é obrigatório.');
@@ -131,6 +141,7 @@ export class ContaUsuario {
     }
 
     this.cpf = normalizarCpf(cpf);
+    this.iniciais = gerarIniciais(dadosPessoais.nomeSocial?.trim() || dadosPessoais.nomeCompleto);
     this.senhaHash = senhaHash;
     this.papeis = papeisUnicos;
     this.perfis = perfis
@@ -159,6 +170,14 @@ export interface VinculoFamiliar {
   parentesco: string;
 }
 
+export interface Aviso {
+  id: string;
+  canal: CanalAviso;
+  titulo: string;
+  descricao: string;
+  data: string;
+}
+
 export interface DadosAluno {
   corRaca: CorRaca;
   nacionalidade: string;
@@ -167,7 +186,7 @@ export interface DadosAluno {
   naturalidade?: string;
   responsavel?: VinculoFamiliar;
   academico?: unknown[]; //histórico academico em ordem cronológica inversa
-  avisos?: unknown[]; //lista de avisos
+  avisos?: Aviso[];
 }
 
 export class Aluno {
@@ -178,7 +197,7 @@ export class Aluno {
   readonly naturalidade?: string;
   readonly responsavel?: VinculoFamiliar;
   readonly academico: unknown[];
-  readonly avisos: unknown[];
+  readonly avisos: Aviso[];
 
   constructor(dados: DadosAluno) {
     if (

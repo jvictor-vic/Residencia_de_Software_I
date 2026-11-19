@@ -1,0 +1,11 @@
+---
+import Academico from '@layouts/Academico.astro';
+
+const usuario = Astro.locals.authenticatedUser;
+const aluno = usuario?.perfis.aluno;
+const responsavel = usuario?.perfis.responsavel;
+---
+
+<Academico title="Avisos | EducaHub">
+  <h1>Avisos</h1>
+</Academico>

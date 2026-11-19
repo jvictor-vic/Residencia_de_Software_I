@@ -24,7 +24,13 @@ const PADRAO: Preferencias = {
 
 export function lerPreferencias(): Preferencias {
   // Sem escolha salva, o tema atual é o que o script do <head> aplicou (tema do sistema)
-  const temaAtual = document.documentElement.dataset.tema === 'escuro' ? 'escuro' : 'claro';
+  const temaDoDocumento = document.documentElement.dataset.tema;
+  const temaAtual: Tema =
+    temaDoDocumento === 'claro' || temaDoDocumento === 'escuro'
+      ? temaDoDocumento
+      : window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'escuro'
+        : 'claro';
   return { ...PADRAO, tema: temaAtual, ...ler<Partial<Preferencias>>('preferencias', {}) };
 }
 

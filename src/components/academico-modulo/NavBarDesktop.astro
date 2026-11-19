@@ -1,0 +1,172 @@
+---
+import Logo from '@components/Logo.astro';
+import IconBoletim from '@assets/icons/boletim.svg';
+import IconAgenda from '@assets/icons/calendario.svg';
+import IconHorario from '@assets/icons/horario.svg';
+import IconMaterias from '@assets/icons/materias.svg';
+import IconSecretaria from '@assets/icons/secretaria.svg';
+
+import getDiaSemana from '@utils/getDiaSemana.ts';
+const diaSemana = getDiaSemana(new Date(), 'curto');
+const caminhoAtual = Astro.url.pathname.replace(/\/+$/, '') || '/';
+const paginaAtiva = (caminho: string) => {
+  const caminhoNormalizado = caminho.replace(/\/+$/, '') || '/';
+  return caminhoAtual === caminhoNormalizado || caminhoAtual.startsWith(`${caminhoNormalizado}/`);
+};
+---
+
+<div class="menu" id="menu-lateral" aria-label="Menu principal">
+  <aside class="menu-marca">
+    <Logo tamanho={38} sobreAzul={true} />
+  </aside>
+
+  <nav aria-label="Menu Navegação">
+    <ul class="menu-lista">
+      <li>
+        <a
+          href="/academico/boletim/"
+          aria-current={paginaAtiva('/academico/boletim/') ? 'page' : undefined}
+        >
+          <IconBoletim />
+          <span>Boletim</span>
+        </a>
+      </li>
+      <li>
+        <a
+          href="/academico/agenda/"
+          aria-current={paginaAtiva('/academico/agenda/') ? 'page' : undefined}
+        >
+          <IconAgenda />
+          <span>Agenda</span>
+        </a>
+      </li>
+      <li>
+        <a
+          href="/academico/horario/"
+          aria-current={paginaAtiva('/academico/horario/') ? 'page' : undefined}
+        >
+          <div id="iconeHorario">
+            <span id="diaSemana">{diaSemana}</span>
+            <IconHorario />
+          </div>
+          <span>Horário</span>
+        </a>
+      </li>
+      <li>
+        <a
+          href="/academico/materias/"
+          aria-current={paginaAtiva('/academico/materias/') ? 'page' : undefined}
+        >
+          <IconMaterias />
+          <span>Materias</span>
+        </a>
+      </li>
+      <li>
+        <a
+          href="/academico/secretaria/"
+          aria-current={paginaAtiva('/academico/secretaria/') ? 'page' : undefined}
+        >
+          <IconSecretaria />
+          <span>Secretaria</span>
+        </a>
+      </li>
+    </ul>
+  </nav>
+</div>
+
+<style>
+  .menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 20;
+    width: 276px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    padding: 24px 16px;
+    background: var(--primary);
+    color: var(--bg);
+  }
+
+  .menu-marca {
+    padding: 0 8px 0 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  nav {
+    width: 100%;
+  }
+
+  .menu-lista {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    list-style: none;
+  }
+
+  .menu-lista > li {
+    width: 100%;
+  }
+
+  .menu-lista a {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 48px;
+    padding: 8px 12px;
+    border-radius: 14px;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .menu-lista a:hover {
+    background: rgb(249 243 236 / 0.14);
+  }
+
+  .menu-lista a[aria-current='page'] {
+    background-color: var(--bg);
+    color: var(--fg);
+    font-weight: 700;
+    box-shadow: 3px 4px 0 rgb(18 12 7 / 0.35);
+
+    #diaSemana {
+      color: var(--bg);
+    }
+  }
+
+  .menu-lista a[aria-current='page']::before {
+    content: '';
+    position: absolute;
+    left: -4px;
+    top: 10px;
+    bottom: 10px;
+    width: 5px;
+    border-radius: 4px;
+    background-color: var(--secondary);
+  }
+
+  .menu-lista a:focus-visible {
+    outline-color: var(--secondary);
+  }
+
+  #iconeHorario {
+    position: relative;
+    color: inherit;
+  }
+  #diaSemana {
+    font-size: 0.9rem;
+    position: absolute;
+    color: var(--primary);
+    top: 24px;
+    left: 20px;
+    transform: translate(-50%, -50%);
+  }
+</style>
