@@ -2,11 +2,11 @@
 import type { Aviso } from '@data/users/classes';
 
 interface Props {
-  avisos: Aviso[];
+  avisos?: Aviso[];
   perfil: string;
 }
 
-const { avisos, perfil } = Astro.props;
+const { avisos = [], perfil } = Astro.props;
 const painelId = `notificacoes-painel-${perfil}`;
 
 function formatarData(data: string): string {

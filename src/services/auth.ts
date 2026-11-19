@@ -6,7 +6,6 @@ import {
   ContaUsuario,
   PAPEIS_USUARIO,
   Responsavel,
-  criarContaDeAluno,
 } from '@data/users/classes';
 import { calcularIdade } from '@utils/calcularIdade';
 import { cpfValidator } from '@utils/cpfValidator';
@@ -160,6 +159,26 @@ const accountSchema = z
           avisos: z.array(z.unknown()),
         })
         .optional(),
+      professor: z
+        .object({
+          escolaId: z.string().trim().min(1),
+          atribuicoes: z
+            .array(
+              z.object({
+                turmaId: z.string().trim().min(1),
+                disciplina: z.string().trim().min(1),
+              }),
+            )
+            .min(1),
+        })
+        .optional(),
+      escola: z
+        .object({
+          escolaIds: z.array(z.string().trim().min(1)).min(1),
+          funcao: z.enum(['direcao', 'coordenacao']),
+        })
+        .optional(),
+      secretaria: z.object({ redeId: z.string().trim().min(1) }).optional(),
     }),
   })
   .superRefine((account, context) => {
@@ -175,6 +194,14 @@ const accountSchema = z
         code: 'custom',
         message: 'O papel de responsável não corresponde ao perfil.',
       });
+    }
+    for (const role of ['professor', 'escola', 'secretaria'] as const) {
+      if (papeis.has(role) !== Boolean(account.perfis[role])) {
+        context.addIssue({
+          code: 'custom',
+          message: `O papel ${role} não corresponde ao perfil.`,
+        });
+      }
     }
     if (
       account.perfis.aluno &&
@@ -627,20 +654,17 @@ export async function readModuleProfile(
   role: 'professor' | 'escola' | 'secretaria',
 ): Promise<{
   cpf: string;
-  profile: NonNullable<z.infer<typeof accountSchema>['perfis']>[typeof role];
+  profile: NonNullable<NonNullable<z.infer<typeof accountSchema>['perfis']>[typeof role]>;
 } | null> {
   const session = await readSession(request);
   if (!session) return null;
 
   const account = await loadAccount(session.cpf);
-  if (!account) return null;
-  return {
-    cpf: account.cpf,
-    iniciais: account.iniciais,
-    papeis: account.papeis,
-    dadosPessoais: account.dadosPessoais,
-    perfis: account.perfis,
-  };
+  if (!account || !account.papeis.includes(role)) return null;
+
+  const profile = account.perfis[role];
+  if (!profile) return null;
+  return { cpf: account.cpf, profile };
 }
 
 export async function readAccessibleStudents(

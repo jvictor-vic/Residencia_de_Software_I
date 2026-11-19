@@ -4,14 +4,6 @@ import { hasModuleRole, readAuthenticatedProfile } from './services/auth';
 const ALLOWED_ROLES = ['aluno', 'responsavel', 'professor', 'escola', 'secretaria'] as const;
 type Role = (typeof ALLOWED_ROLES)[number];
 
-const ROLE_TO_BASE_PATH: Record<Role, string> = {
-  aluno: '/academico',
-  responsavel: '/academico',
-  professor: '/professor',
-  escola: '/escola',
-  secretaria: '/secretaria',
-};
-
 const MODULE_PREFIXES = ['/academico', '/professor', '/escola', '/secretaria'] as const;
 type ModulePath = (typeof MODULE_PREFIXES)[number];
 type ModuleRole = 'professor' | 'escola' | 'secretaria';
@@ -77,8 +69,6 @@ export const onRequest = defineMiddleware(async (context, next) => {
       : await hasModuleRole(context.request, MODULE_ROLE_BY_PREFIX[targetModule]);
 
   if (!hasAccessToModule) {
-    // Opcional: se quiser enviar o usuário para a home do papel dele em vez de 403 direto,
-    // use ROLE_TO_BASE_PATH[validRoles[0]]. Para 403 estrito conforme a regra:
     return forbiddenResponse();
   }
 
