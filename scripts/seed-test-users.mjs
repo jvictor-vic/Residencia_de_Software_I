@@ -89,8 +89,8 @@ const testAccounts = [
   },
 ];
 
-// const isLocalDev = process.env.NETLIFY_DEV === 'true';
-// const shouldSeedDeploy = process.env.SEED_DEMO_USERS === 'true';
+const isLocalDev = process.env.NETLIFY_DEV === 'true';
+const shouldSeedDeploy = process.env.SEED_DEMO_USERS === 'true';
 //
 // if (!isLocalDev && !shouldSeedDeploy) {
 //  console.info('Skipping test-user seed (SEED_DEMO_USERS is not enabled).');
