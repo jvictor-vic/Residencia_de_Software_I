@@ -1,0 +1,58 @@
+---
+import { Image } from 'astro:assets';
+import icon from '@assets/icon.svg';
+
+interface Props {
+  tamanho?: number;
+  sobreAzul?: boolean;
+}
+const { tamanho = 40, sobreAzul = false } = Astro.props;
+---
+
+<div id="logo">
+  <Image id="icon" src={icon} alt="Logo EducaHub" height={tamanho} width={tamanho} />
+  <span class:list={['sublinha', { 'sobre-azul': sobreAzul }]}>
+    <svg width="68" height="16" viewBox="0 0 68 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M4.00073 4.00073C4.00073 4.00073 8.41425 12.0007 12.5722 12.0007C16.7301 12.0007 16.9857 4.00073 21.1436 4.00073C25.3015 4.00073 25.5571 12.0007 29.715 12.0007C33.8729 12.0007 34.1285 4.00073 38.2864 4.00073C42.4444 4.00073 42.7 12.0007 46.8579 12.0007C51.0158 12.0007 51.2714 4.00073 55.4293 4.00073C59.5872 4.00073 64.0007 12.0007 64.0007 12.0007"
+        stroke-width="8"
+        stroke-linecap="round"
+        stroke="currentColor"
+      />
+    </svg>
+  </span>
+  <h1>Educa</h1>
+  <h1>Hub</h1>
+</div>
+
+<style>
+  #logo {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+
+    padding: 0 0 4px 0;
+  }
+
+  #icon {
+    aspect-ratio: 1/1;
+  }
+
+  .sublinha {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    color: var(--primary);
+  }
+
+  .sobre-azul {
+    color: var(--secondary);
+  }
+
+  h1 {
+    font-size: 28px;
+    color: var(--bg);
+  }
+</style>

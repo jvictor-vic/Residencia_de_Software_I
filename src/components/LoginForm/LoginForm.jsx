@@ -3,7 +3,7 @@ import { InputCPF } from '../InputCPF/InputCPF';
 import InputSenha from '../InputSenha/InputSenha';
 import styles from './LoginForm.module.css';
 
-import warningIcon from '../../assets/icons/warning.svg?raw';
+import warningIcon from '@assets/icons/warning.svg?raw';
 
 const BASE = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 
@@ -52,7 +52,35 @@ export default function LoginForm() {
         return;
       }
 
-      window.location.assign(`${BASE}painel`);
+      if (!Array.isArray(result?.papeis) || result.papeis.length === 0) {
+        setStatus('Sua conta não possui um papel de acesso válido.');
+        return;
+      }
+
+      let destino;
+      for (const papel of result.papeis) {
+        switch (papel) {
+          case 'aluno':
+          case 'responsavel':
+            destino = 'academico/';
+            break;
+          case 'professor':
+            destino = 'professor/';
+            break;
+          case 'escola':
+            destino = 'escola/';
+            break;
+          case 'secretaria':
+            destino = 'secretaria/';
+            break;
+          default:
+            setStatus('Sua conta possui um papel sem área de acesso configurada.');
+            return;
+        }
+        break;
+      }
+
+      window.location.assign(`${BASE}${destino}`);
     } catch {
       setStatus('Não foi possível conectar ao servidor. Tente novamente.');
     } finally {

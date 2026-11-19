@@ -5,7 +5,7 @@ import {
   isSameOriginRequest,
   readJsonBody,
   registerAccount,
-} from '../../../services/auth';
+} from '@services/auth';
 
 export const prerender = false;
 

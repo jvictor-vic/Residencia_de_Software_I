@@ -58,7 +58,7 @@ svg {
 }
 
 svg {
-  color: var(--fg);
+  color: currentColor;
   fill: currentColor;
   stroke: currentColor;
 }
@@ -106,7 +106,7 @@ h4 {
 h5,
 h6,
 p,
-li {
+li, span {
   overflow-wrap: break-word;
   font-family: var(--font-cabin);
   font-size: 16px;
@@ -129,7 +129,7 @@ h6 {
 }
 
 p,
-li {
+li, span {
   font-weight: 500;
   text-wrap-style: pretty;
 
@@ -138,13 +138,25 @@ li {
   }
 }
 
+span.legenda {
+  overflow-wrap: break-word;
+  font-family: var(--font-cabin);
+  font-size: 14px;
+  color: var(--fg--20);
+}
+
 input,
 button,
 textarea,
 select,
-label {
+label,
+legend {
   font-family: var(--font-cabin);
   font-size: 1rem;
+}
+
+legend {
+  font-weight: 700;
 }
 
 .marker-text {
@@ -187,6 +199,11 @@ input[type='password'] {
   border: 2px solid var(--fg--20);
 
   background-color: var(--fg--90);
+}
+
+/* Checkbox */
+input[type='checkbox'] {
+  border: 2px solid red;
 }
 
 /* Select field */

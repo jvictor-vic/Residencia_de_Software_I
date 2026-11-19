@@ -1,6 +1,14 @@
 import { calcularIdade } from '@utils/calcularIdade';
+import { gerarIniciais } from '@utils/gerarIniciais';
+import type { options as CanalAviso } from '@utils/getIDsemantico';
 
-export const PAPEIS_USUARIO = ['aluno', 'responsavel'] as const;
+export const PAPEIS_USUARIO = [
+  'aluno',
+  'responsavel',
+  'professor',
+  'escola',
+  'secretaria',
+] as const;
 export type PapelUsuario = (typeof PAPEIS_USUARIO)[number];
 export type DataNascimentoISO = string;
 export type Genero = 'Homem Cis' | 'Homem Trans' | 'Mulher Cis' | 'Mulher Trans' | 'Não-Binário';
@@ -17,6 +25,7 @@ export interface DadosPessoaisUsuario {
 export interface DadosContaUsuario {
   cpf: string;
   senhaHash: string;
+  iniciais: string;
   papeis: readonly PapelUsuario[];
   dadosPessoais: DadosPessoaisUsuario;
   perfis: {
@@ -25,7 +34,10 @@ export interface DadosContaUsuario {
   };
 }
 
+type DadosContaUsuarioEntrada = Omit<DadosContaUsuario, 'iniciais'>;
+
 export class ContaUsuario {
+  readonly iniciais: string;
   readonly cpf: string;
   readonly senhaHash: string;
   readonly papeis: readonly PapelUsuario[];
@@ -35,7 +47,7 @@ export class ContaUsuario {
     responsavel?: Responsavel;
   };
 
-  constructor({ cpf, senhaHash, papeis, dadosPessoais, perfis }: DadosContaUsuario) {
+  constructor({ cpf, senhaHash, papeis, dadosPessoais, perfis }: DadosContaUsuarioEntrada) {
     if (!senhaHash.trim()) {
       throw new Error('O hash da senha é obrigatório.');
     }
@@ -70,6 +82,7 @@ export class ContaUsuario {
     }
 
     this.cpf = normalizarCpf(cpf);
+    this.iniciais = gerarIniciais(dadosPessoais.nomeSocial?.trim() || dadosPessoais.nomeCompleto);
     this.senhaHash = senhaHash;
     this.papeis = papeisUnicos;
     this.dadosPessoais = dadosPessoaisNormalizados;
@@ -93,6 +106,14 @@ export interface VinculoFamiliar {
   parentesco: string;
 }
 
+export interface Aviso {
+  id: string;
+  canal: CanalAviso;
+  titulo: string;
+  descricao: string;
+  data: string;
+}
+
 export interface DadosAluno {
   corRaca: CorRaca;
   nacionalidade: string;
@@ -101,7 +122,7 @@ export interface DadosAluno {
   naturalidade?: string;
   responsavel?: VinculoFamiliar;
   academico?: unknown[]; //histórico academico em ordem cronológica inversa
-  avisos?: unknown[]; //lista de avisos
+  avisos?: Aviso[];
 }
 
 export class Aluno {
@@ -112,7 +133,7 @@ export class Aluno {
   readonly naturalidade?: string;
   readonly responsavel?: VinculoFamiliar;
   readonly academico: unknown[];
-  readonly avisos: unknown[];
+  readonly avisos: Aviso[];
 
   constructor(dados: DadosAluno) {
     if (

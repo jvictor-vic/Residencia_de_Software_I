@@ -4,6 +4,8 @@ import { z } from 'zod';
 import { Aluno, ContaUsuario, PAPEIS_USUARIO, Responsavel } from '@data/users/classes';
 import { calcularIdade } from '@utils/calcularIdade';
 import { cpfValidator } from '@utils/cpfValidator';
+import { gerarIniciais } from '@utils/gerarIniciais';
+import { CANAIS_AVISO } from '@utils/getIDsemantico';
 import { senhaSchema } from '@components/CadastroSenha/senhaSchema';
 
 // Autenticação demonstrativa: não usar com dados reais nem como provedor de identidade de produção.
@@ -18,6 +20,16 @@ const EMPTY_HASH = Buffer.alloc(PASSWORD_HASH_BYTES);
 const GENEROS = ['Homem Cis', 'Homem Trans', 'Mulher Cis', 'Mulher Trans', 'Não-Binário'] as const;
 const RACAS = ['Amarela', 'Branca', 'Indígena', 'Parda', 'Preta'] as const;
 const ZONAS = ['Urbana', 'Rural'] as const;
+const avisoSchema = z.object({
+  id: z.string().min(1),
+  canal: z.enum(CANAIS_AVISO),
+  titulo: z.string().trim().min(1),
+  descricao: z.string().trim().min(1),
+  data: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .refine(isDataISOValida),
+});
 const dataNascimentoSchema = z
   .union([
     z.date(),
@@ -91,6 +103,7 @@ const accountSchema = z
   .object({
     cpf: z.string().regex(/^\d{11}$/),
     senhaHash: z.string(),
+    iniciais: z.string().optional(),
     papeis: z.array(z.enum(PAPEIS_USUARIO)).min(1),
     dadosPessoais: z.object({
       nomeCompleto: z.string(),
@@ -125,7 +138,7 @@ const accountSchema = z
             })
             .optional(),
           academico: z.array(z.unknown()),
-          avisos: z.array(z.unknown()),
+          avisos: z.array(avisoSchema),
         })
         .optional(),
       responsavel: z
@@ -167,7 +180,13 @@ const accountSchema = z
         message: 'Alunos menores de 18 anos precisam de um vínculo com responsável.',
       });
     }
-  });
+  })
+  .transform((account) => ({
+    ...account,
+    iniciais:
+      account.iniciais ??
+      gerarIniciais(account.dadosPessoais.nomeSocial?.trim() || account.dadosPessoais.nomeCompleto),
+  }));
 
 const sessionSchema = z.object({
   cpf: z.string().regex(/^\d{11}$/),
@@ -178,7 +197,7 @@ type JsonRecord = Record<string, unknown>;
 
 export type PerfilAutenticado = Pick<
   z.infer<typeof accountSchema>,
-  'cpf' | 'papeis' | 'dadosPessoais' | 'perfis'
+  'cpf' | 'iniciais' | 'papeis' | 'dadosPessoais' | 'perfis'
 >;
 
 export class AuthRequestError extends Error {
@@ -430,7 +449,9 @@ export async function registerAccount(input: unknown): Promise<void> {
   }
 }
 
-export async function login(input: unknown): Promise<{ cookie: string }> {
+export async function login(
+  input: unknown,
+): Promise<{ cookie: string; papeis: z.infer<typeof accountSchema>['papeis'] }> {
   const parsed = loginSchema.safeParse(input);
   const cpf = parsed.success ? normalizeCpf(parsed.data.cpf) : '';
   const senha = parsed.success ? parsed.data.senha : '';
@@ -458,7 +479,10 @@ export async function login(input: unknown): Promise<{ cookie: string }> {
     throw new Error('Não foi possível criar uma sessão. Tente novamente.');
   }
 
-  return { cookie: sessionCookie(token, SESSION_TTL_SECONDS) };
+  return {
+    cookie: sessionCookie(token, SESSION_TTL_SECONDS),
+    papeis: account.papeis,
+  };
 }
 
 export async function logout(request: Request): Promise<string> {
@@ -500,10 +524,42 @@ export async function readAuthenticatedProfile(
   if (!account) return null;
   return {
     cpf: account.cpf,
+    iniciais: account.iniciais,
     papeis: account.papeis,
     dadosPessoais: account.dadosPessoais,
     perfis: account.perfis,
   };
+}
+
+export async function readAccessibleStudents(
+  user: PerfilAutenticado,
+): Promise<Array<{ cpf: string; nome: string }>> {
+  const students = new Map<string, string>();
+
+  if (user.perfis.aluno) {
+    students.set(
+      user.cpf,
+      user.dadosPessoais.nomeSocial?.trim() || user.dadosPessoais.nomeCompleto,
+    );
+  }
+
+  const tutelados = user.perfis.responsavel?.tutelados ?? [];
+  const accounts = await Promise.all(
+    tutelados.map(({ cpfContaRelacionada }) => loadAccount(cpfContaRelacionada)),
+  );
+
+  accounts.forEach((account) => {
+    if (!account?.perfis.aluno) {
+      throw new Error('Uma conta vinculada como tutelado não possui perfil de aluno.');
+    }
+
+    students.set(
+      account.cpf,
+      account.dadosPessoais.nomeSocial?.trim() || account.dadosPessoais.nomeCompleto,
+    );
+  });
+
+  return [...students].map(([cpf, nome]) => ({ cpf, nome }));
 }
 
 export async function readJsonBody(request: Request): Promise<JsonRecord> {

@@ -26,11 +26,12 @@
 ## Utilizando a paleta semântica
 
 Importar o [getIDsemantico](src\utils\getIDsemantico.ts), passar a referencia para função `getIDsemantico(referencia)`.
-A função retorna um objeto com três valores:
+A função retorna um objeto com quatro valores:
 
 - bg: variável css da cor de plano de fundo;
 - fg: variável css da cor do primeiro plano;
 - pattern: classe css com o padrão de fundo;
+- icon: metadados do SVG associado à referência, importado de `src/assets/icons/materias`. Em componentes Astro, use `icon.src` no atributo `src` de uma imagem.
 
 ### Referências de cada id
 
@@ -52,7 +53,7 @@ A função retorna um objeto com três valores:
 - religioso => 15
 - matematica => 16
 
-### Exemplo: aplicando o padrão de fundo em um container
+### Exemplo: aplicando o padrão de fundo e exibindo o ícone
 
 Em um componente Astro, use `pattern` como classe CSS e aplique as cores retornadas pela função:
 
@@ -67,6 +68,7 @@ const estiloSemantico = getIDsemantico('escola');
   class={estiloSemantico.pattern}
   style={`background-color: ${estiloSemantico.bg}; color: ${estiloSemantico.fg};`}
 >
+  <img src={estiloSemantico.icon.src} alt="Ícone da escola" />
   Aviso da coordenação
 </div>
 ```

@@ -1,0 +1,345 @@
+---
+import type { Aviso } from '@data/users/classes';
+
+interface Props {
+  avisos: Aviso[];
+  perfil: string;
+}
+
+const { avisos, perfil } = Astro.props;
+const painelId = `notificacoes-painel-${perfil}`;
+
+function formatarData(data: string): string {
+  const [ano, mes, dia] = data.split('-');
+  return `${dia}/${mes}/${ano}`;
+}
+---
+
+<div class="notificacoes" data-notificacoes data-perfil={perfil}>
+  <button
+    type="button"
+    class="notificacoes-botao"
+    aria-label="Notificações"
+    aria-expanded="false"
+    aria-controls={painelId}
+    data-notificacoes-botao
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+      <path d="M10 21h4" />
+    </svg>
+    <span class="notificacoes-contador" data-notificacoes-contador hidden></span>
+  </button>
+
+  <section class="notificacoes-painel" id={painelId} aria-label="Notificações" hidden>
+    <div class="notificacoes-topo">
+      <h2>Notificações</h2>
+      {avisos.length > 0 && (
+        <button type="button" class="notificacoes-marcar" data-notificacoes-marcar>
+          Marcar todas como lidas
+        </button>
+      )}
+    </div>
+    {avisos.length > 0 ? (
+      <ul class="notificacoes-lista">
+        {avisos.map((aviso) => (
+          <li class="notificacoes-item" data-notificacao-id={aviso.id}>
+            <span class="notificacoes-canal">{aviso.canal}</span>
+            <div class="notificacoes-corpo">
+              <p class="notificacoes-titulo">{aviso.titulo}</p>
+              <p>{aviso.descricao}</p>
+              <time datetime={aviso.data}>{formatarData(aviso.data)}</time>
+            </div>
+            <button
+              type="button"
+              class="notificacoes-ler"
+              aria-label={`Marcar como lida: ${aviso.titulo}`}
+              data-notificacao-ler
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path d="m5 12 4 4L19 6" />
+              </svg>
+            </button>
+            <span class="notificacoes-lida" aria-label="Lida">
+              Lida
+            </span>
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <p class="notificacoes-vazio">Você não tem notificações no momento.</p>
+    )}
+  </section>
+</div>
+
+<style>
+  .notificacoes {
+    position: relative;
+  }
+
+  .notificacoes-botao,
+  .notificacoes-marcar,
+  .notificacoes-ler {
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .notificacoes-botao,
+  .notificacoes-ler {
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+  }
+
+  .notificacoes-botao {
+    position: relative;
+    width: 44px;
+    height: 44px;
+  }
+
+  .notificacoes-botao svg {
+    width: 24px;
+    height: 24px;
+    flex: none;
+  }
+
+  .notificacoes-botao:hover,
+  .notificacoes-ler:hover {
+    background: var(--fg--90);
+  }
+
+  .notificacoes-contador {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: grid;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    place-items: center;
+    border: 2px solid var(--bg);
+    border-radius: 999px;
+    background: var(--error--bg);
+    color: var(--bg);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .notificacoes-contador[hidden],
+  .notificacoes-painel[hidden] {
+    display: none;
+  }
+
+  .notificacoes-painel {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 40;
+    width: min(420px, calc(100vw - 32px));
+    max-height: min(70vh, 560px);
+    overflow-y: auto;
+    padding: 16px;
+    border: 1px solid var(--fg--80);
+    border-radius: 12px;
+    background: var(--bg);
+    box-shadow: 0 8px 24px rgb(18 12 7 / 0.18);
+  }
+
+  .notificacoes-topo {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .notificacoes-topo h2 {
+    font-size: 20px;
+  }
+
+  .notificacoes-marcar {
+    border: 0;
+    background: transparent;
+    color: var(--primary-darker);
+    text-decoration: underline;
+  }
+
+  .notificacoes-lista {
+    display: grid;
+    gap: 8px;
+    padding: 0;
+    list-style: none;
+  }
+
+  .notificacoes-item {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 0;
+    border-top: 1px solid var(--fg--80);
+  }
+
+  .notificacoes-canal {
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: var(--fg--90);
+    font-size: 12px;
+  }
+
+  .notificacoes-corpo {
+    min-width: 0;
+  }
+
+  .notificacoes-corpo p {
+    overflow-wrap: anywhere;
+  }
+
+  .notificacoes-titulo {
+    font-weight: 700;
+  }
+
+  .notificacoes-corpo time {
+    color: var(--fg--50);
+    font-size: 14px;
+  }
+
+  .notificacoes-ler {
+    width: 36px;
+    height: 36px;
+  }
+
+  .notificacoes-ler svg {
+    width: 20px;
+    height: 20px;
+    flex: none;
+  }
+
+  .notificacoes-lida {
+    display: none;
+    color: var(--fg--50);
+    font-size: 14px;
+  }
+
+  .notificacoes-item.lida .notificacoes-titulo {
+    font-weight: 400;
+  }
+
+  .notificacoes-item.lida .notificacoes-ler {
+    display: none;
+  }
+
+  .notificacoes-item.lida .notificacoes-lida {
+    display: block;
+  }
+
+  .notificacoes-vazio {
+    padding: 12px 0;
+    border-top: 1px solid var(--fg--80);
+  }
+
+  .notificacoes-botao:focus-visible,
+  .notificacoes-marcar:focus-visible,
+  .notificacoes-ler:focus-visible {
+    outline: 2px solid var(--primary-darker);
+    outline-offset: 2px;
+  }
+
+  @media (max-width: 600px) {
+    .notificacoes-painel {
+      position: fixed;
+      top: 76px;
+      right: 16px;
+    }
+  }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-notificacoes]').forEach((raiz) => {
+    const botao = raiz.querySelector<HTMLButtonElement>('[data-notificacoes-botao]');
+    const painel = raiz.querySelector<HTMLElement>('.notificacoes-painel');
+    const contador = raiz.querySelector<HTMLElement>('[data-notificacoes-contador]');
+    if (!botao || !painel || !contador) return;
+
+    const itens = [...raiz.querySelectorAll<HTMLElement>('[data-notificacao-id]')];
+    const lidas = new Set<string>();
+
+    function atualizar(): void {
+      let naoLidas = 0;
+      itens.forEach((item) => {
+        const lida = lidas.has(item.dataset.notificacaoId ?? '');
+        item.classList.toggle('lida', lida);
+        if (!lida) naoLidas++;
+      });
+      contador.textContent = String(naoLidas);
+      contador.hidden = naoLidas === 0;
+      botao.setAttribute(
+        'aria-label',
+        naoLidas > 0 ? `Notificações: ${naoLidas} não lidas` : 'Notificações: nenhuma nova',
+      );
+    }
+
+    function abrirFechar(abrir: boolean): void {
+      painel.hidden = !abrir;
+      botao.setAttribute('aria-expanded', String(abrir));
+    }
+
+    botao.addEventListener('click', () => abrirFechar(painel.hidden));
+    raiz.querySelector('[data-notificacoes-marcar]')?.addEventListener('click', () => {
+      itens.forEach((item) => {
+        const id = item.dataset.notificacaoId;
+        if (id) lidas.add(id);
+      });
+      atualizar();
+    });
+    itens.forEach((item) => {
+      item.querySelector('[data-notificacao-ler]')?.addEventListener('click', () => {
+        const id = item.dataset.notificacaoId;
+        if (id) lidas.add(id);
+        atualizar();
+        botao.focus();
+      });
+    });
+    document.addEventListener('click', (event) => {
+      if (event.target instanceof Node && !raiz.contains(event.target)) abrirFechar(false);
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !painel.hidden) {
+        abrirFechar(false);
+        botao.focus();
+      }
+    });
+
+    atualizar();
+  });
+</script>

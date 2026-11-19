@@ -1,5 +1,6 @@
 ---
 import { Font } from 'astro:assets';
+import { ClientRouter } from 'astro:transitions';
 import '../variables.css';
 import '../global.css';
 
@@ -8,6 +9,7 @@ interface Props {
   description?: string;
   image?: string;
   canonicalURL?: URL;
+  transition?: boolean;
 }
 
 const {
@@ -15,6 +17,7 @@ const {
   description = 'Bem vindo ao EducaHub!',
   image = '/social.jpg',
   canonicalURL = new URL(Astro.url.pathname, Astro.site),
+  transition = false,
 } = Astro.props;
 ---
 
@@ -22,6 +25,7 @@ const {
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
 <meta name="generator" content={Astro.generator} />
 
 <Font cssVariable="--font-roboto" />
@@ -50,5 +54,19 @@ const {
 <meta property="twitter:description" content={description} />
 <meta property="twitter:image" content={new URL(image, Astro.url)} />
 
+<!-- Add view transitions -->
+<ClientRouter transition:name="fade" />
+
 <!-- Overrides ou scripts podem ser passados via slot -->
 <slot />
+
+<script>
+  import { aplicarPreferencias, lerPreferencias } from '../scripts/preferencias';
+
+  function aplicarTema(): void {
+    aplicarPreferencias(lerPreferencias());
+  }
+
+  aplicarTema();
+  document.addEventListener('astro:page-load', aplicarTema);
+</script>

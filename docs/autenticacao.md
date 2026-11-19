@@ -15,7 +15,7 @@ As páginas e endpoints são:
 | `/api/auth/register` | `POST`             | Valida e cria conta(s) e perfil(is)                                                                               |
 | `/api/auth/login`    | `POST`             | Verifica credenciais, cria sessão e envia cookie                                                                  |
 | `/api/auth/logout`   | `POST`             | Invalida sessão e limpa cookie                                                                                    |
-| `/painel`            | Página protegida   | Verifica a sessão no servidor; sem sessão válida redireciona para `/entrar`                                       |
+| `/academico/`        | Página protegida   | Landing do perfil acadêmico; exige papel `aluno` ou `responsavel`                                                 |
 | `/academico/*`       | Páginas protegidas | Middleware carrega conta e perfis; redireciona sessões ausentes para `/entrar` e papéis sem permissão para `/403` |
 | `/403`               | Página             | Informa que o tipo de usuário não tem permissão para acessar a área                                               |
 
@@ -43,7 +43,7 @@ Respostas:
 
 ### Login e logout
 
-`POST /api/auth/login` recebe `{ "cpf": "...", "senha": "..." }`. Em sucesso retorna `{ "ok": true }` e define o cookie de sessão. CPF inexistente, inválido ou senha incorreta resultam na mesma resposta `401` (`CPF ou senha inválidos.`), evitando confirmar se uma conta existe.
+`POST /api/auth/login` recebe `{ "cpf": "...", "senha": "..." }`. Em sucesso retorna `{ "ok": true, "papeis": ["aluno"] }` (ou os papéis associados à conta) e define o cookie de sessão. O formulário redireciona aluno e/ou responsável para `/academico/`, professor para `/professor/`, escola para `/escola/` e secretaria para `/secretaria/`. CPF inexistente, inválido ou senha incorreta resultam na mesma resposta `401` (`CPF ou senha inválidos.`), evitando confirmar se uma conta existe.
 
 `POST /api/auth/logout` invalida o token atual quando presente e sempre responde com `{ "ok": true }` no caminho normal, removendo o cookie. Em ambos os endpoints, falhas inesperadas retornam erro genérico `500`; as respostas não são cacheadas.
 
@@ -138,9 +138,15 @@ Páginas protegidas podem reutilizar `src/layouts/Academico.astro` e acessar `As
    npx netlify dev
    ```
 
-3. Abra a URL local apresentada pela CLI e teste com dados fictícios.
+3. Na inicialização, o hook `predev` cria os usuários de teste documentados em
+   `docs/usuarios.md` no Blobs local. O seed é idempotente, gera hashes de senha
+   e não sobrescreve contas existentes.
+4. Abra a URL local apresentada pela CLI e teste com as credenciais fictícias.
 
-Não é necessária uma variável contendo senha ou credencial de conta no código. Use o ambiente de desenvolvimento da Netlify para testar Blobs; `npm run dev` isolado não deve ser considerado um teste de persistência do serviço.
+O seed só é executado quando `NETLIFY_DEV` e o endpoint local do Netlify Blobs
+estão disponíveis. `npm run dev` isolado inicia apenas o Astro e não provisiona
+as contas para persistência; use o ambiente de desenvolvimento da Netlify para
+testar autenticação.
 
 ### Deploy na Netlify
 
