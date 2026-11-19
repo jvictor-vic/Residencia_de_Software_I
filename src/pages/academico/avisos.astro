@@ -247,6 +247,8 @@ const alunosFiltro = alunos.map((aluno) => ({
     };
 
     if (lista && estadoVazio && resultadoAvisos) {
+      const estadoVazioAvisos = estadoVazio;
+      const resultadoAvisosVisiveis = resultadoAvisos;
       const cards = [...lista.querySelectorAll<HTMLElement>('[data-aviso]')];
       const gruposPorFiltro = new Map(
         gruposFiltro.map((grupo) => [grupo.dataset.filtro ?? '', grupo]),
@@ -278,8 +280,8 @@ const alunosFiltro = alunos.map((aluno) => ({
           if (visivel) quantidadeVisivel += 1;
         });
 
-        estadoVazio.hidden = quantidadeVisivel > 0;
-        resultadoAvisos.textContent = `${quantidadeVisivel} ${
+        estadoVazioAvisos.hidden = quantidadeVisivel > 0;
+        resultadoAvisosVisiveis.textContent = `${quantidadeVisivel} ${
           quantidadeVisivel === 1 ? 'aviso' : 'avisos'
         }`;
       }

@@ -291,6 +291,9 @@ function formatarData(data: string): string {
     const contador = raiz.querySelector<HTMLElement>('[data-notificacoes-contador]');
     if (!botao || !painel || !contador) return;
 
+    const botaoNotificacoes = botao;
+    const painelNotificacoes = painel;
+    const contadorNotificacoes = contador;
     const itens = [...raiz.querySelectorAll<HTMLElement>('[data-notificacao-id]')];
     const lidas = new Set<string>();
 
@@ -301,20 +304,20 @@ function formatarData(data: string): string {
         item.classList.toggle('lida', lida);
         if (!lida) naoLidas++;
       });
-      contador.textContent = String(naoLidas);
-      contador.hidden = naoLidas === 0;
-      botao.setAttribute(
+      contadorNotificacoes.textContent = String(naoLidas);
+      contadorNotificacoes.hidden = naoLidas === 0;
+      botaoNotificacoes.setAttribute(
         'aria-label',
         naoLidas > 0 ? `Notificações: ${naoLidas} não lidas` : 'Notificações: nenhuma nova',
       );
     }
 
     function abrirFechar(abrir: boolean): void {
-      painel.hidden = !abrir;
-      botao.setAttribute('aria-expanded', String(abrir));
+      painelNotificacoes.hidden = !abrir;
+      botaoNotificacoes.setAttribute('aria-expanded', String(abrir));
     }
 
-    botao.addEventListener('click', () => abrirFechar(painel.hidden));
+    botaoNotificacoes.addEventListener('click', () => abrirFechar(Boolean(painelNotificacoes.hidden)));
     raiz.querySelector('[data-notificacoes-marcar]')?.addEventListener('click', () => {
       itens.forEach((item) => {
         const id = item.dataset.notificacaoId;
@@ -327,16 +330,16 @@ function formatarData(data: string): string {
         const id = item.dataset.notificacaoId;
         if (id) lidas.add(id);
         atualizar();
-        botao.focus();
+        botaoNotificacoes.focus();
       });
     });
     document.addEventListener('click', (event) => {
       if (event.target instanceof Node && !raiz.contains(event.target)) abrirFechar(false);
     });
     document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape' && !painel.hidden) {
+      if (event.key === 'Escape' && !painelNotificacoes.hidden) {
         abrirFechar(false);
-        botao.focus();
+        botaoNotificacoes.focus();
       }
     });
 
