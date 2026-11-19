@@ -21,18 +21,20 @@ jobs:
 
       - name: Instalar dependências
         run: npm ci
+        
+      - name: Build Astro site
+        run: npm run build
 
-      - name: Build e Deploy na Netlify
-        uses: nwtgck/actions-netlify@v3
-        with:
-          publish-dir: "./dist"
-          production-branch: main
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          deploy-message: "Deploy automatizado via GitHub Actions - Commit: ${{ github.sha }}"
-          enable-pull-request-comment: false
+      - name: Seed test users into Netlify Blobs
         env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-          URL: ${{ vars.SITE_URL }}
-          PUBLIC_SITE_URL: ${{ secrets.PUBLIC_SITE_URL }}
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           SEED_DEMO_USERS: "true"
+        run: node scripts/seed-test-users.mjs
+
+      - name: Deploy pre-built site to Netlify
+        env:
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+        run: npx netlify-cli deploy --no-build --prod
+
