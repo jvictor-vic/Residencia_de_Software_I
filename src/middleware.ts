@@ -13,8 +13,16 @@ const ROLE_TO_BASE_PATH: Record<Role, string> = {
 };
 
 const MODULE_PREFIXES = ['/academico', '/professor', '/escola', '/secretaria'] as const;
+type ModulePath = (typeof MODULE_PREFIXES)[number];
+type ModuleRole = 'professor' | 'escola' | 'secretaria';
 
-function getTargetModule(pathname: string): string | null {
+const MODULE_ROLE_BY_PREFIX: Record<Exclude<ModulePath, '/academico'>, ModuleRole> = {
+  '/professor': 'professor',
+  '/escola': 'escola',
+  '/secretaria': 'secretaria',
+};
+
+function getTargetModule(pathname: string): ModulePath | null {
   return (
     MODULE_PREFIXES.find((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)) ??
     null
@@ -66,7 +74,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const hasAccessToModule =
     targetModule === '/academico'
       ? validRoles.some((role) => role === 'aluno' || role === 'responsavel')
-      : await hasModuleRole(context.request, targetModule.slice(1) as Role);
+      : await hasModuleRole(context.request, MODULE_ROLE_BY_PREFIX[targetModule]);
 
   if (!hasAccessToModule) {
     // Opcional: se quiser enviar o usuário para a home do papel dele em vez de 403 direto,

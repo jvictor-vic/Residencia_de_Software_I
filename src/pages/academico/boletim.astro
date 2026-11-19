@@ -1,11 +1,336 @@
 ---
 import Academico from '@layouts/Academico.astro';
-
-const usuario = Astro.locals.authenticatedUser;
-const aluno = usuario?.perfis.aluno;
-const responsavel = usuario?.perfis.responsavel;
+import Icone from '@components/Icone.astro';
+import MateriaTag from '@components/MateriaTag.astro';
+import {
+  boletimAna,
+  formatarNota,
+  FREQUENCIA_MINIMA,
+  MEDIA_MINIMA,
+  media,
+  percentual,
+  situacaoNota,
+} from '@data/dados';
 ---
 
-<Academico title="Avisos | EducaHub">
-  <h1>Avisos</h1>
+<Academico title="Boletim | EducaHub">
+  <section class="pagina" aria-labelledby="titulo-pagina">
+    <header class="introducao">
+      <h1 id="titulo-pagina">Minhas notas</h1>
+      <p>Ano letivo 2026 · 8º ano B</p>
+    </header>
+
+    <section class="card" aria-labelledby="titulo-boletim">
+      <div class="card-cabecalho">
+        <h2 id="titulo-boletim">
+          <Icone nome="grafico" /> Boletim
+        </h2>
+        <button id="imprimir-boletim" class="botao-secundario" type="button">
+          <Icone nome="baixar" /> Imprimir / salvar PDF
+        </button>
+      </div>
+
+      <div class="tabela-wrap">
+        <table class="tabela-boletim">
+          <caption class="sr-only">Boletim de Ana Clara Souza, 8º ano B</caption>
+          <thead>
+            <tr>
+              <th scope="col">Matéria</th>
+              <th scope="col" class="centro">
+                1ª un.
+              </th>
+              <th scope="col" class="centro">
+                2ª un.
+              </th>
+              <th scope="col" class="centro">
+                3ª un.
+              </th>
+              <th scope="col" class="centro">
+                4ª un.
+              </th>
+              <th scope="col" class="centro">
+                Média
+              </th>
+              <th scope="col">Situação</th>
+              <th scope="col" class="centro">
+                Frequência
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {boletimAna.map((linha) => {
+              const mediaAtual = media(linha.unidades);
+              const situacao = situacaoNota(mediaAtual);
+              const frequencia = percentual(linha.aulas - linha.faltas, linha.aulas);
+              return (
+                <tr>
+                  <th scope="row">
+                    <MateriaTag materia={linha.materia} compacto />
+                  </th>
+                  {linha.unidades.map((nota) => (
+                    <td
+                      class:list={[
+                        'centro numero',
+                        { 'nota-baixa': nota !== null && nota < MEDIA_MINIMA },
+                      ]}
+                    >
+                      {formatarNota(nota)}
+                    </td>
+                  ))}
+                  <td class="centro numero destaque">{formatarNota(mediaAtual)}</td>
+                  <td>
+                    <span class:list={['situacao', `situacao-${situacao}`]}>
+                      {situacao === 'aprovado' && 'Na média'}
+                      {situacao === 'recuperacao' && 'Recuperação'}
+                      {situacao === 'sem-nota' && 'Sem nota'}
+                    </span>
+                  </td>
+                  <td
+                    class:list={['centro numero', { 'nota-baixa': frequencia < FREQUENCIA_MINIMA }]}
+                  >
+                    {frequencia}%
+                    {frequencia < FREQUENCIA_MINIMA && <span aria-hidden="true"> ⚠</span>}
+                    {frequencia < FREQUENCIA_MINIMA && (
+                      <span class="sr-only"> (abaixo do mínimo)</span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <p class="legenda">
+        Média mínima: <strong>{formatarNota(MEDIA_MINIMA)}</strong> · Frequência mínima:{' '}
+        <strong>{FREQUENCIA_MINIMA}%</strong> · Notas abaixo da média aparecem sublinhadas. “—” =
+        ainda não lançada.
+      </p>
+    </section>
+
+    <section class="dica" aria-labelledby="titulo-dica">
+      <h2 id="titulo-dica">
+        <Icone nome="lampada" /> Dica
+      </h2>
+      <p>
+        Você está em <strong>recuperação em Geografia</strong>. Procure a professora Renata Lopes
+        para combinar as atividades de recuperação até o fim da 4ª unidade.
+      </p>
+    </section>
+  </section>
 </Academico>
+
+<script>
+  document.addEventListener('astro:page-load', () => {
+    const botao = document.querySelector<HTMLButtonElement>('#imprimir-boletim');
+    if (!botao) throw new Error('Não foi possível inicializar a impressão do boletim.');
+    botao.addEventListener('click', () => window.print());
+  });
+</script>
+
+<style>
+  .pagina {
+    display: grid;
+    gap: 1.5rem;
+    max-width: 1280px;
+    margin-inline: auto;
+  }
+
+  .introducao {
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .introducao p {
+    color: var(--fg--40);
+  }
+
+  .card,
+  .dica {
+    min-width: 0;
+    padding: 1.25rem;
+    border: 1px solid var(--fg--80);
+    border-radius: 12px;
+    background: var(--bg);
+    box-shadow: 0 4px 12px rgb(18 12 7 / 8%);
+  }
+
+  .card-cabecalho {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .card-cabecalho h2,
+  .dica h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 1.35rem;
+  }
+
+  .card-cabecalho h2 :global(svg),
+  .dica h2 :global(svg) {
+    color: var(--primary-darker);
+  }
+
+  .botao-secundario {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.85rem;
+    border: 1px solid var(--primary-darker);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--primary-darker);
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .botao-secundario:hover {
+    background: var(--fg--90);
+  }
+
+  .botao-secundario:focus-visible {
+    outline: 3px solid var(--primary-darker);
+    outline-offset: 2px;
+  }
+
+  .tabela-wrap {
+    overflow-x: auto;
+  }
+
+  .tabela-boletim {
+    width: 100%;
+    min-width: 900px;
+    border-collapse: collapse;
+  }
+
+  .tabela-boletim th,
+  .tabela-boletim td {
+    padding: 0.75rem 0.65rem;
+    border-bottom: 1px solid var(--fg--80);
+    text-align: left;
+  }
+
+  .tabela-boletim thead th {
+    background: var(--fg--90);
+    font-weight: 700;
+  }
+
+  .tabela-boletim th:first-child {
+    min-width: 190px;
+  }
+
+  .tabela-boletim :global(.materia) {
+    gap: 0.5rem;
+  }
+
+  .tabela-boletim :global(.materia-selo) {
+    border-color: var(--fg--40);
+  }
+
+  .centro {
+    text-align: center !important;
+  }
+
+  .numero {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .destaque {
+    font-weight: 800;
+  }
+
+  .nota-baixa {
+    color: var(--error--fg);
+    font-weight: 700;
+    text-decoration: underline wavy;
+    text-underline-offset: 4px;
+  }
+
+  .situacao {
+    display: inline-block;
+    padding: 0.2rem 0.55rem;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .situacao-aprovado {
+    color: var(--fg);
+    background: var(--success--bg);
+  }
+
+  .situacao-recuperacao {
+    color: var(--fg);
+    background: var(--error--bg);
+  }
+
+  .situacao-sem-nota {
+    color: var(--fg--20);
+    background: var(--fg--90);
+  }
+
+  .legenda {
+    margin-top: 0.85rem;
+    color: var(--fg--40);
+  }
+
+  .dica {
+    border-left: 6px solid var(--secondary);
+  }
+
+  .dica p {
+    margin-top: 0.65rem;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    clip-path: inset(50%);
+  }
+
+  @media (max-width: 600px) {
+    .card,
+    .dica {
+      padding: 0.8rem;
+    }
+
+    .card-cabecalho {
+      align-items: flex-start;
+    }
+  }
+
+  @media print {
+    :global(.topo),
+    :global(.mobile),
+    :global(.desktop),
+    :global(footer),
+    :global(.botao-ajuda),
+    .introducao,
+    .dica,
+    .botao-secundario {
+      display: none !important;
+    }
+
+    .pagina {
+      max-width: none;
+    }
+
+    .card {
+      border: 0;
+      box-shadow: none;
+    }
+  }
+</style>

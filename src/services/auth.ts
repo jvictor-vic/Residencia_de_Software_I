@@ -520,12 +520,32 @@ export async function readSession(request: Request): Promise<{ cpf: string } | n
   return { cpf: session.cpf };
 }
 
+export async function readAuthenticatedProfile(request: Request): Promise<PerfilAutenticado | null> {
+  const session = await readSession(request);
+  if (!session) return null;
+
+  const account = await loadAccount(session.cpf);
+  if (!account) return null;
+  return {
+    cpf: account.cpf,
+    iniciais: account.iniciais,
+    papeis: account.papeis,
+    dadosPessoais: account.dadosPessoais,
+    perfis: account.perfis,
+  };
+}
+
 async function ensureDemoModuleAccounts(): Promise<void> {
   const fixtures = [
     {
       cpf: '52998224725',
       senha: 'Professor123!',
       role: 'professor' as const,
+      dadosPessoais: {
+        nomeCompleto: 'Carlos Menezes',
+        genero: 'Homem Cis' as const,
+        dataNascimento: '1980-01-01',
+      },
       perfil: {
         escolaId: 'escola-e-e-jardim-das-mangabeiras',
         atribuicoes: [{ turmaId: 'turma-8b', disciplina: 'Matemática' }],
@@ -535,12 +555,22 @@ async function ensureDemoModuleAccounts(): Promise<void> {
       cpf: '11144477735',
       senha: 'Escola123!',
       role: 'escola' as const,
+      dadosPessoais: {
+        nomeCompleto: 'Juliana Prado',
+        genero: 'Mulher Cis' as const,
+        dataNascimento: '1980-01-01',
+      },
       perfil: { escolaIds: ['escola-e-e-jardim-das-mangabeiras'], funcao: 'direcao' as const },
     },
     {
       cpf: '12345678909',
       senha: 'Secretaria123!',
       role: 'secretaria' as const,
+      dadosPessoais: {
+        nomeCompleto: 'Roberto Lima',
+        genero: 'Homem Cis' as const,
+        dataNascimento: '1980-01-01',
+      },
       perfil: { redeId: 'rede-sergipe-demo' },
     },
   ];
@@ -563,6 +593,7 @@ async function ensureDemoModuleAccounts(): Promise<void> {
         cpf: fixture.cpf,
         senhaHash: await hashPassword(fixture.senha),
         papeis: [fixture.role],
+        dadosPessoais: fixture.dadosPessoais,
         perfis: { [fixture.role]: fixture.perfil },
       });
       const created = await blobStore.setJSON(accountKey, account, { onlyIfNew: true });

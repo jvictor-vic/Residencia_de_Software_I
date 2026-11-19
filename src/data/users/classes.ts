@@ -44,7 +44,7 @@ export interface DadosPerfilSecretaria {
 }
 export interface PerfisContaUsuario {
   aluno?: DadosAluno;
-  responsavel?: DadosResponsavel;  
+  responsavel?: DadosResponsavel;
   professor?: DadosProfessor;
   escola?: DadosPerfilEscola;
   secretaria?: DadosPerfilSecretaria;
@@ -109,7 +109,9 @@ export class Escola implements DadosEscola {
   }
 }
 
-type DadosContaUsuarioEntrada = Omit<DadosContaUsuario, 'iniciais'>;
+type DadosContaUsuarioEntrada = Omit<DadosContaUsuario, 'iniciais'> & {
+  dadosPessoais: DadosPessoaisUsuario;
+};
 
 export class ContaUsuario {
   readonly iniciais: string;
@@ -119,7 +121,6 @@ export class ContaUsuario {
   readonly perfis?: PerfisContaUsuario;
 
   constructor({ cpf, senhaHash, papeis, dadosPessoais, perfis }: DadosContaUsuarioEntrada) {
-  constructor({ cpf, senhaHash, papeis, perfis }: DadosContaUsuario) {
     if (!senhaHash.trim()) {
       throw new Error('O hash da senha é obrigatório.');
     }
