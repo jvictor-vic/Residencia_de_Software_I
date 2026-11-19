@@ -102,11 +102,11 @@ let blobStore;
 if (isLocalDev) {
   blobStore = getStore(STORE_NAME, { consistency: 'strong' });
 } else {
-  const siteID = process.env.NETLIFY_SITE_ID;
+  const siteID = process.env.NETLIFY_SITE_ID || process.env.SITE_ID;
   const token = process.env.NETLIFY_AUTH_TOKEN;
 
   if (!siteID || !token) {
-    throw new Error('NETLIFY_SITE_ID and NETLIFY_AUTH_TOKEN are required to seed Blobs during deploy.');
+    throw new Error('SITE_ID (or NETLIFY_SITE_ID) and NETLIFY_AUTH_TOKEN are required to seed Blobs during deploy.');
   }
 
   blobStore = getStore({
