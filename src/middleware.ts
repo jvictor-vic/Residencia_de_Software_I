@@ -4,7 +4,7 @@ import { hasModuleRole, readAuthenticatedProfile } from './services/auth';
 const ALLOWED_ROLES = ['aluno', 'responsavel', 'professor', 'escola', 'secretaria'] as const;
 type Role = (typeof ALLOWED_ROLES)[number];
 
-const MODULE_PREFIXES = ['/academico', '/professor', '/escola', '/secretaria'] as const;
+const MODULE_PREFIXES = ['/academico'] as const;
 type ModulePath = (typeof MODULE_PREFIXES)[number];
 type ModuleRole = 'professor' | 'escola' | 'secretaria';
 
