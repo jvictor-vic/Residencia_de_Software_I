@@ -89,42 +89,48 @@ const testAccounts = [
   },
   {
       key: 'accounts/52998224725',
-      cpf: '52998224725',
       password: 'Professor123!',
-      papeis: 'professor',
-      dadosPessoais: {
-        nomeCompleto: 'Carlos Menezes',
-        genero: 'Homem Cis',
-        dataNascimento: '1980-01-01',
-      },
-      perfil: {
-        escolaId: 'escola-e-e-jardim-das-mangabeiras',
-        atribuicoes: [{ turmaId: 'turma-8b', disciplina: 'Matemática' }],
+      account: {
+        cpf: '52998224725',
+        papeis: ['professor'],
+        dadosPessoais: {
+          nomeCompleto: 'Carlos Menezes',
+          genero: 'Homem Cis',
+          dataNascimento: '1980-01-01',
+        },
+        perfil: {
+          escolaId: 'escola-e-e-jardim-das-mangabeiras',
+          atribuicoes: [{ turmaId: 'turma-8b', disciplina: 'Matemática' }],
+        },
       },
     },
     {
       key: 'accounts/11144477735',
-      cpf: '11144477735',
       password: 'Escola123!',
-      papeis: 'escola',
-      dadosPessoais: {
-        nomeCompleto: 'Juliana Prado',
-        genero: 'Mulher Cis',
-        dataNascimento: '1980-01-01',
-      },
+      account: {
+        cpf: '11144477735',
+        papeis: ['escola'],
+        dadosPessoais: {
+          nomeCompleto: 'Juliana Prado',
+          genero: 'Mulher Cis',
+          dataNascimento: '1980-01-01',
+        },
       perfil: { escolaIds: ['escola-e-e-jardim-das-mangabeiras'], funcao: 'direcao' },
+      },
     },
     {
       key: 'accounts/12345678909',
-      cpf: '12345678909',
       password: 'Secretaria123!',
-      papeis: 'secretaria',
-      dadosPessoais: {
-        nomeCompleto: 'Roberto Lima',
-        genero: 'Homem Cis',
-        dataNascimento: '1980-01-01',
+      account: {
+        cpf: '12345678909',
+        papeis: ['secretaria'],
+          dadosPessoais: {
+            nomeCompleto: 'Roberto Lima',
+            genero: 'Homem Cis',
+            dataNascimento: '1980-01-01',
+          },
+        perfil: { redeId: 'rede-sergipe-demo' },
       },
-      perfil: { redeId: 'rede-sergipe-demo' },
     },
 ];
 
